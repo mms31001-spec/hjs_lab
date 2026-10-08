@@ -2,7 +2,14 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2d5844">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HJS물리학실험실">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
 <title>HJS물리학실험실</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -114,7 +121,7 @@ body.touch #help { display: none; }
 }
 </style>
 </head>
-<body style="margin:0">
+<body class="touch" style="margin:0">
 
 <div id="view"></div>
 <div id="crosshair" class="hud"></div>
@@ -179,7 +186,10 @@ body.touch #help { display: none; }
       <span><kbd>WASD</kbd>이동</span><span><kbd>마우스</kbd>시점</span><span><kbd>E</kbd>집기·놓기</span><span><kbd>클릭</kbd>주먹·휘두르기</span><span><kbd>Space</kbd>점프</span><span><kbd>V</kbd>앉기</span><span><kbd>Z</kbd>확대</span><span><kbd>F</kbd>레이저</span><span><kbd>Q</kbd>돌리기</span><span><kbd>I</kbd>측정 정보</span>
     </div>
     <button id="startBtn" type="button" disabled>불러오는 중…</button>
-    <p class="note">휴대폰·태블릿에서는 <a href="install.html" style="color:var(--brass)">모바일용(install.html)</a>으로 열면 홈 화면에 앱처럼 설치할 수 있어요.</p>
+    <div id="installBox" hidden style="display:grid;gap:8px">
+      <button id="installBtn" type="button" hidden style="justify-self:start;font:inherit;font-weight:700;font-size:15px;color:var(--ink);background:transparent;border:1.5px solid var(--brass);border-radius:8px;padding:9px 18px;cursor:pointer">홈 화면에 앱으로 설치</button>
+      <p class="note" id="iosTip" hidden>아이폰·아이패드: Safari 아래쪽 <b>공유 버튼(□↑)</b> → <b>홈 화면에 추가</b>를 누르면 앱처럼 설치돼요.</p>
+    </div>
     <p class="note" id="overlayNote">키보드와 마우스가 있는 컴퓨터에서 이용하세요. 실험 중 <kbd>Esc</kbd>를 누르면 마우스 커서가 돌아옵니다.</p>
   </div>
 </div>
@@ -216,7 +226,7 @@ try { await Promise.race([document.fonts.load(`700 40px "IBM Plex Sans KR"`), ne
 
 const view = document.getElementById('view');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-const isTouch = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window && !matchMedia('(pointer: fine)').matches);
+const isTouch = true;   // 모바일용: 항상 터치 조작판
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isTouch ? 1.5 : 2));   // 휴대폰은 화질을 조금 낮춰 부드럽게
 renderer.setSize(view.clientWidth || innerWidth, view.clientHeight || innerHeight);
 renderer.shadowMap.enabled = true;
@@ -2392,5 +2402,20 @@ window.__lab = { player, balance, weights, items, interact, get held() { return 
   start() { playing = true; mode = 'drag'; overlay.hidden = true; } };
 </script>
 
+<script>
+// 홈 화면 설치(PWA)와 오프라인 저장
+(function () {
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+  var box = document.getElementById('installBox'), btn = document.getElementById('installBtn'), tip = document.getElementById('iosTip');
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches || navigator.standalone;
+  if (standalone) return;
+  var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isIOS) { box.hidden = false; tip.hidden = false; }
+  var deferred = null;
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; box.hidden = false; btn.hidden = false; });
+  btn.addEventListener('click', function () { if (!deferred) return; deferred.prompt(); deferred.userChoice.then(function () { deferred = null; btn.hidden = true; }); });
+  window.addEventListener('appinstalled', function () { box.hidden = true; });
+})();
+</script>
 </body>
 </html>
