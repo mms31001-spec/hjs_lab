@@ -31,7 +31,9 @@
   color-scheme: dark;
 }
 [hidden] { display: none !important; }
-html, body { height: 100%; }
+html, body { height: 100%; width: 100%; overscroll-behavior: none; }
+/* 휴대폰을 세로로 들고 있으면 화면 전체를 90° 돌려 항상 가로 화면으로 보이게 (아이폰은 방향 잠금 기능이 없어서) */
+body.rot { position: fixed; top: 0; left: 0; transform-origin: 0 0; transform: rotate(90deg) translateY(-100%); }
 body { background: var(--ground); color: var(--ink); font-family: var(--font-ui); overflow: hidden; }
 #view { position: fixed; inset: 0; }
 #view canvas { display: block; width: 100%; height: 100%; touch-action: none; }
@@ -1986,7 +1988,7 @@ const touchMove = { x: 0, y: 0 };
   stick.addEventListener('pointerdown', e => { e.preventDefault(); sid = e.pointerId; const r = stick.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; stick.setPointerCapture(sid); });
   stick.addEventListener('pointermove', e => {
     if (e.pointerId !== sid) return;
-    let dx = e.clientX - cx, dy = e.clientY - cy; const R = 52, d = Math.hypot(dx, dy); if (d > R) { dx *= R / d; dy *= R / d; }
+    let [dx, dy] = screenDelta(e.clientX - cx, e.clientY - cy); const R = 52, d = Math.hypot(dx, dy); if (d > R) { dx *= R / d; dy *= R / d; }
     setKnob(dx, dy); touchMove.x = dx / R; touchMove.y = -dy / R;
   });
   const endStick = e => { if (e.pointerId !== sid) return; sid = null; setKnob(0, 0); touchMove.x = touchMove.y = 0; };
@@ -1996,7 +1998,7 @@ const touchMove = { x: 0, y: 0 };
   canvas.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' || !playing) return; looks.set(e.pointerId, { x: e.clientX, y: e.clientY }); canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', e => {
     const L = looks.get(e.pointerId); if (!L) return;
-    const dx = e.clientX - L.x, dy = e.clientY - L.y; L.x = e.clientX; L.y = e.clientY;
+    const [dx, dy] = screenDelta(e.clientX - L.x, e.clientY - L.y); L.x = e.clientX; L.y = e.clientY;
     const k = 0.0045 * (player.fov / 70) * (cartState.pushing ? 0.5 : 1);
     player.yaw -= dx * k;
     if (insertMode.active) insertMode.depth = Math.max(INSERT_MIN, Math.min(INSERT_MAX, insertMode.depth - dy * 0.0006));
@@ -2065,7 +2067,12 @@ function enterPlay() {
   overlay.hidden = true; $('overlayNote').style.color = '';
   if (isTouch) {                         // 휴대폰·태블릿: 화면 조작판으로
     mode = 'touch'; playing = true; $('touchUI').hidden = false;
-    try { const fs = document.documentElement.requestFullscreen?.(); if (fs && fs.catch) fs.catch(() => {}); } catch (e) {}
+    try {
+      const fs = document.documentElement.requestFullscreen?.();
+      const lock = () => { try { const p = screen.orientation?.lock?.('landscape'); if (p && p.catch) p.catch(() => {}); } catch (e) {} };   // 안드로이드: 가로로 고정
+      if (fs && fs.then) fs.then(lock, lock); else lock();
+    } catch (e) {}
+    setTimeout(fitScreen, 300);
     return;
   }
   canvas.focus?.();
@@ -2159,7 +2166,21 @@ function onResize() {
   renderer.setSize(w, h); camera.aspect = handCam.aspect = w / h;
   camera.updateProjectionMatrix(); handCam.updateProjectionMatrix();
 }
-addEventListener('resize', onResize);
+// 화면 크기를 실제 보이는 영역에 딱 맞추고, 휴대폰이 세로면 90° 돌려 가로로 보여 준다
+let screenRotated = false;
+function fitScreen() {
+  const vv = window.visualViewport;
+  const vw = Math.round(vv ? vv.width : innerWidth), vh = Math.round(vv ? vv.height : innerHeight);
+  screenRotated = isTouch && vh > vw;
+  const b = document.body;
+  b.classList.toggle('rot', screenRotated);
+  if (isTouch) { b.style.width = (screenRotated ? vh : vw) + 'px'; b.style.height = (screenRotated ? vw : vh) + 'px'; }
+  onResize();
+}
+// 화면을 돌린 상태에서 손가락 움직임(화면 기준)을 실험실 화면 기준으로 바꾼다
+function screenDelta(dx, dy) { return screenRotated ? [dy, -dx] : [dx, dy]; }
+for (const ev of ['resize', 'orientationchange']) addEventListener(ev, () => { fitScreen(); setTimeout(fitScreen, 250); setTimeout(fitScreen, 700); });
+if (window.visualViewport) visualViewport.addEventListener('resize', fitScreen);
 
 /* ---------- 루프 ---------- */
 const clock = new THREE.Clock();
@@ -2390,7 +2411,7 @@ function frame() {
 }
 
 resetLab();
-onResize();
+fitScreen(); setTimeout(fitScreen, 500);   // 홈 화면 앱은 처음 몇 순간 화면 크기를 잘못 알려 줄 때가 있다
 startBtn.disabled = false; startBtn.textContent = '실험 시작';
 requestAnimationFrame(frame);
 
