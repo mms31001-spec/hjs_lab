@@ -2,7 +2,14 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#244a39">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HJS물리학실험실">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
 <title>HJS물리학실험실</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -179,7 +186,7 @@ body.touch #help { display: none; }
       <span><kbd>WASD</kbd>이동</span><span><kbd>마우스</kbd>시점</span><span><kbd>E</kbd>집기·놓기</span><span><kbd>클릭</kbd>주먹·휘두르기</span><span><kbd>Space</kbd>점프</span><span><kbd>V</kbd>앉기</span><span><kbd>Z</kbd>확대</span><span><kbd>F</kbd>레이저</span><span><kbd>Q</kbd>돌리기</span><span><kbd>I</kbd>측정 정보</span>
     </div>
     <button id="startBtn" type="button" disabled>불러오는 중…</button>
-    <p class="note">휴대폰·태블릿에서는 <a href="install.html" style="color:var(--brass)">모바일용(install.html)</a>으로 열면 홈 화면에 앱처럼 설치할 수 있어요.</p>
+    <p class="note">휴대폰·태블릿에서는 <a href="install.html" style="color:var(--brass)">홈 화면에 앱으로 설치</a>할 수 있어요.</p>
     <p class="note" id="overlayNote">키보드와 마우스가 있는 컴퓨터에서 이용하세요. 실험 중 <kbd>Esc</kbd>를 누르면 마우스 커서가 돌아옵니다.</p>
   </div>
 </div>
@@ -2392,5 +2399,9 @@ window.__lab = { player, balance, weights, items, interact, get held() { return 
   start() { playing = true; mode = 'drag'; overlay.hidden = true; } };
 </script>
 
+<script>
+// 오프라인 저장(서비스 워커): 한 번 열면 다음부터 빠르게, 인터넷이 끊겨도 실행
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+</script>
 </body>
 </html>

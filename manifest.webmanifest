@@ -3,7 +3,7 @@
   "short_name": "HJS물리학실험실",
   "description": "1인칭으로 걸어 다니며 실험 도구를 옮기고 실험하는 HJS 3D 물리학 실험실",
   "lang": "ko",
-  "start_url": "./install.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",
   "orientation": "landscape",
