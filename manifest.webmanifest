@@ -1,6 +1,6 @@
 {
-  "name": "HJS물리학실험실",
-  "short_name": "HJS물리학실험실",
+  "name": "세상의 모든 물리학 실험",
+  "short_name": "세.모.물",
   "description": "1인칭으로 걸어 다니며 실험 도구를 옮기고 실험하는 HJS 3D 물리학 실험실",
   "lang": "ko",
   "start_url": "./index.html",
