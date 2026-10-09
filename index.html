@@ -5,16 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest">
 <script>
-// 스마트폰·태블릿 브라우저로 열면 설치 안내 화면으로 (홈 화면 앱으로 실행했거나, 설치 화면에서 '바로 열기'를 고른 경우는 그대로)
+// 스마트폰·태블릿은 홈 화면에 설치한 앱으로만 실행: 브라우저로 열면 언제나 설치 안내 화면으로
 (function () {
   try {
     var ua = navigator.userAgent || '';
     var mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
     var app = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
-    var web = /[?&]web=1/.test(location.search);
-    if (web) { try { sessionStorage.setItem('labWeb', '1'); } catch (e) {} }
-    var chose = web; try { chose = chose || sessionStorage.getItem('labWeb') === '1'; } catch (e) {}
-    if (mobile && !app && !chose) location.replace('install.html');
+    if (mobile && !app) location.replace('install.html');
   } catch (e) {}
 })();
 </script>
@@ -76,6 +73,7 @@ kbd { font-family: var(--font-num); font-size: 12px; background: rgba(238,241,23
 #viewGuide button:hover { border-color: var(--brass); color: var(--brass); }
 #viewGuide .sep { color: var(--ink-dim); margin: 0 2px; }
 body:has(#overlay:not([hidden])) #viewGuide { display: none; }
+body.touch #viewGuide .wheelHint { display: none; }   /* 휴대폰에는 마우스 휠 안내가 필요 없다 */
 #actions { display: none !important; }
 /* 기구 이름표(커서 바로 위)와 선택창(클릭하면 커서 위에) */
 #nameTip { position: fixed; z-index: 7; transform: translate(-50%, calc(-100% - 14px)); pointer-events: none; white-space: nowrap;
@@ -167,7 +165,7 @@ body:has(#overlay:not([hidden])) #sideBtns { visibility: hidden; }   /* 첫 화�
 #demoBar { position: fixed; z-index: 8; left: 50%; bottom: calc(18px + var(--sa-bottom)); transform: translateX(-50%); width: min(640px, calc(100% - 200px));
   background: var(--panel); border: 1px solid var(--brass); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; backdrop-filter: blur(6px); box-shadow: 0 6px 20px rgba(0,0,0,.4); }
 #demoBar[hidden] { display: none; }
-#graphPanel { position: fixed; z-index: 6; left: calc(80px + var(--sa-left)); top: calc(60px + var(--sa-top)); width: 330px;
+#graphPanel { position: fixed; z-index: 6; right: calc(14px + var(--sa-right)); top: calc(60px + var(--sa-top)); width: 330px;
   background: var(--panel); border: 1px solid var(--panel-line); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(6px); font-size: 12.5px; }
 #graphPanel[hidden] { display: none; }
 #graphPanel .gHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -180,6 +178,11 @@ body:has(#overlay:not([hidden])) #sideBtns { visibility: hidden; }   /* 첫 화�
 #gTable th, #gTable td { border: 1px solid var(--panel-line); padding: 2px 4px; text-align: center; font-weight: 500; }
 #gTable th { color: var(--ink-dim); white-space: nowrap; }
 body:has(#overlay:not([hidden])) #graphPanel { display: none; }
+/* 휴대폰: 그래프 창을 작게 (오른쪽 위 구석) */
+body.touch #graphPanel { width: 220px; top: calc(52px + var(--sa-top)); padding: 6px 8px; font-size: 10.5px; }
+body.touch #graphPanel .gHead b { font-size: 12px; }
+body.touch #graphPanel .gHead button { font-size: 11px; padding: 2px 6px; }
+body.touch #gTable th, body.touch #gTable td { padding: 1px 2px; }
 #demoBar .lbl { flex: none; font: 700 12px var(--font-ui); color: #1a1406; background: var(--brass); border-radius: 6px; padding: 3px 8px; }
 #demoTime { flex: none; font: 700 14px var(--font-ui); color: var(--brass); min-width: 46px; text-align: center; font-variant-numeric: tabular-nums; }
 #demoTime:empty { display: none; }
@@ -282,7 +285,7 @@ body.touch #help { display: none; }
 </svg></div>
 <div id="prompt" class="hud" hidden></div>
 <div id="toast" class="hud"></div>
-<div id="viewGuide"><b>시야 조정</b><button type="button" data-view="top">위</button><button type="button" data-view="left">왼쪽</button><button type="button" data-view="right">오른쪽</button><button type="button" data-view="front">정면</button><button type="button" data-view="home">처음 시점</button><span class="sep">/</span><span>마우스 휠: 확대·축소</span></div>
+<div id="viewGuide"><b>시야 조정</b><button type="button" data-view="top">위</button><button type="button" data-view="left">왼쪽</button><button type="button" data-view="right">오른쪽</button><button type="button" data-view="front">정면</button><button type="button" data-view="home">처음 시점</button><span class="sep wheelHint">/</span><span class="wheelHint">마우스 휠: 확대·축소</span></div>
 <div id="nameTip" hidden></div>
 <div id="ctxMenu" hidden><div class="cmTitle"></div><div class="cmList"></div></div>
 
@@ -3029,18 +3032,20 @@ function connectLead(w, T1, T2) {                   // 집게 전선 양쪽 집�
   u.endA = T1; u.endB = T2; T1.clip = w; T2.clip = w;
   scene.add(w); w.position.set(0, -10, 0); bodyOff(w);   // 뭉치는 숨기고 전선만 그린다
 }
+// 세팅 자리: 뒷줄(주 장치: 역학 레일·지레 장치) / 앞줄(추: 레일 앞면과 실험대 앞 끝의 한가운데)
+const LAB_ROW = { back: -1.13, front: (-1.13 + RAIL.w / 2 + TABLE.maxZ) / 2 };
 const SETUPS = {
   lever: { name: '지레', thumb: 'lever', run() {
-    const lev = placeAt('lever', 0, -1.5);
+    const lev = placeAt('lever', 0, LAB_ROW.back);                // 역학 레일·수레와 같은 줄
     const ws = [];
-    for (let i = 0; i < 10; i++) ws.push(placeAt('hweight', -0.45 + i * 0.1, -1.0));
+    for (let i = 0; i < 10; i++) ws.push(placeAt('hweight', -0.45 + i * 0.1, LAB_ROW.front));   // 수레용 추와 같은 줄
     return { lev, ws };
   } },
   fma: { name: '힘·질량·가속도', thumb: 'cart', run() {
-    const rail = placeAt('rail', 0, -1.45);
+    const rail = placeAt('rail', 0, LAB_ROW.back);               // 앞쪽: 수레용 추 바로 뒤
     const cart = spawnItem(catalogOf('cart')); scene.add(cart); attachToRail(cart, rail);
     const sc = spawnItem(catalogOf('scale')); scene.add(sc); attachScale(sc, cart); setScaleForce(sc, 1);
-    const ws = [-0.25, 0.25].map(x => placeAt('cartweight', x, -1.0));
+    const ws = [-0.25, 0.25].map(x => placeAt('cartweight', x, LAB_ROW.front));   // 레일 앞면과 실험대 앞 끝의 한가운데
     measure.runs.length = 0; drawGraph();
     return { rail, cart, sc, ws };
   } },
@@ -3481,9 +3486,8 @@ canvas.addEventListener('wheel', e => {
   canvas.addEventListener('pointermove', e => {
     if (!tps.has(e.pointerId)) return; tps.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (tps.size !== 2 || !g0 || !playing) return;
-    const g = state(), [dx, dy] = screenDelta(g.mx - g0.mx, g.my - g0.my);
-    view3.azT -= dx * 0.006; view3.elT += dy * 0.006; clampView();
-    setAim(g.mx, g.my); zoomAt(aimNDC.clone(), g0.d / g.d); g0 = g;    // 두 손가락 사이를 중심으로 확대·축소
+    const g = state();
+    setAim(g.mx, g.my); zoomAt(aimNDC.clone(), g0.d / g.d); g0 = g;    // 두 손가락 사이를 중심으로 확대·축소만 (시야는 돌리지 않는다)
   });
   const end = e => { tps.delete(e.pointerId); g0 = tps.size === 2 ? state() : null; };
   canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
