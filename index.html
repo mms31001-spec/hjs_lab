@@ -4,6 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest">
+<script>
+// 스마트폰·태블릿 브라우저로 열면 설치 안내 화면으로 (홈 화면 앱으로 실행했거나, 설치 화면에서 '바로 열기'를 고른 경우는 그대로)
+(function () {
+  try {
+    var ua = navigator.userAgent || '';
+    var mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    var app = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
+    var web = /[?&]web=1/.test(location.search);
+    if (web) { try { sessionStorage.setItem('labWeb', '1'); } catch (e) {} }
+    var chose = web; try { chose = chose || sessionStorage.getItem('labWeb') === '1'; } catch (e) {}
+    if (mobile && !app && !chose) location.replace('install.html');
+  } catch (e) {}
+})();
+</script>
 <meta name="theme-color" content="#244a39">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -32,6 +46,11 @@
 }
 [hidden] { display: none !important; }
 html, body { height: 100%; width: 100%; overscroll-behavior: none; }
+/* 휴대폰: 가로 화면에서 글자가 저절로 커지지 않게, 화면 가장자리(노치·홈 막대) 여백은 변수로 */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+:root { --sa-top: env(safe-area-inset-top, 0px); --sa-right: env(safe-area-inset-right, 0px); --sa-bottom: env(safe-area-inset-bottom, 0px); --sa-left: env(safe-area-inset-left, 0px); }
+/* 세로로 든 휴대폰을 90° 돌려 가로처럼 보일 때: 가로로 들었을 때와 같은 여백이 되도록 (노치 쪽이 왼쪽·오른쪽 여백) */
+body.rot { --sa-top: 0px; --sa-left: env(safe-area-inset-top, 0px); --sa-right: env(safe-area-inset-top, 0px); --sa-bottom: calc(env(safe-area-inset-bottom, 0px) * 0.6); }
 /* 휴대폰을 세로로 들고 있으면 화면 전체를 90° 돌려 항상 가로 화면으로 보이게 (아이폰은 방향 잠금 기능이 없어서) */
 body.rot { position: fixed; top: 0; left: 0; transform-origin: 0 0; transform: rotate(90deg) translateY(-100%); }
 body { background: var(--ground); color: var(--ink); font-family: var(--font-ui); overflow: hidden; }
@@ -39,30 +58,52 @@ body { background: var(--ground); color: var(--ink); font-family: var(--font-ui)
 #view canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
 .hud { position: fixed; pointer-events: none; z-index: 5; }
-#crosshair { left: 50%; top: 46%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%;
-  background: var(--ink); box-shadow: 0 0 0 1.5px rgba(0,0,0,.55); transition: transform .12s, background .12s; }
-#crosshair.on { transform: scale(1.8); background: var(--brass); }
+/* 마우스 커서는 기본 화살표를 그대로 쓴다 (조준 표시는 숨김) */
+#crosshair { display: none !important; }
 
-#prompt { left: 50%; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+#prompt { left: 50%; bottom: calc(28px + var(--sa-bottom)); transform: translateX(-50%);
   background: var(--panel); border: 1px solid var(--panel-line); border-radius: 8px; padding: 8px 14px;
   font-size: 15px; font-weight: 500; white-space: nowrap; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; }
 #prompt.bad { color: var(--warn); }
 kbd { font-family: var(--font-num); font-size: 12px; background: rgba(238,241,239,.12); border: 1px solid var(--panel-line);
   border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; margin-right: 6px; color: var(--ink); }
 
-#toast { left: 50%; top: calc(22px + env(safe-area-inset-top, 0px)); transform: translateX(-50%);
+#viewGuide { position: fixed; z-index: 7; left: 50%; top: calc(10px + var(--sa-top)); transform: translateX(-50%);
+  display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 10px; padding: 6px 10px;
+  font: 500 13.5px var(--font-ui); color: var(--ink); white-space: nowrap; backdrop-filter: blur(6px); }
+#viewGuide b { color: var(--brass); margin-right: 4px; }
+#viewGuide button { font: 600 13px var(--font-ui); color: var(--ink); background: rgba(238,241,239,.06); border: 1px solid var(--panel-line); border-radius: 7px; padding: 4px 10px; cursor: pointer; }
+#viewGuide button:hover { border-color: var(--brass); color: var(--brass); }
+#viewGuide .sep { color: var(--ink-dim); margin: 0 2px; }
+body:has(#overlay:not([hidden])) #viewGuide { display: none; }
+#actions { display: none !important; }
+/* 기구 이름표(커서 바로 위)와 선택창(클릭하면 커서 위에) */
+#nameTip { position: fixed; z-index: 7; transform: translate(-50%, calc(-100% - 14px)); pointer-events: none; white-space: nowrap;
+  background: rgba(18,22,23,.88); border: 1px solid var(--panel-line); border-radius: 7px; padding: 4px 9px; font: 600 13px var(--font-ui); color: var(--ink); }
+#nameTip.held { color: var(--brass); }
+#nameTip[hidden] { display: none; }
+#ctxMenu { position: fixed; z-index: 8; transform: translate(-50%, calc(-100% - 14px)); min-width: 150px;
+  background: var(--panel); border: 1px solid var(--brass); border-radius: 10px; padding: 8px; display: grid; gap: 5px; backdrop-filter: blur(6px); box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+#ctxMenu[hidden] { display: none; }
+#ctxMenu .cmTitle { font: 700 13px var(--font-ui); color: var(--brass); padding: 0 4px 3px; white-space: nowrap; }
+#ctxMenu .cmList { display: grid; gap: 4px; }
+#ctxMenu button { font: 600 13.5px var(--font-ui); color: var(--ink); background: rgba(238,241,239,.06); border: 1px solid var(--panel-line); border-radius: 7px; padding: 7px 12px; cursor: pointer; text-align: left; white-space: nowrap; }
+#ctxMenu button:hover { border-color: var(--brass); background: rgba(217,180,91,.14); }
+#ctxMenu button.off { opacity: .5; }
+#ctxMenu .hint { font-size: 12px; color: var(--ink-dim); padding: 0 4px; white-space: nowrap; }
+#toast { left: 50%; top: calc(62px + var(--sa-top)); transform: translateX(-50%);
   background: var(--panel); border: 1px solid var(--panel-line); border-radius: 8px; padding: 8px 14px; font-size: 14px;
   opacity: 0; transition: opacity .25s; max-width: calc(100vw - 32px); text-align: center; }
 #toast.show { opacity: 1; }
 
-#help { left: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); background: var(--panel); border: 1px solid var(--panel-line);
+#help { left: 16px; top: calc(16px + var(--sa-top)); background: var(--panel); border: 1px solid var(--panel-line);
   border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.55; width: 250px; }
 #help h2 { margin: 0 0 6px; font-size: 13px; font-weight: 700; letter-spacing: .04em; color: var(--brass); }
 #help dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 8px; margin: 0; align-items: center; }
 #help dt { white-space: nowrap; } #help dd { margin: 0; color: var(--ink-dim); }
 #help .foot { margin-top: 8px; color: var(--ink-dim); font-size: 12px; }
 
-#info { right: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); background: var(--panel); border: 1px solid var(--panel-line);
+#info { right: 16px; top: calc(16px + var(--sa-top)); background: var(--panel); border: 1px solid var(--panel-line);
   border-radius: 10px; padding: 12px 14px; font-size: 13px; width: 210px; }
 #info h2 { margin: 0 0 8px; font-size: 13px; color: var(--brass); letter-spacing: .04em; }
 #info .row { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-top: 1px solid var(--panel-line); }
@@ -74,14 +115,28 @@ kbd { font-family: var(--font-num); font-size: 12px; background: rgba(238,241,23
 #overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding-inline: 16px; padding-block: 16px; overflow-y: auto;
   background: radial-gradient(ellipse at center, rgba(18,22,23,.55), rgba(10,12,13,.88)); }
 .card { width: min(560px, 100%); background: var(--panel); border: 1px solid var(--panel-line); border-radius: 14px;
-  padding: 26px 26px 22px; display: grid; gap: 16px; backdrop-filter: blur(6px); }
+  padding: 34px 28px 22px; display: grid; gap: 18px; justify-items: center; text-align: center; backdrop-filter: blur(6px); }
+.card[hidden] { display: none; }
+.card h2 { margin: 0; font-size: 22px; color: var(--brass); }
+.card .lead { font-size: 16px; color: var(--ink); line-height: 1.7; }
+.cardBtns { display: flex; flex-direction: column; gap: 10px; width: min(240px, 100%); }
+.cardBtns button, #introBack { width: 100%; }
+#introBtn, #introBack { font: inherit; font-weight: 700; font-size: 16px; color: var(--brass); background: transparent;
+  border: 1px solid var(--brass); border-radius: 8px; padding: 10px 22px; cursor: pointer; }
+#introBack { width: min(240px, 100%); }
+#introBtn:hover, #introBack:hover { background: rgba(217,180,91,.1); }
+#introText { color: var(--ink); line-height: 1.7; }
+#overlayNote:empty { display: none; }
+body:has(#overlay:not([hidden])) #sideBtns { visibility: hidden; }   /* 첫 화면에서는 왼쪽 버튼을 숨긴다 */
+.card .maker { font-size: 13px; }
+.card .ver { font-size: 12px; font-family: var(--font-num); opacity: .7; margin-top: -8px; }
 .card .eyebrow { font-family: var(--font-num); font-size: 12px; color: var(--brass); letter-spacing: .12em; }
-.card h1 { margin: 0; font-size: 28px; line-height: 1.25; text-wrap: balance; }
+.card h1 { margin: 0; font-size: 34px; line-height: 1.25; text-wrap: balance; }
 .card p { margin: 0; color: var(--ink-dim); line-height: 1.6; font-size: 14.5px; }
 .card ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14.5px; line-height: 1.5; }
 .keys { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--ink-dim); }
 .keys span { white-space: nowrap; }
-#startBtn { justify-self: start; font: inherit; font-weight: 700; font-size: 16px; color: #1a1406; background: var(--brass);
+#startBtn { justify-self: center; font: inherit; font-weight: 700; font-size: 16px; color: #1a1406; background: var(--brass);
   border: 0; border-radius: 8px; padding: 11px 22px; cursor: pointer; }
 #startBtn:hover { filter: brightness(1.08); }
 #startBtn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
@@ -89,7 +144,7 @@ kbd { font-family: var(--font-num); font-size: 12px; background: rgba(238,241,23
 #loading { font-size: 13px; color: var(--ink-dim); }
 
 /* 실험기구 선택 버튼 · 선택창 · 확인 창 · 행동 안내 */
-#sideBtns { position: fixed; z-index: 7; left: calc(16px + env(safe-area-inset-left, 0px)); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; }
+#sideBtns { position: fixed; z-index: 7; left: calc(16px + var(--sa-left)); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; }
 #invBtn, #recBtn { font: 700 15px var(--font-ui); color: #1a1406; background: var(--brass); border: 0; border-radius: 10px; padding: 14px 14px;
   writing-mode: vertical-rl; letter-spacing: .12em; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
 #recBtn { background: var(--panel); color: var(--brass); border: 1px solid var(--brass); }
@@ -97,7 +152,7 @@ kbd { font-family: var(--font-num); font-size: 12px; background: rgba(238,241,23
   writing-mode: vertical-rl; letter-spacing: .1em; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
 #clearTable:hover { border-color: #ff8f7a; color: #ffb4a6; }
 #clearTable:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-#recPanel { position: fixed; z-index: 9; left: calc(70px + env(safe-area-inset-left, 0px)); top: 16px; bottom: 16px; width: min(440px, calc(100% - 100px));
+#recPanel { position: fixed; z-index: 9; left: calc(70px + var(--sa-left)); top: 16px; bottom: 16px; width: min(440px, calc(100% - 100px));
   background: var(--panel); border: 1px solid var(--panel-line); border-radius: 12px; display: flex; flex-direction: column; backdrop-filter: blur(6px); }
 #recPanel[hidden] { display: none; }
 #recList { flex: 1; overflow-y: auto; padding: 12px; display: grid; gap: 10px; align-content: start; margin: 0; list-style: none; }
@@ -107,9 +162,33 @@ kbd { font-family: var(--font-num); font-size: 12px; background: rgba(238,241,23
 .rec .need { font-size: 12.5px; color: var(--ink-dim); flex: 1; }
 .needRow { margin-top: 8px; display: flex; align-items: center; gap: 10px; }
 .setBtn { flex: none; font: 700 13px var(--font-ui); color: #1a1406; background: var(--brass); border: 0; border-radius: 8px; padding: 7px 12px; cursor: pointer; white-space: nowrap; }
-.setBtn:hover { filter: brightness(1.08); }
+.setBtn:hover, .demoBtn:hover { filter: brightness(1.08); }
+.demoBtn { flex: none; font: 700 13px var(--font-ui); color: var(--brass); background: transparent; border: 1px solid var(--brass); border-radius: 8px; padding: 6px 11px; cursor: pointer; white-space: nowrap; }
+#demoBar { position: fixed; z-index: 8; left: 50%; bottom: calc(18px + var(--sa-bottom)); transform: translateX(-50%); width: min(640px, calc(100% - 200px));
+  background: var(--panel); border: 1px solid var(--brass); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; backdrop-filter: blur(6px); box-shadow: 0 6px 20px rgba(0,0,0,.4); }
+#demoBar[hidden] { display: none; }
+#graphPanel { position: fixed; z-index: 6; left: calc(80px + var(--sa-left)); top: calc(60px + var(--sa-top)); width: 330px;
+  background: var(--panel); border: 1px solid var(--panel-line); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(6px); font-size: 12.5px; }
+#graphPanel[hidden] { display: none; }
+#graphPanel .gHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+#graphPanel .gHead b { color: var(--brass); font-size: 13.5px; }
+#graphPanel .gHead button { font: 600 12px var(--font-ui); color: var(--ink); background: transparent; border: 1px solid var(--panel-line); border-radius: 6px; padding: 3px 8px; margin-left: 6px; cursor: pointer; }
+#gCanvas { width: 100%; height: auto; display: block; border-radius: 6px; }
+#gLegend { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 6px; color: var(--ink-dim); }
+#gLegend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+#gTable table { width: 100%; border-collapse: collapse; margin-top: 6px; font-variant-numeric: tabular-nums; }
+#gTable th, #gTable td { border: 1px solid var(--panel-line); padding: 2px 4px; text-align: center; font-weight: 500; }
+#gTable th { color: var(--ink-dim); white-space: nowrap; }
+body:has(#overlay:not([hidden])) #graphPanel { display: none; }
+#demoBar .lbl { flex: none; font: 700 12px var(--font-ui); color: #1a1406; background: var(--brass); border-radius: 6px; padding: 3px 8px; }
+#demoTime { flex: none; font: 700 14px var(--font-ui); color: var(--brass); min-width: 46px; text-align: center; font-variant-numeric: tabular-nums; }
+#demoTime:empty { display: none; }
+#demoText { flex: 1; font-size: 15px; line-height: 1.5; color: var(--ink); }
+#demoStart { flex: none; font: 700 13px var(--font-ui); color: #1a1406; background: var(--brass); border: 0; border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+#demoStart[hidden], #demoOther[hidden], #demoStop[hidden] { display: none; }
+#demoStop, #demoOther { flex: none; font: 600 13px var(--font-ui); color: var(--ink); background: transparent; border: 1px solid var(--panel-line); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
 #invBtn:focus-visible, #recBtn:focus-visible, #recPanel button:focus-visible, #invPanel button:focus-visible, #confirmBox button:focus-visible, #actions button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-#invPanel { position: fixed; z-index: 9; left: calc(70px + env(safe-area-inset-left, 0px)); top: 16px; bottom: 16px; width: min(440px, calc(100% - 100px));
+#invPanel { position: fixed; z-index: 9; left: calc(70px + var(--sa-left)); top: 16px; bottom: 16px; width: min(440px, calc(100% - 100px));
   background: var(--panel); border: 1px solid var(--panel-line); border-radius: 12px; display: flex; flex-direction: column; backdrop-filter: blur(6px); }
 .invHead { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--panel-line); }
 .invHead h2 { margin: 0; font-size: 16px; color: var(--brass); }
@@ -129,7 +208,7 @@ kbd { font-family: var(--font-num); font-size: 12px; background: rgba(238,241,23
 .cbBtns { display: flex; gap: 10px; }
 .cbBtns button { font: 700 15px var(--font-ui); border-radius: 8px; padding: 9px 22px; cursor: pointer; border: 1px solid var(--panel-line); background: transparent; color: var(--ink); }
 #cbOk { background: var(--brass); color: #1a1406; border-color: var(--brass); }
-#actions { position: fixed; z-index: 6; right: calc(16px + env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%);
+#actions { position: fixed; z-index: 6; right: calc(16px + var(--sa-right)); top: 50%; transform: translateY(-50%);
   background: var(--panel); border: 1px solid var(--panel-line); border-radius: 12px; padding: 10px; display: grid; gap: 6px; min-width: 190px; }
 #actTitle { font-size: 13px; font-weight: 700; color: var(--brass); padding: 2px 4px 4px; }
 #actList { display: grid; gap: 6px; }
@@ -138,7 +217,7 @@ kbd { font-family: var(--font-num); font-size: 12px; background: rgba(238,241,23
 #actList button:hover { border-color: var(--brass); }
 #actList button.off { opacity: .45; }
 #actList .hint { font-size: 12.5px; color: var(--ink-dim); padding: 2px 4px; }
-#crosshair { transition: transform .12s, background .12s; }
+
 
 /* 터치 화면(휴대폰·태블릿) 조작판 */
 #touchUI { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
@@ -147,49 +226,82 @@ kbd { font-family: var(--font-num); font-size: 12px; background: rgba(238,241,23
   border-radius: 50%; width: 58px; height: 58px; display: grid; place-items: center; padding: 0; }
 #touchUI button.on, #touchUI button:active { background: rgba(217, 180, 91, 0.75); color: #1a1406; }
 #touchUI button[hidden] { display: none !important; }
-#stick { position: absolute; left: calc(26px + env(safe-area-inset-left, 0px)); bottom: calc(26px + env(safe-area-inset-bottom, 0px));
+#stick { position: absolute; left: calc(26px + var(--sa-left)); bottom: calc(26px + var(--sa-bottom));
   width: 132px; height: 132px; border-radius: 50%; background: rgba(16, 21, 22, 0.35); border: 1.5px solid rgba(238, 241, 239, 0.3); pointer-events: auto; touch-action: none; }
 #knob { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: rgba(238, 241, 239, 0.55); }
-#tbtns { position: absolute; right: calc(18px + env(safe-area-inset-right, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+#tbtns { position: absolute; right: calc(18px + var(--sa-right)); bottom: calc(18px + var(--sa-bottom));
   display: grid; grid-template-columns: repeat(3, 58px); grid-auto-rows: 58px; gap: 10px; justify-items: center; align-items: center; }
 #tbtns .big { width: 72px; height: 72px; font-size: 16px; grid-column: 3; grid-row: 2 / span 2; align-self: center; }
-#tmenu { position: absolute; right: calc(12px + env(safe-area-inset-right, 0px)); top: calc(12px + env(safe-area-inset-top, 0px)); display: flex; gap: 8px; }
+#tmenu { position: absolute; right: calc(12px + var(--sa-right)); top: calc(12px + var(--sa-top)); display: flex; gap: 8px; }
 #tmenu button { width: auto; height: 36px; border-radius: 18px; padding: 0 14px; font-size: 13px; }
-body.touch #prompt { bottom: auto; top: calc(64px + env(safe-area-inset-top, 0px)); white-space: normal; text-align: center; }
-body.touch #toast { top: calc(110px + env(safe-area-inset-top, 0px)); }
-body.touch #info { top: calc(56px + env(safe-area-inset-top, 0px)); }
+body.touch #prompt { bottom: auto; top: calc(64px + var(--sa-top)); white-space: normal; text-align: center; }
+body.touch #toast { top: calc(110px + var(--sa-top)); }
+body.touch #info { top: calc(56px + var(--sa-top)); }
 body.touch #help { display: none; }
 
 /* 가로로 눕힌 휴대폰처럼 화면이 낮을 때: 시작 카드를 간추리고 위에서부터 */
 @media (max-height: 520px) {
   #overlay { align-items: start; }
   .card { padding: 14px 18px; gap: 9px; }
-  .card h1 { font-size: 21px; }
+  .card h1 { font-size: 24px; }
   .card p { font-size: 13px; line-height: 1.45; }
+  .card .lead { font-size: 14px; }
   .card ol { display: none; }
 }
 @media (max-width: 720px) {
   #help { display: none; }
   .card { padding: 20px 18px; }
-  .card h1 { font-size: 23px; }
+  .card h1 { font-size: 26px; }
 }
 </style>
 </head>
 <body style="margin:0">
 
 <div id="view"></div>
-<div id="crosshair" class="hud"></div>
+<div id="crosshair" class="hud"><svg viewBox="0 0 34 40" aria-hidden="true">
+  <defs><linearGradient id="nitrile" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fb0ff"/><stop offset="1" stop-color="#4a6fd8"/></linearGradient></defs>
+  <g class="point" transform="rotate(-30 12 1)" fill="url(#nitrile)" stroke="#1d2f6b" stroke-width="1.3" stroke-linejoin="round">
+    <path d="M7 23 C4.5 21 3 22 3.3 24.3 C3.8 27 6 29.5 8.5 31.5 L10 28 Z"/>
+    <path d="M8.5 21 L8.5 33 C8.5 35.5 10.5 36.5 13 36.5 L25 36.5 C28 36.5 30.5 34 30.5 31 L30.5 22 Z"/>
+    <rect x="9" y="1" width="6.2" height="22" rx="3.1"/>
+    <rect x="15" y="12.5" width="5.6" height="11" rx="2.8"/>
+    <rect x="20.4" y="14" width="5.2" height="10" rx="2.6"/>
+    <rect x="25.4" y="16" width="4.8" height="8.5" rx="2.4"/>
+    <path d="M9.6 30.5 Q11 33.5 15 34" fill="none" stroke-width="1"/>
+    <rect x="10.5" y="35" width="18" height="5" rx="1.6" fill="#b9cbff"/>
+  </g>
+  <g class="grab" transform="rotate(-15 18 14)" fill="url(#nitrile)" stroke="#1d2f6b" stroke-width="1.3" stroke-linejoin="round">
+    <rect x="6" y="8" width="24" height="20" rx="7"/>
+    <rect x="8.5" y="7" width="5.5" height="9" rx="2.7"/>
+    <rect x="14" y="6" width="5.5" height="9.5" rx="2.7"/>
+    <rect x="19.5" y="6.5" width="5.3" height="9" rx="2.6"/>
+    <rect x="24.8" y="8" width="4.8" height="8" rx="2.4"/>
+    <path d="M7 17 C11 15.5 16 16 19 19.5 C17 21.5 12 22 7.5 21.5 Z"/>
+    <rect x="9" y="27" width="18" height="6" rx="1.6" fill="#b9cbff"/>
+  </g>
+</svg></div>
 <div id="prompt" class="hud" hidden></div>
 <div id="toast" class="hud"></div>
+<div id="viewGuide"><b>시야 조정</b><button type="button" data-view="top">위</button><button type="button" data-view="left">왼쪽</button><button type="button" data-view="right">오른쪽</button><button type="button" data-view="front">정면</button><button type="button" data-view="home">처음 시점</button><span class="sep">/</span><span>마우스 휠: 확대·축소</span></div>
+<div id="nameTip" hidden></div>
+<div id="ctxMenu" hidden><div class="cmTitle"></div><div class="cmList"></div></div>
 
 <!-- 실험기구 선택 -->
 <div id="sideBtns"><button id="invBtn" type="button">실험기구</button><button id="recBtn" type="button">추천 실험</button><button id="clearTable" type="button">실험대 비우기</button></div>
+<div id="graphPanel" hidden>
+  <div class="gHead"><b>속도–시간 그래프</b><span><button id="gClear" type="button">지우기</button><button id="gClose" type="button">닫기</button></span></div>
+  <canvas id="gCanvas" width="640" height="400"></canvas>
+  <div id="gLegend"></div>
+  <div id="gTable"></div>
+</div>
+<div id="demoBar" hidden><span class="lbl">시범 실험</span><span id="demoTime"></span><div id="demoText"></div><button id="demoStop" type="button">시범 종료</button><button id="demoStart" type="button" hidden>실험 시작</button><button id="demoOther" type="button" hidden>다른 실험</button></div>
 <div id="recPanel" hidden>
   <div class="invHead"><h2>추천 실험</h2><button id="recClose" type="button">닫기</button></div>
   <ol id="recList">
-    <li class="rec"><span class="tag">역학</span><p>양팔저울 접시에 500 g 추를 올려 돌림힘의 평형 관찰하기</p><div class="needRow"><div class="need">필요한 기구: 양팔저울, 500 g 추</div><button class="setBtn" type="button" data-set="mech">바로 세팅</button></div></li>
-    <li class="rec"><span class="tag">광학</span><p>레이저와 렌즈·거울·프리즘을 실험대에 눕혀 놓고 빛의 경로 관찰하기</p><div class="needRow"><div class="need">필요한 기구: 3구 레이저, 볼록·오목렌즈, 평면·오목·볼록거울, 직각 프리즘</div><button class="setBtn" type="button" data-set="optics">바로 세팅</button></div></li>
-    <li class="rec"><span class="tag">전자기학</span><p>코일과 검류계를 집게 전선으로 잇고, 자석을 코일에 넣었다 빼며 바늘 관찰하기</p><div class="needRow"><div class="need">필요한 기구: 코일, 검류계, 빨간·검은 집게 전선, 막대자석</div><button class="setBtn" type="button" data-set="em">바로 세팅</button></div></li>
+    <li class="rec"><span class="tag">역학</span><p>지레의 양쪽 눈금에 추를 걸어 수평을 맞추며 돌림힘의 원리 찾기</p><div class="needRow"><div class="need">필요한 기구: 지레 장치, 거는 추(50 g)</div><button class="demoBtn" type="button" data-demo="lever">시범실험</button><button class="setBtn" type="button" data-set="lever">실험하기</button></div></li>
+    <li class="rec"><span class="tag">역학</span><p>레일 위의 역학 수레를 용수철저울로 일정한 힘으로 끌어 힘·질량·가속도의 관계 알아보기</p><div class="needRow"><div class="need">필요한 기구: 역학 레일, 역학 수레, 용수철저울, 수레용 추(1 kg)</div><button class="demoBtn" type="button" data-demo="fma">시범실험</button><button class="setBtn" type="button" data-set="fma">실험하기</button></div></li>
+    <li class="rec"><span class="tag">광학</span><p>레이저와 렌즈·거울·프리즘을 실험대에 눕혀 놓고 빛의 경로 관찰하기</p><div class="needRow"><div class="need">필요한 기구: 3구 레이저, 볼록·오목렌즈, 평면·오목·볼록거울, 직각 프리즘</div><button class="demoBtn" type="button" data-demo="optics">시범실험</button><button class="setBtn" type="button" data-set="optics">실험하기</button></div></li>
+    <li class="rec"><span class="tag">전자기학</span><p>코일과 검류계를 집게 전선으로 잇고, 자석을 코일에 넣었다 빼며 바늘 관찰하기</p><div class="needRow"><div class="need">필요한 기구: 코일, 검류계, 집게 전선(빨강·검정), 막대자석</div><button class="demoBtn" type="button" data-demo="em">시범실험</button><button class="setBtn" type="button" data-set="em">실험하기</button></div></li>
   </ol>
 </div>
 <div id="invPanel" hidden>
@@ -233,16 +345,21 @@ body.touch #help { display: none; }
 </div>
 
 <div id="overlay">
-  <div class="card">
-    <div class="eyebrow">HJS PHYSICS LAB</div>
+  <div class="card" id="mainCard">
     <h1>세상의 모든 물리학 실험</h1>
-    <p>실험대를 중심으로 시야를 돌려 가며, 왼쪽의 <b>실험기구</b> 버튼으로 필요한 기구를 실험대에 올려 실험해 보세요. 무엇을 할지 모르겠다면 <b>추천 실험</b> 버튼을 눌러 보세요. 기구는 실제 물리 법칙에 따라 움직여요.</p>
-    <div class="keys">
-      <span><kbd>마우스</kbd>조준</span><span><kbd>A D</kbd>둘레 돌기</span><span><kbd>W S</kbd>위·옆에서 보기</span><span><kbd>휠</kbd>확대·축소</span><span><kbd>E</kbd>줍기·놓기·연계</span><span><kbd>R</kbd>조작</span><span><kbd>F</kbd>회전</span><span><kbd>G</kbd>치우기</span>
+    <p class="lead">여러분이 원하는 모든 물리학 실험<br>이 곳에서 할 수 있습니다.</p>
+    <div class="cardBtns">
+      <button id="startBtn" type="button" disabled>불러오는 중…</button>
+      <button id="introBtn" type="button">기획 의도</button>
     </div>
-    <button id="startBtn" type="button" disabled>불러오는 중…</button>
-    <p class="note">휴대폰·태블릿에서는 <a href="install.html" style="color:var(--brass)">홈 화면에 앱으로 설치</a>할 수 있어요.</p>
-    <p class="note" id="overlayNote">A·D로 실험대 둘레를 돌고, W·S로 위·옆에서 봐요. 기구는 E·R·F·G로 다뤄요. 숫자 1 앞 · 2 위 · 3 왼쪽 · 4 오른쪽 · 0 처음 시점. 휴대폰은 두 손가락으로 끌기·벌리기.</p>
+    <p class="note" id="overlayNote"></p>
+    <p class="maker">제작: 물리교사 한재상(2026, 경상남도교육청 과학교육원)</p>
+    <p class="ver">v1.00</p>
+  </div>
+  <div class="card" id="introCard" hidden>
+    <h2>기획 의도</h2>
+    <div id="introText"><p>추가 예정</p></div>
+    <button id="introBack" type="button">돌아가기</button>
   </div>
 </div>
 
@@ -253,7 +370,11 @@ body.touch #help { display: none; }
     if (n) { n.textContent = msg; n.style.color = '#ff8f7a'; }
     if (b && b.disabled) b.textContent = '실행할 수 없어요';
     document.getElementById('overlay').hidden = false;
+    document.getElementById('introCard').hidden = true; document.getElementById('mainCard').hidden = false;
   }
+  // 첫 화면: 기획 의도 보기 / 돌아가기 (3D가 불러와지기 전에도 동작)
+  document.getElementById('introBtn').addEventListener('click', function () { document.getElementById('mainCard').hidden = true; document.getElementById('introCard').hidden = false; });
+  document.getElementById('introBack').addEventListener('click', function () { document.getElementById('introCard').hidden = true; document.getElementById('mainCard').hidden = false; });
   window.__labError = show;
   window.addEventListener('error', function (e) { if (!(e instanceof ErrorEvent)) return; show('오류: ' + (e.message || '스크립트를 불러오지 못했어요') + ' — 이 문구를 알려 주시면 고칠게요.'); }, true);
   window.addEventListener('unhandledrejection', function (e) { show('오류: ' + (e.reason && e.reason.message || e.reason) + ' — 이 문구를 알려 주시면 고칠게요.'); });
@@ -658,6 +779,292 @@ function stepBalance(b, dt) {
   updateBalancePose(b);
 }
 
+
+/* ---------- 지레 장치: 스탠드에 건 눈금 지레 막대(양쪽 눈금 1~5)와 거는 추(50 g) ----------
+   막대는 받침점에 대해 돌고, 돌림힘 = 무게 × 받침점까지의 거리. 받침점이 막대 무게중심보다 살짝 위에 있어 양쪽 돌림힘이 같으면 수평으로 돌아온다. */
+const LEV = { pivotY: 0.36, spacing: 0.045, barLen: 0.52, maxPhi: 0.3, beamMass: 0.12, comDrop: 0.03, beamI: 0.006, damping: 0.03, wh: 0.04, hookY: 0.018, maxStack: 6 };
+function makeLever() {
+  const g = new THREE.Group();
+  g.userData = { grab: true, kind: 'lever', name: '지레 장치', radius: 0.27, physMass: 0.8, phi: 0, omega: 0, centerY: 0.18, angle: 0 };
+  const metal = std({ color: 0xbfc5ca, metalness: 0.85, roughness: 0.28 }), dark = std({ color: 0x2b3034, roughness: 0.55, metalness: 0.3 });
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.08, 0.016, 32), dark); base.position.y = 0.008; g.add(base);
+  const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, LEV.pivotY + 0.03, 14), metal); rod.position.set(0, (LEV.pivotY + 0.03) / 2, -0.012); g.add(rod);
+  const clamp = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.03, 0.02), dark); clamp.position.set(0, LEV.pivotY, -0.012); g.add(clamp);
+  const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.03, 10), metal); pin.rotation.x = Math.PI / 2; pin.position.set(0, LEV.pivotY, -0.002); g.add(pin);
+  // 막대 (회전하는 부분): 앞면에 5 4 3 2 1 ● 1 2 3 4 5 눈금
+  const beam = new THREE.Group(); beam.position.y = LEV.pivotY; g.add(beam);
+  const W = 1024, H = 64, barTex = canvasTex(W, H, (c, w, h) => {
+    c.fillStyle = '#eef0ee'; c.fillRect(0, 0, w, h);
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    for (let n = -5; n <= 5; n++) {
+      const x = (n * LEV.spacing / LEV.barLen + 0.5) * w;
+      if (n === 0) { c.fillStyle = '#c0392b'; c.beginPath(); c.arc(x, h / 2, 9, 0, Math.PI * 2); c.fill(); continue; }
+      c.fillStyle = '#2b3a36'; c.beginPath(); c.arc(x, h / 2, 24, 0, Math.PI * 2); c.lineWidth = 3; c.strokeStyle = '#2b3a36'; c.stroke();
+      c.font = `700 32px ${FONT}`; c.fillText(String(Math.abs(n)), x, h / 2 + 2);
+    }
+  });
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(LEV.barLen, 0.032, 0.008), [metal, metal, metal, metal, std({ map: barTex, roughness: 0.5 }), metal]);
+  beam.add(bar);
+  // 눈금마다 아래에 추를 거는 고리
+  const notches = new Map();
+  for (let n = -5; n <= 5; n++) {
+    if (!n) continue;
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.005, 0.0015, 6, 14), metal); ring.position.set(n * LEV.spacing, -0.02, 0); beam.add(ring);
+    const hg = new THREE.Group(); g.add(hg);            // 추가 매달리는 자리 (막대가 기울어도 추는 늘 아래로)
+    notches.set(n, { n, group: hg, items: [], pending: 0 });
+  }
+  g.userData.beam = beam; g.userData.notches = notches;
+  g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  updateLeverPose(g);
+  return g;
+}
+function updateLeverPose(l) {
+  const phi = l.userData.phi;                  // +: 오른쪽이 내려감
+  l.userData.beam.rotation.z = -phi;
+  for (const [n, N] of l.userData.notches) {
+    const x = n * LEV.spacing;
+    N.group.position.set(x * Math.cos(phi), LEV.pivotY - x * Math.sin(phi) - LEV.hookY, 0);
+  }
+}
+function leverTorque(l) { let t = 0; for (const [n, N] of l.userData.notches) for (const w of N.items) t += (w.userData.mass || 0.05) * n * LEV.spacing; return t; }   // Σ m·x (+: 오른쪽)
+function stepLever(l, dt) {
+  const u = l.userData, n = 8, h = dt / n;
+  let m2 = 0; for (const [k, N] of u.notches) for (const w of N.items) m2 += (w.userData.mass || 0.05) * (k * LEV.spacing) ** 2;
+  const mx = leverTorque(l), I = LEV.beamI + m2;
+  for (let i = 0; i < n; i++) {
+    const tau = 9.8 * mx * Math.cos(u.phi) - LEV.beamMass * 9.8 * LEV.comDrop * Math.sin(u.phi) - LEV.damping * u.omega;
+    u.omega += tau / I * h; u.phi += u.omega * h;
+    if (u.phi > LEV.maxPhi) { u.phi = LEV.maxPhi; if (u.omega > 0) u.omega = -u.omega * 0.2; }
+    if (u.phi < -LEV.maxPhi) { u.phi = -LEV.maxPhi; if (u.omega < 0) u.omega = -u.omega * 0.2; }
+  }
+  updateLeverPose(l);
+}
+function leverItems(l) { const out = []; for (const [, N] of l.userData.notches) out.push(...N.items); return out; }
+function restackNotch(N) { N.items.forEach((w, k) => { w.position.set(0, -(k + 1) * LEV.wh, 0); w.rotation.set(0, 0, 0); }); }
+function attachToNotch(w, l, n) {
+  const N = l.userData.notches.get(n);
+  stopMotion(w); bodyOff(w);
+  N.items.push(w); N.group.add(w); w.userData.lever = { lev: l, notch: n };
+  restackNotch(N);
+}
+function leaveLever(w) {
+  const L = w.userData.lever; if (!L) return;
+  const N = L.lev.userData.notches.get(L.notch), k = N.items.indexOf(w);
+  if (k >= 0) N.items.splice(k, 1);
+  w.userData.lever = null;
+  if (w.parent === N.group) scene.attach(w);
+  restackNotch(N);
+}
+function notchAt(l, hit) {                     // 조준한 곳에서 가장 가까운 눈금 (−5…5, 0이면 받침점)
+  if (!hit) return 0;
+  const p = l.userData.beam.worldToLocal(hit.point.clone());
+  return Math.max(-5, Math.min(5, Math.round(p.x / LEV.spacing)));
+}
+/* 거는 추 50 g: 바닥이 원점(실험대 위에 세워 둘 수 있게), 위에 걸이 고리 */
+function makeHangWeight() {
+  const g = new THREE.Group();
+  g.userData = { grab: true, kind: 'hweight', name: '거는 추 (50 g)', mass: 0.05, physMass: 0.05, radius: 0.02, centerY: 0.02, angle: 0 };
+  const brass = std({ color: 0xc9a14a, metalness: 0.9, roughness: 0.3 }), steel = std({ color: 0xb8bec4, metalness: 0.9, roughness: 0.3 });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.026, 24), brass); body.position.y = 0.013; g.add(body);
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.012, 0.004, 24), brass); top.position.y = 0.028; g.add(top);
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.0015, 0.0015, 0.006, 8), steel); stem.position.y = 0.033; g.add(stem);
+  const hook = new THREE.Mesh(new THREE.TorusGeometry(0.004, 0.0013, 6, 12), steel); hook.position.y = 0.039; g.add(hook);
+  g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  return g;
+}
+function resetPose(it) {
+  if (isK(it, 'balance')) { it.userData.phi = 0; it.userData.omega = 0; updateBalancePose(it); }
+  if (isK(it, 'lever')) { it.userData.phi = 0; it.userData.omega = 0; updateLeverPose(it); }
+}
+
+
+/* ---------- 역학 레일 · 역학 수레 · 용수철저울 · 수레용 추: 힘·질량·가속도의 관계 ----------
+   레일 위의 수레를 용수철저울로 일정한 힘 F로 끌면 a = F / m 로 속도가 일정하게 빨라진다 (마찰은 무시). */
+const RAIL = { len: 1.6, w: 0.12, top: 0.014, stop: 0.03 };
+const CARTD = { len: 0.17, w: 0.075, h: 0.05, base: 1.0, load: 1.0, maxLoads: 2 };
+const SCALE = { len: 0.16 };
+// 기구가 놓인 자리와 겹치는지: 긴 기구(레일)는 직사각형 바닥으로, 나머지는 원으로 본다
+function overlaps(o, x, z, r) {
+  const u = o.userData;
+  if (u.footprint) {
+    const p = o.worldToLocal(new THREE.Vector3(x, o.position.y, z));
+    return Math.hypot(Math.max(0, Math.abs(p.x) - u.footprint[0]), Math.max(0, Math.abs(p.z) - u.footprint[1])) < r;
+  }
+  return Math.hypot(o.position.x - x, o.position.z - z) < r + (u.radius || 0.08);
+}
+function makeRail() {
+  const g = new THREE.Group();
+  g.userData = { grab: true, kind: 'rail', name: '역학 레일', footprint: [RAIL.len / 2, RAIL.w / 2], radius: 0.8, physMass: 1.0, centerY: 0.01, angle: 0, carts: [] };
+  const alu = std({ color: 0xc3c9ce, metalness: 0.8, roughness: 0.35 }), dark = std({ color: 0x2b3034, roughness: 0.6 });
+  const tickTex = canvasTex(2048, 64, (c, w, h) => {
+    c.fillStyle = '#d6dbdf'; c.fillRect(0, 0, w, h); c.fillStyle = '#2b3a36';
+    for (let i = 0; i <= 160; i++) { const x = i / 160 * w; const L = i % 10 === 0 ? 40 : i % 5 === 0 ? 28 : 16; c.fillRect(x - 1.5, 0, 3, L); }
+    c.font = `700 22px ${FONT}`; c.textAlign = 'center';
+    for (let i = 0; i <= 16; i++) c.fillText(String(i * 10), Math.min(w - 20, Math.max(20, i / 16 * w)), 60);
+  });
+  const base = new THREE.Mesh(new THREE.BoxGeometry(RAIL.len, RAIL.top, RAIL.w), [alu, alu, std({ color: 0xc3c9ce, metalness: 0.6, roughness: 0.4 }), alu, std({ map: tickTex, roughness: 0.6 }), alu]);
+  base.position.y = RAIL.top / 2; g.add(base);
+  for (const z of [-RAIL.w / 2 + 0.006, RAIL.w / 2 - 0.006]) { const lip = new THREE.Mesh(new THREE.BoxGeometry(RAIL.len, 0.012, 0.006), alu); lip.position.set(0, RAIL.top + 0.006, z); g.add(lip); }
+  for (const sx of [-1, 1]) { const st = new THREE.Mesh(new THREE.BoxGeometry(RAIL.stop, 0.05, RAIL.w), dark); st.position.set(sx * (RAIL.len / 2 - RAIL.stop / 2), RAIL.top + 0.025, 0); g.add(st); }
+  g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  return g;
+}
+function makeDynCart() {
+  const g = new THREE.Group();
+  g.userData = { grab: true, kind: 'cart', name: '역학 수레', radius: 0.09, physMass: 1.0, centerY: 0.03, angle: 0, loads: [], scale: null, rail: null };
+  const body = std({ color: 0xe0457b, roughness: 0.45 }), dark = std({ color: 0x24292d, roughness: 0.6 }), white = std({ color: 0xeeeeee, roughness: 0.5 });
+  const ch = new THREE.Mesh(roundedBlob(CARTD.len, 0.03, CARTD.w, 0.006, 3), body); ch.position.y = 0.032; g.add(ch);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.01, 18), white); wh.rotation.x = Math.PI / 2; wh.position.set(sx * 0.055, 0.016, sz * (CARTD.w / 2 - 0.004)); g.add(wh);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.012, 10), dark); hub.rotation.x = Math.PI / 2; hub.position.copy(wh.position); g.add(hub);
+  }
+  const hookP = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.012, 0.012), dark); hookP.position.set(CARTD.len / 2 + 0.004, 0.032, 0); g.add(hookP);
+  const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.016), std({ map: labelTex('1 kg'), roughness: 0.6 })); plate.position.set(0, 0.032, CARTD.w / 2 + 0.0005); g.add(plate);
+  g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  return g;
+}
+function makeCartWeight() {
+  const g = new THREE.Group();
+  g.userData = { grab: true, kind: 'cartweight', name: '수레용 추 (1 kg)', mass: 1.0, physMass: 1.0, radius: 0.06, centerY: 0.01, angle: 0, onCart: null };
+  const m = new THREE.Mesh(roundedBlob(0.11, 0.02, 0.055, 0.004, 3), std({ color: 0x8a9096, metalness: 0.8, roughness: 0.35 })); m.position.y = 0.01; g.add(m);
+  const lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.014), std({ map: labelTex('1 kg'), roughness: 0.6 })); lbl.position.set(0, 0.01, 0.0281); g.add(lbl);
+  g.traverse(x => { if (x.isMesh) { x.castShadow = true; x.receiveShadow = true; } });
+  return g;
+}
+const FORCE_STEPS = [1, 2, 3];
+function scaleLabelTex(F) {
+  return canvasTex(256, 96, (c, w, h) => {
+    c.fillStyle = '#fff7d6'; c.fillRect(0, 0, w, h); c.strokeStyle = '#2b3a36'; c.lineWidth = 6; c.strokeRect(3, 3, w - 6, h - 6);
+    c.fillStyle = '#b8322a'; c.font = `700 60px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(`${F} N`, w / 2, h / 2 + 3);
+  });
+}
+function makeSpringScale() {
+  const g = new THREE.Group();
+  g.userData = { grab: true, kind: 'scale', name: '용수철저울', radius: 0.09, physMass: 0.1, centerY: 0.03, angle: 0, force: 1, onCart: null };
+  const red = std({ color: 0xc8322d, roughness: 0.4 }), clear = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.05, clearcoat: 1 }), steel = std({ color: 0xb8bec4, metalness: 0.9, roughness: 0.3 });
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.11, 20, 1, true), clear); tube.rotation.z = Math.PI / 2; tube.position.set(0.0, 0.03, 0); g.add(tube);
+  for (let i = 0; i < 9; i++) { const c = new THREE.Mesh(new THREE.TorusGeometry(0.008, 0.0012, 5, 14), steel); c.rotation.y = Math.PI / 2; c.position.set(-0.04 + i * 0.01, 0.03, 0); g.add(c); }
+  const cap1 = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.012, 20), red); cap1.rotation.z = Math.PI / 2; cap1.position.set(0.06, 0.03, 0); g.add(cap1);
+  const cap2 = cap1.clone(); cap2.position.x = -0.06; g.add(cap2);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.0025, 8, 20), red); ring.position.set(0.083, 0.03, 0); g.add(ring);
+  const hook = new THREE.Mesh(new THREE.TorusGeometry(0.006, 0.0015, 6, 14, Math.PI * 1.4), steel); hook.position.set(-0.075, 0.03, 0); g.add(hook);
+  const lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.04, 0.015), std({ map: scaleLabelTex(1), roughness: 0.6 })); lbl.position.set(0, 0.03, 0.0125); g.add(lbl);
+  g.userData.label = lbl;
+  g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  return g;
+}
+function setScaleForce(sc, F) {
+  sc.userData.force = F;
+  const L = sc.userData.label; if (L.material.map) L.material.map.dispose(); L.material.map = scaleLabelTex(F); L.material.needsUpdate = true;
+}
+function cartMass(c) { return CARTD.base + CARTD.load * c.userData.loads.length; }
+function restackLoads(c) { c.userData.loads.forEach((w, k) => { w.position.set(0, 0.047 + k * 0.021, 0); w.rotation.set(0, 0, 0); }); }
+function attachLoad(w, c) { stopMotion(w); bodyOff(w); c.userData.loads.push(w); c.add(w); w.userData.onCart = c; restackLoads(c); }
+function attachScale(sc, c) {
+  stopMotion(sc); bodyOff(sc); c.userData.scale = sc; c.add(sc); sc.userData.onCart = c;
+  sc.position.set(CARTD.len / 2 + 0.083, 0.002, 0); sc.rotation.set(0, 0, 0);
+}
+function detachFromCart(it) {
+  const c = it.userData.onCart; if (!c) return;
+  const u = c.userData;
+  if (u.scale === it) u.scale = null;
+  const k = u.loads.indexOf(it); if (k >= 0) { u.loads.splice(k, 1); restackLoads(c); }
+  it.userData.onCart = null;
+  if (it.parent === c) scene.attach(it);
+}
+function railSpan(c) {                                // 레일 위에서 수레(+앞의 용수철저울)가 갈 수 있는 범위 (레일 좌표)
+  const front = c.userData.scale ? SCALE.len + 0.01 : 0;
+  return [-RAIL.len / 2 + RAIL.stop + CARTD.len / 2 + 0.01, RAIL.len / 2 - RAIL.stop - CARTD.len / 2 - front - 0.01];
+}
+function attachToRail(c, r) {
+  stopMotion(c); bodyOff(c);
+  const [s0] = railSpan(c);
+  const taken = r.userData.carts.map(x => x.userData.rail.s);
+  let s = s0; while (taken.some(t => Math.abs(t - s) < CARTD.len + SCALE.len + 0.02) && s < RAIL.len / 2) s += 0.1;
+  r.userData.carts.push(c); r.add(c);
+  c.userData.rail = { rail: r, s, s0: s, run: null };
+  c.position.set(s, RAIL.top, 0); c.rotation.set(0, 0, 0);
+}
+function leaveRail(c) {
+  const R = c.userData.rail; if (!R) return;
+  const k = R.rail.userData.carts.indexOf(c); if (k >= 0) R.rail.userData.carts.splice(k, 1);
+  c.userData.rail = null; if (c.parent === R.rail) scene.attach(c);
+}
+// 측정 기록: 끌 때마다 속도–시간 자료를 모은다
+const measure = { runs: [], colors: ['#d9b45b', '#5bc0eb', '#e56b6f', '#8fd694', '#c792ea', '#f4a261'] };
+function startRun(c) {
+  const R = c.userData.rail, sc = c.userData.scale;
+  if (!R || !sc) return null;
+  const F = sc.userData.force, m = cartMass(c);
+  const run = { F, m, t: 0, v: 0, pts: [[0, 0]], done: false, resolve: null, label: `F = ${F} N, m = ${+m.toFixed(1)} kg` };
+  run.color = measure.colors[measure.runs.length % measure.colors.length];
+  measure.runs.push(run); if (measure.runs.length > 6) measure.runs.shift();
+  R.run = run; showGraph();
+  return new Promise(res => { run.resolve = res; });
+}
+function resetCart(c) { const R = c.userData.rail; if (!R) return; R.run = null; R.s = R.s0; c.position.x = R.s; }
+function updateCarts(dt) {
+  let any = false;
+  for (const c of items) {
+    const R = c.userData.rail; if (!isK(c, 'cart') || !R || !R.run || R.run.done) continue;
+    const run = R.run, [, sMax0] = railSpan(c);
+    let sMax = sMax0;
+    for (const o of R.rail.userData.carts) if (o !== c && o.userData.rail.s > R.s) sMax = Math.min(sMax, o.userData.rail.s - CARTD.len - (c.userData.scale ? SCALE.len + 0.01 : 0));
+    run.v += run.F / run.m * dt; R.s += run.v * dt; run.t += dt;
+    if (R.s >= sMax) { R.s = sMax; run.done = true; run.pts.push([run.t, run.v]); run.v = 0; if (run.resolve) run.resolve(); }
+    else if (run.t - run.pts[run.pts.length - 1][0] >= 0.02) run.pts.push([run.t, run.v]);
+    c.position.x = R.s; any = true;
+  }
+  if (any) drawGraph();
+}
+function showGraph() { $('graphPanel').hidden = false; drawGraph(); }
+function vAt(run, t) {                                // 기록에서 시각 t의 속도 (직선 보간)
+  const P = run.pts; if (t > P[P.length - 1][0] + 1e-9) return null;
+  for (let i = 1; i < P.length; i++) if (P[i][0] >= t) { const [t0, v0] = P[i - 1], [t1, v1] = P[i]; return v0 + (v1 - v0) * (t - t0) / Math.max(1e-9, t1 - t0); }
+  return P[P.length - 1][1];
+}
+function drawGraph() {
+  const cv = $('gCanvas'); if (!cv) return; const g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  const kk = (cv.clientWidth || 306) / W, L = Math.round(52 / kk), Rm = Math.round(12 / kk), T = Math.round(10 / kk), B = Math.round(40 / kk), pw = W - L - Rm, ph = H - T - B;   // 여백도 화면 크기 기준
+  let tMax = 0.5, vMax = 1;
+  for (const r of measure.runs) { tMax = Math.max(tMax, r.t); vMax = Math.max(vMax, ...r.pts.map(p => p[1])); }
+  tMax = Math.ceil(tMax * 5) / 5; vMax = Math.ceil(vMax);
+  g.clearRect(0, 0, W, H); g.fillStyle = '#121617'; g.fillRect(0, 0, W, H);
+  // 글씨 크기는 화면에 보이는 크기로 고정: 축 이름은 제목(속도–시간 그래프)과 같은 13.5px, 눈금 수치는 12px
+  const k = (cv.clientWidth || 306) / W, px = v => Math.round(v / k);
+  g.strokeStyle = 'rgba(238,241,239,.36)'; g.lineWidth = 1;   // 모눈선
+  g.fillStyle = '#c9d0d6'; g.font = `500 ${px(12)}px ${FONT}`;
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  for (let t = 0; t <= tMax + 1e-9; t += 0.2) { const x = L + t / tMax * pw; g.beginPath(); g.moveTo(x, T); g.lineTo(x, T + ph); g.stroke(); g.fillText(t.toFixed(1), x, T + ph + 8); }
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  const vStep = vMax > 4 ? 1 : 0.5;
+  for (let v = 0; v <= vMax + 1e-9; v += vStep) { const y = T + ph - v / vMax * ph; g.beginPath(); g.moveTo(L, y); g.lineTo(L + pw, y); g.stroke(); g.fillText(v.toFixed(1), L - 8, y); }
+  g.fillStyle = '#eef1ef'; g.font = `700 ${px(13.5)}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'bottom';
+  g.fillText('시간 (s)', L + pw / 2, H - 4);
+  g.save(); g.translate(4, T + ph / 2); g.rotate(-Math.PI / 2); g.textBaseline = 'top'; g.fillText('속도 (m/s)', 0, 0); g.restore();
+  for (const r of measure.runs) {
+    g.strokeStyle = r.color; g.lineWidth = 4; g.beginPath();
+    r.pts.forEach(([t, v], i) => { const x = L + t / tMax * pw, y = T + ph - v / vMax * ph; if (i) g.lineTo(x, y); else g.moveTo(x, y); });
+    g.stroke();
+  }
+  // 범례와 표 (가장 최근 실험: 0.1 s 간격)
+  const leg = $('gLegend'); if (leg) leg.innerHTML = measure.runs.map(r => `<span><i style="background:${r.color}"></i>${r.label}</span>`).join('');
+  const last = measure.runs[measure.runs.length - 1], tb = $('gTable');
+  if (tb) tb.innerHTML = last ? `<table><tr><th>시간(s)</th>${[0, 0.1, 0.2, 0.3, 0.4].map(t => `<td>${t.toFixed(2)}</td>`).join('')}</tr><tr><th>속도(m/s)</th>${[0, 0.1, 0.2, 0.3, 0.4].map(t => { const v = vAt(last, t); return `<td>${v === null ? '' : v.toFixed(2)}</td>`; }).join('')}</tr></table>` : '';
+}
+function cartAction(c) {                             // 수레의 R(조작하기): 끌기 / 처음 자리로
+  const R = c.userData.rail;
+  if (!R) { toast('역학 수레를 역학 레일 위에 올려 주세요.'); return; }
+  if (!c.userData.scale) { toast('수레 앞에 용수철저울을 걸어 주세요.'); return; }
+  if (R.run) { resetCart(c); toast('수레를 처음 자리로 옮겼어요.'); return; }
+  startRun(c); toast(`${c.userData.scale.userData.force} N의 힘으로 끌어요. (수레 ${+cartMass(c).toFixed(1)} kg)`);
+}
+function cartActLabel(c) {
+  const R = c.userData.rail;
+  if (!R || !c.userData.scale) return '조작하기';
+  return R.run ? '조작하기 · 처음 자리로' : `조작하기 · ${c.userData.scale.userData.force} N으로 끌기`;
+}
+
 /* ---------- 500 g 추 ---------- */
 const markTex = canvasTex(512, 64, (c, w, h) => {
   c.clearRect(0, 0, w, h); c.fillStyle = 'rgba(70,45,10,0.85)'; c.font = `700 40px ${FONT}`; c.textBaseline = 'middle';
@@ -847,7 +1254,7 @@ function makeCoil() {
   g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
   return g;
 }
-const MAGNET = { m: 2.0, half: 0.042 };   // 자기 쌍극자 모멘트 2 A·m², 자극 사이 거리 8.4 cm
+const MAGNET = { m: 6.0, half: 0.042 };   // 자기 쌍극자 모멘트 6 A·m² (강한 막대자석), 자극 사이 거리 8.4 cm
 function makeMagnet() {
   const g = new THREE.Group();
   g.userData = { grab: true, kind: 'magnet', name: '막대자석', radius: 0.055, physMass: 0.15, centerY: 0.01, magnetic: true, angle: 0 };
@@ -927,15 +1334,19 @@ function makeLead(color, name) {
 
 /* ---------- 실험기구 목록: 선택창에서 몇 개든 새로 꺼낼 수 있다 ---------- */
 const CATALOG = [
-  { key: 'balance', name: '양팔저울', make: makeBalance },
-  { key: 'weight', name: '500 g 추', make: () => makeWeight(0) },
+  { key: 'lever', name: '지레 장치', make: makeLever },
+  { key: 'rail', name: '역학 레일', make: makeRail },
+  { key: 'cart', name: '역학 수레', make: makeDynCart },
+  { key: 'scale', name: '용수철저울', make: makeSpringScale },
+  { key: 'cartweight', name: '수레용 추 (1 kg)', make: makeCartWeight },
+  { key: 'hweight', name: '거는 추 (50 g)', make: makeHangWeight },
   { key: 'laser', name: '3구 레이저', make: makeLaser },
   ...['convex', 'concave', 'prism', 'plane', 'concaveMirror', 'convexMirror'].map(t => ({ key: t, name: OPTIC_DEFS[t]().name, make: () => makeOptic(t) })),
   { key: 'coil', name: '코일', make: makeCoil },
   { key: 'magnet', name: '막대자석', make: makeMagnet },
   { key: 'galv', name: '검류계', make: makeGalvanometer },
-  { key: 'leadR', name: '빨간 집게 전선', make: () => makeLead(0xc8322d, '빨간 집게 전선') },
-  { key: 'leadB', name: '검은 집게 전선', make: () => makeLead(0x1d1d1d, '검은 집게 전선') },
+  { key: 'leadR', name: '집게 전선(빨강)', make: () => makeLead(0xc8322d, '집게 전선(빨강)') },
+  { key: 'leadB', name: '집게 전선(검정)', make: () => makeLead(0x1d1d1d, '집게 전선(검정)') },
 ];
 const items = [];          // 지금 실험실에 꺼내 놓은 기구들
 const magnetItems = [];    // 그중 자석을 가진 기구들
@@ -953,6 +1364,13 @@ function buildBody(it) {
     com = new THREE.Vector3(0, 0.026, 0);
     b.addShape(new CANNON.Cylinder(0.022, 0.022, 0.044, 14), new CANNON.Vec3(0, 0.022 - com.y, 0));
     b.addShape(new CANNON.Sphere(0.0135), new CANNON.Vec3(0, 0.062 - com.y, 0));
+  } else if (u.kind === 'lever') {                 // 받침판·기둥·막대를 상자로
+    com = new THREE.Vector3(0, 0.12, 0);
+    const box = (hx, hy, hz, x, y, z) => b.addShape(new CANNON.Box(new CANNON.Vec3(hx, hy, hz)), new CANNON.Vec3(x, y - com.y, z));
+    box(0.075, 0.008, 0.075, 0, 0.008, 0); box(0.007, (LEV.pivotY + 0.03) / 2, 0.007, 0, (LEV.pivotY + 0.03) / 2, -0.012); box(LEV.barLen / 2, 0.016, 0.006, 0, LEV.pivotY, 0);
+  } else if (u.kind === 'hweight') {
+    com = new THREE.Vector3(0, 0.015, 0);
+    b.addShape(new CANNON.Cylinder(0.012, 0.012, 0.03, 12));
   } else if (u.kind === 'balance') {               // 받침·기둥·저울대·접시를 상자로
     com = new THREE.Vector3(0, 0.07, 0);
     const box = (hx, hy, hz, x, y, z) => b.addShape(new CANNON.Box(new CANNON.Vec3(hx, hy, hz)), new CANNON.Vec3(x, y - com.y, z));
@@ -1060,7 +1478,7 @@ function driveKinematic(b, x, y, z, yaw, dt) {
 }
 function placeKinematic(b, x, y, z, yaw) { b.position.set(x, y, z); b.quaternion.setFromEuler(0, yaw, 0); }
 /* ---------- 자기력: 모든 자석을 두 자극(+q, −q)으로 보고, 자극 사이에 쿨롱 법칙 꼴의 힘 F = (μ0/4π)·q1q2/r² ----------
-   막대자석: m = 2 A·m². 광학 도구·레이저 뒷면의 작은 원판 자석(지름 8 mm 네오디뮴): m ≈ 0.14 A·m², N극이 뒷면 쪽. */
+   막대자석: m = 6 A·m². 광학 도구·레이저 뒷면의 작은 원판 자석(지름 8 mm 네오디뮴): m ≈ 0.14 A·m², N극이 뒷면 쪽. */
 function setPolesFor(it) {
   const u = it.userData, qBar = MAGNET.m / (2 * MAGNET.half);
   const qd = 0.14 / 0.003, disc = (x, y) => [{ p: new THREE.Vector3(x, y, 0), q: qd }, { p: new THREE.Vector3(x, y, 0.003), q: -qd }];
@@ -1165,7 +1583,11 @@ function physicsStep(dt) {
     const b = it.userData.body;
     if (!b.world || b.type !== CANNON.Body.DYNAMIC) continue;
     syncGroupFromBody(it);
-    it.userData.flying = b.sleepState !== CANNON.Body.SLEEPING && (b.velocity.length() > 0.05 || b.angularVelocity.length() > 0.3);
+    const v = b.velocity.length(), w = b.angularVelocity.length();
+    it.userData.flying = b.sleepState !== CANNON.Body.SLEEPING && (v > 0.1 || w > 0.8);
+    // 거의 멈춘 채 미세하게 떨리는 물체(납작한 렌즈·레이저 등)는 잠깐 뒤 완전히 멈춰 세운다 → 빛의 경로가 흔들리지 않게
+    if (b.sleepState !== CANNON.Body.SLEEPING && v < 0.05 && w < 0.4) { it.userData.calm = (it.userData.calm || 0) + dt; if (it.userData.calm > 0.3) { b.sleep(); it.userData.flying = false; } }
+    else it.userData.calm = 0;
     if (b.position.y < -1) { b.position.set(0, 1.2, 0); b.velocity.setZero(); }    // 혹시 바닥 밑으로 빠지면 되살리기
   }
 }
@@ -1269,6 +1691,11 @@ function destroyItem(it) {
   for (const T of (u.terms || [])) { if (T.clip) disconnectLead(T.clip); const k = terminals.indexOf(T); if (k >= 0) terminals.splice(k, 1); }
   leavePan(it);
   if (u.kind === 'balance') for (const x of panItems(it)) { x.userData.pan = null; }
+  leaveLever(it);
+  if (u.kind === 'lever') for (const x of leverItems(it)) x.userData.lever = null;
+  detachFromCart(it); leaveRail(it);
+  if (u.kind === 'cart') { for (const x of [...u.loads]) x.userData.onCart = null; if (u.scale) u.scale.userData.onCart = null; u.loads = []; u.scale = null; }
+  if (u.kind === 'rail') for (const c of u.carts) c.userData.rail = null;
   if (u.kind === 'laser') setLaserPower(it, false);
   stash(it);
   let k = items.indexOf(it); if (k >= 0) items.splice(k, 1);
@@ -1433,6 +1860,49 @@ function setCurl(hand, t) {
 }
 const handR = makeHand(1), handL = makeHand(-1);
 handScene.add(handR, handL);
+/* 손이 실험기구를 가리면 손을 반투명하게: 손마다 재질을 따로 두고(손에 든 기구는 제외), 화면에서 겹치는지 매 프레임 확인한다 */
+function prepHandFade(h) {
+  const mats = new Map(), meshes = [];
+  h.traverse(m => {
+    if (!m.isMesh) return; meshes.push(m);
+    const arr = [].concat(m.material).map(x => { if (!mats.has(x)) { const c = x.clone(); c.transparent = true; mats.set(x, c); } return mats.get(x); });
+    m.material = Array.isArray(m.material) ? arr : arr[0];
+  });
+  h.userData.fade = { mats: [...mats.values()], meshes, op: 1 };
+}
+prepHandFade(handR); prepHandFade(handL);
+const _fb = new THREE.Box3(), _fc = new THREE.Vector3();
+function screenRect(box, cam) {                      // 상자의 화면 위 사각형 (정규화 좌표), 카메라 뒤면 null
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, front = false;
+  for (let i = 0; i < 8; i++) {
+    _fc.set(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).applyMatrix4(cam.matrixWorldInverse);
+    if (_fc.z > -cam.near) continue;                 // 카메라 뒤쪽 꼭짓점은 빼고
+    _fc.applyMatrix4(cam.projectionMatrix); front = true;
+    x0 = Math.min(x0, _fc.x); x1 = Math.max(x1, _fc.x); y0 = Math.min(y0, _fc.y); y1 = Math.max(y1, _fc.y);
+  }
+  return front ? [Math.max(-1.5, x0), Math.max(-1.5, y0), Math.min(1.5, x1), Math.min(1.5, y1)] : null;
+}
+const HAND_FADE_OP = 0.25;
+function updateHandFade(dt) {
+  const rects = [];
+  for (const it of items) {
+    if (!it.parent || inHand(it)) continue;
+    const u = it.userData;
+    if (u.kind === 'wire') { if (u.vis.tube.visible) { _fb.setFromObject(u.vis.tube); const r = screenRect(_fb, camera); if (r) rects.push(r); } if (it.position.y < -1) continue; }
+    if (it.parent !== scene) continue;               // 접시 위의 기구는 저울 상자에 들어 있다
+    _fb.setFromObject(it); const r = screenRect(_fb, camera); if (r) rects.push(r);
+  }
+  for (const h of [handR, handL]) {
+    const F = h.userData.fade;
+    _fb.makeEmpty(); for (const m of F.meshes) if (m.visible) _fb.expandByObject(m);
+    const hr = _fb.isEmpty() ? null : screenRect(_fb, handCam);
+    const cover = !!hr && rects.some(r => r[0] < hr[2] && r[2] > hr[0] && r[1] < hr[3] && r[3] > hr[1]);
+    const target = cover ? HAND_FADE_OP : 1;
+    F.op += (target - F.op) * (1 - Math.exp(-dt * 10));
+    if (Math.abs(F.op - target) < 0.004) F.op = target;
+    for (const m of F.mats) m.opacity = F.op;
+  }
+}
 const holdR = new THREE.Group(); holdR.position.set(0, -0.083, -0.062); handR.add(holdR);
 // 한 손으로 저울 기둥을 움켜쥐는 자리 (주먹 속, 기둥이 손의 x축을 따라 지나감)
 const holdBal = new THREE.Group(); holdBal.position.set(0, -0.022, -0.052); handR.add(holdBal);
@@ -1458,10 +1928,14 @@ const FIX = { x: 0, z: 0.05, yaw: 0, pitch: -0.5 };
    az: 실험대 둘레 방향(0 = 앞쪽), el: 올려다본 높이각(0 = 옆, π/2 = 바로 위), dist: 실험대 가운데까지 거리 */
 const VIEW_HOME = { az: 0, el: 0.62, dist: 1.9 };
 const VIEW_LIM = { elMin: 0.06, elMax: 1.53, distMin: 0.45, distMax: 4.5 };
-const view3 = { target: new THREE.Vector3(0, 0.95, -1.4), az: VIEW_HOME.az, el: VIEW_HOME.el, dist: VIEW_HOME.dist, azT: VIEW_HOME.az, elT: VIEW_HOME.el, distT: VIEW_HOME.dist };
+const VIEW_CENTER = new THREE.Vector3(0, 0.95, -1.4);   // 실험대 가운데
+const view3 = { target: VIEW_CENTER.clone(), targetT: VIEW_CENTER.clone(), az: VIEW_HOME.az, el: VIEW_HOME.el, dist: VIEW_HOME.dist, azT: VIEW_HOME.az, elT: VIEW_HOME.el, distT: VIEW_HOME.dist };
 // 처음 시점의 거리: 지금 화면 비율에서 실험대(앞쪽 모서리 포함)가 가로로 화면의 약 95%를 채우는 거리
+// 처음 시점의 거리: 실험대가 꽉 차는 거리에서 마우스 휠로 한 번 확대한 만큼 더 가깝게 (휠 한 칸 = ×e^(−0.12) ≈ 0.887)
+const HOME_ZOOM = Math.exp(-100 * 0.0012);
+function homeViewDist() { return homeDist() * HOME_ZOOM; }
 function homeDist(fill = 0.95) {
-  const el = VIEW_HOME.el, T = view3.target, asp = camera.aspect || 16 / 9, th = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const el = VIEW_HOME.el, T = VIEW_CENTER, asp = camera.aspect || 16 / 9, th = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
   const f = new THREE.Vector3(0, -Math.sin(el), -Math.cos(el)), up = new THREE.Vector3(0, Math.cos(el), -Math.sin(el));
   const fitAt = d => {
     const c = new THREE.Vector3(T.x, T.y + d * Math.sin(el), T.z + d * Math.cos(el)); let m = 0;
@@ -1479,22 +1953,38 @@ function clampView() {
   view3.elT = Math.max(VIEW_LIM.elMin, Math.min(VIEW_LIM.elMax, view3.elT));
   view3.distT = Math.max(VIEW_LIM.distMin, Math.min(VIEW_LIM.distMax, view3.distT));
 }
-function setView(az, el, dist) {           // 정해 둔 시점으로 (가장 가까운 방향으로 돈다)
-  view3.azT = view3.az + angDiff(view3.az, az); view3.elT = el; if (dist !== undefined) view3.distT = dist; clampView();
+function setView(az, el, dist, recenter) {  // 정해 둔 시점으로 (가장 가까운 방향으로 돈다)
+  view3.azT = view3.az + angDiff(view3.az, az); view3.elT = el; if (dist !== undefined) view3.distT = dist;
+  if (recenter) view3.targetT.copy(VIEW_CENTER);
+  clampView();
+}
+// 확대·축소: 화면의 한 점(ndc)을 중심으로. 그 점이 가리키는 실험실의 자리가 화면에서 그대로 머물도록 바라보는 중심도 함께 옮긴다
+const _zr = new THREE.Raycaster(), _zp = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.9);
+function zoomAt(ndc, f) {
+  const d0 = view3.distT;
+  view3.distT *= f; clampView();
+  f = view3.distT / d0; if (Math.abs(f - 1) < 1e-6) return;
+  let P = null;
+  if (ndc) {
+    _zr.setFromCamera(ndc, camera);
+    const h = _zr.intersectObjects(scene.children, true).find(x => x.object.visible && x.object.raycast !== noRay && !x.object.isLine);
+    P = h ? h.point.clone() : _zr.ray.intersectPlane(_zp, new THREE.Vector3());
+  }
+  if (!P) return;
+  const T = view3.targetT;
+  T.x = P.x + (T.x - P.x) * f; T.z = P.z + (T.z - P.z) * f;   // 높이는 그대로 (실험대 위)
+  if (view3.distT >= homeViewDist() * 0.98) T.lerp(VIEW_CENTER, 0.5);   // 다 축소하면 실험대 가운데로 돌아간다
+  T.x = Math.max(TABLE.minX - 0.2, Math.min(TABLE.maxX + 0.2, T.x)); T.z = Math.max(TABLE.minZ - 0.2, Math.min(TABLE.maxZ + 0.2, T.z));
 }
 function updateView(dt) {
   if (playing) {
-    const rs = 1.5 * dt, es = 1.0 * dt;
-    if (keys.KeyA) view3.azT -= rs;
-    if (keys.KeyD) view3.azT += rs;
-    if (keys.KeyW) view3.elT += es;
-    if (keys.KeyS) view3.elT -= es;
     if (keys.Equal || keys.NumpadAdd) view3.distT *= Math.exp(-1.4 * dt);
     if (keys.Minus || keys.NumpadSubtract) view3.distT *= Math.exp(1.4 * dt);
     clampView();
   }
   const k = 1 - Math.exp(-dt * 10);
   view3.az += (view3.azT - view3.az) * k; view3.el += (view3.elT - view3.el) * k; view3.dist += (view3.distT - view3.dist) * k;
+  view3.target.lerp(view3.targetT, k);
   const T = view3.target, ce = Math.cos(view3.el);
   const dir = new THREE.Vector3(Math.sin(view3.az) * ce, Math.sin(view3.el), Math.cos(view3.az) * ce);
   // 카메라가 벽·천장 밖으로 나가지 않게 거리를 줄인다
@@ -1536,25 +2026,43 @@ function collide() {
 /* ---------- 상호작용 ---------- */
 const ray = new THREE.Raycaster(); ray.far = 12;
 const center = new THREE.Vector2(0, -0.08);
-const aimNDC = new THREE.Vector2(0, -0.08);      // 조준점: 마우스 커서(휴대폰은 누른 곳)
+const aimNDC = new THREE.Vector2(0, -0.08), aimPx = { x: 0, y: 0 };      // 조준점: 마우스 커서(휴대폰은 누른 곳)
 function setAim(clientX, clientY) {
   let cx, cy, W, H;
   const vw = window.innerWidth;
   if (typeof screenRotated !== 'undefined' && screenRotated) { cx = clientY; cy = vw - clientX; W = view.clientWidth; H = view.clientHeight; }
   else { const r = canvas.getBoundingClientRect(); cx = clientX - r.left; cy = clientY - r.top; W = r.width; H = r.height; }
-  aimNDC.set(cx / W * 2 - 1, -(cy / H * 2 - 1));
+  aimNDC.set(cx / W * 2 - 1, -(cy / H * 2 - 1)); aimPx.x = cx; aimPx.y = cy;
   const ch = document.getElementById('crosshair'); ch.style.left = cx + 'px'; ch.style.top = cy + 'px';
 }
-canvas.addEventListener('pointermove', e => { if (e.pointerType === 'mouse') setAim(e.clientX, e.clientY); });
+canvas.addEventListener('pointermove', e => { if (e.pointerType === 'mouse') { setAim(e.clientX, e.clientY); document.getElementById('crosshair').classList.remove('away'); } });
+canvas.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') document.getElementById('crosshair').classList.add('away'); });   // 버튼·창 위에서는 보통 화살표
 canvas.addEventListener('pointerdown', e => { setAim(e.clientX, e.clientY); });
 // 자석을 코일에 넣는 중: 마우스를 위아래로 움직이면 자석이 들어가고 나온다
 document.addEventListener('pointermove', e => {
-  if (e.pointerType === 'mouse' && insertMode.active && playing) insertMode.depth = Math.max(INSERT_MIN, Math.min(INSERT_MAX, insertMode.depth - e.movementY * 0.00045));
+  if (e.pointerType === 'mouse' && insertMode.active && playing && !ctxMenu.open) insertMode.depth = Math.max(INSERT_MIN, Math.min(INSERT_MAX, insertMode.depth - e.movementY * 0.00045));
 });
 const ghostMatOk = new THREE.MeshBasicMaterial({ color: 0x7fd49b, transparent: true, opacity: 0.35, depthWrite: false });
 const ghostMatBad = new THREE.MeshBasicMaterial({ color: 0xff8f7a, transparent: true, opacity: 0.35, depthWrite: false });
 const noRay = () => {};
 
+// 화면에서 커서와 가장 가까운 기구 (기구 가운데가 커서에서 px 이내). 작은 기구를 고르기 쉽게
+const PICK_PX = 34, _np = new THREE.Vector3();
+function nearItemOnScreen(maxPx) {
+  const W = view.clientWidth || innerWidth, H = view.clientHeight || innerHeight;
+  const mx = (aimNDC.x + 1) / 2 * W, my = (1 - aimNDC.y) / 2 * H;
+  let best = null, bd = maxPx;
+  for (const it of items) {
+    if (it === held || !it.parent || inHand(it)) continue;
+    const u = it.userData;
+    if (u.kind === 'wire' && u.endA) continue;                 // 연결된 전선은 전선 자체를 가리켜야
+    it.getWorldPosition(_np); _np.y += (u.centerY || 0.02);
+    _np.project(camera); if (_np.z < -1 || _np.z > 1) continue;
+    const d = Math.hypot((_np.x + 1) / 2 * W - mx, (1 - _np.y) / 2 * H - my);
+    if (d < bd) { bd = d; best = it; }
+  }
+  return best;
+}
 function grabRoot(o) { while (o && !o.userData.grab) o = o.parent; return o; }
 function setHighlight(it, on) {
   if (!it) return;
@@ -1562,18 +2070,20 @@ function setHighlight(it, on) {
 }
 // 받침이 있으면 a(을/과/은), 없으면 b(를/와/는)
 function josa(word, a, b) {
-  const c = word.charCodeAt(word.length - 1);
+  const t = word.replace(/[\s()\[\]]+$/g, '');          // 끝의 괄호·공백은 건너뛰고 마지막 글자로 판단 (예: 집게 전선(빨강) → '강')
+  const c = t.charCodeAt(t.length - 1);
   if (c < 0xAC00 || c > 0xD7A3) return word + b;
   return word + ((c - 0xAC00) % 28 ? a : b);
 }
 // 놓는 곳에 따라 도구의 방향 정하기
 function setPlacedRotation(obj, it, type) {
   const u = it.userData, ang = u.angle || 0;
+  const yaw = u.worldYaw ?? player.yaw;             // 집기 전에 놓여 있던 방향을 기억하면 그 방향으로, 아니면 나를 향하게
   if (type === 'board') obj.rotation.set(0, 0, ang);
-  else if (u.restX !== undefined) obj.rotation.set(u.restX, 0, player.yaw + Math.PI / 2 + ang);
-  else if (u.kind === 'balance') obj.rotation.set(0, player.yaw + ang, 0);
-  else if (u.faceYaw !== undefined) obj.rotation.set(0, player.yaw + u.faceYaw + ang, 0);   // 눈금판·코일 끝이 나를 향하게
-  else if (u.kind === 'magnet') obj.rotation.set(0, player.yaw - Math.PI / 2 + ang, 0);
+  else if (u.restX !== undefined) obj.rotation.set(u.restX, 0, yaw + Math.PI / 2 + ang);
+  else if (['balance', 'lever', 'rail', 'cart', 'scale', 'cartweight'].includes(u.kind)) obj.rotation.set(0, yaw + ang, 0);
+  else if (u.faceYaw !== undefined) obj.rotation.set(0, yaw + u.faceYaw + ang, 0);   // 눈금판·코일 끝이 나를 향하게
+  else if (u.kind === 'magnet') obj.rotation.set(0, yaw - Math.PI / 2 + ang, 0);
   else obj.rotation.set(0, ang, 0);
 }
 
@@ -1638,16 +2148,23 @@ function computePlacement(hit) {
   if (!s) return { valid: false, msg: '여기에는 놓을 수 없어요' };
   const n = hit.face.normal.clone().transformDirection(o.matrixWorld);
   if (n.y < 0.9) return { valid: false, msg: '평평한 윗면에 놓아야 해요' };
-  const r = held.userData.radius;
-  if (s.maxX - s.minX < 2 * r || s.maxZ - s.minZ < 2 * r) return { valid: false, msg: '공간이 좁아요' };
-  const x = Math.min(s.maxX - r, Math.max(s.minX + r, hit.point.x));
-  const z = Math.min(s.maxZ - r, Math.max(s.minZ + r, hit.point.z));
+  const r = held.userData.radius, fp = held.userData.footprint;
+  // 긴 기구(레일)는 놓일 방향에 맞춘 직사각형으로 공간을 잰다
+  let rx = r, rz = r, th = 0;
+  if (fp) { th = (held.userData.worldYaw ?? player.yaw) + (held.userData.angle || 0); const c = Math.abs(Math.cos(th)), sn = Math.abs(Math.sin(th)); rx = c * fp[0] + sn * fp[1]; rz = sn * fp[0] + c * fp[1]; }
+  if (s.maxX - s.minX < 2 * rx || s.maxZ - s.minZ < 2 * rz) return { valid: false, msg: '공간이 좁아요' };
+  const x = Math.min(s.maxX - rx, Math.max(s.minX + rx, hit.point.x));
+  const z = Math.min(s.maxZ - rz, Math.max(s.minZ + rz, hit.point.z));
   for (const it of items) {
     if (it === held || it.parent !== scene) continue;
     if (Math.abs(it.position.y - s.y) > 0.25) continue;
     const d = Math.hypot(it.position.x - x, it.position.z - z);
-    const lim = held.userData.magnetic && it.userData.magnetic ? 0.02 : r + it.userData.radius;   // 납작한 광학 도구끼리는 바짝 붙여 놓을 수 있다
-    if (d < lim) {
+    let hit2;
+    if (fp) {                                       // 든 기구가 레일이면: 다른 기구가 레일 직사각형에 닿는지
+      const dx = it.position.x - x, dz = it.position.z - z, lx = dx * Math.cos(th) - dz * Math.sin(th), lz = dx * Math.sin(th) + dz * Math.cos(th);
+      hit2 = Math.hypot(Math.max(0, Math.abs(lx) - fp[0]), Math.max(0, Math.abs(lz) - fp[1])) < (it.userData.footprint ? it.userData.footprint[1] : it.userData.radius || 0.08);
+    } else hit2 = held.userData.magnetic && it.userData.magnetic ? d < 0.02 : overlaps(it, x, z, r);   // 납작한 광학 도구끼리는 바짝 붙여 놓을 수 있다
+    if (hit2) {
       const tip = held.userData.kind === 'weight' && isK(it, 'balance') ? ' (접시를 겨냥해 보세요)' : '';
       return { valid: false, msg: `${josa(it.userData.name, '과', '와')} 겹쳐요${tip}`, pos: new THREE.Vector3(x, s.y, z) };
     }
@@ -1655,12 +2172,37 @@ function computePlacement(hit) {
   return { valid: true, type: 'surface', pos: new THREE.Vector3(x, s.y, z), surface: s, msg: `${s.name}에 내려놓기` };
 }
 
+// 집는 순간 실험대 위에서의 방향(돌려 놓은 각도 포함)을 기억한다 → 놓을 때 같은 방향으로
+function rememberYaw(it) {
+  const u = it.userData;
+  if (it.parent !== scene || u.onBoard) { u.worldYaw = undefined; return; }
+  const ax = new THREE.Vector3(1, 0, 0).applyQuaternion(it.getWorldQuaternion(new THREE.Quaternion()));
+  const phi = Math.atan2(-ax.z, ax.x);              // 기구의 x축이 실험대 위에서 향한 방향
+  if (u.restX !== undefined) { u.worldYaw = phi - Math.PI / 2; u.angle = 0; }
+  else if (u.kind === 'balance') { u.worldYaw = phi; u.angle = 0; }
+  else if (u.faceYaw !== undefined) { u.worldYaw = phi - u.faceYaw; u.angle = 0; }
+  else if (u.kind === 'magnet') { u.worldYaw = phi + Math.PI / 2; u.angle = 0; }
+  else { u.worldYaw = undefined; u.angle = phi; }
+}
 function pickUp(it) {
   if (isK(it, 'balance') && panItems(it).length > 0) { toast('저울 접시 위의 추를 먼저 내려놓으세요.'); return; }
+  if (isK(it, 'lever') && leverItems(it).length > 0) { toast('지레에 걸린 추를 먼저 내려놓으세요.'); return; }
+  if (isK(it, 'rail') && it.userData.carts.length > 0) { toast('레일 위의 수레를 먼저 내려놓으세요.'); return; }
+  rememberYaw(it);
   setHighlight(it, false); stopMotion(it); bodyOff(it); it.userData.body.userData_init = false;
   it.userData.onBoard = false;
   leavePan(it);   // 저울 접시에서 집기
-  if (it.userData.kind === 'weight') {
+  leaveLever(it); // 지레 눈금에서 빼기
+  detachFromCart(it); leaveRail(it);
+  if (it.userData.kind === 'rail') {
+    carry.add(it); it.position.set(0.12, 0.1, -0.3); it.rotation.set(0, 1.15, 0);   // 1.6 m 레일은 앞쪽으로 비스듬히 들어야 화면에 보인다
+  } else if (['cart', 'scale', 'cartweight'].includes(it.userData.kind)) {
+    holdR.add(it); it.position.set(0, -0.01, 0); it.rotation.set(0, 0, 0);
+  } else if (it.userData.kind === 'hweight') {
+    holdR.add(it); it.position.set(0, -0.01, 0); it.rotation.set(0, 0, 0);
+  } else if (it.userData.kind === 'lever') {
+    carry.add(it); it.position.set(0, -0.1, 0); it.rotation.set(0, 0, 0); resetPose(it);
+  } else if (it.userData.kind === 'weight') {
     holdR.add(it); it.position.set(0, 0, 0); it.rotation.set(0, 0, 0);
   } else if (it.userData.kind === 'magnet') {   // 막대자석은 한쪽 극이 앞을 향하게 쥔다 (R로 뒤집기)
     holdR.add(it); it.position.set(0, 0.02, -0.01); it.rotation.set(0, Math.PI / 2 + (it.userData.flip ? Math.PI : 0), 0);
@@ -1702,7 +2244,7 @@ function placeHeld(pl) {
     scene.add(it); it.position.copy(pl.pos); it.position.y += 0.002;   // 카트 위도 실험실 좌표에 그대로 (마찰로 함께 움직임)
     setPlacedRotation(it, it, pl.type === 'cart' ? 'surface' : pl.type);
     it.userData.onBoard = pl.type === 'board';
-    if (isK(it, 'balance')) { it.userData.phi = 0; it.userData.omega = 0; updateBalancePose(it); }
+    resetPose(it);
     if (it.userData.onBoard) bodyOff(it); else bodyOn(it);
   }
   dropHeld(false); player.reach = 1;
@@ -1743,7 +2285,7 @@ function enterInsert(coil) {
   insertMode.active = true; insertMode.depth = INSERT_MAX; insertMode.coil = coil; insertMode.magnet = held;
   scene.add(held); magnetPoseOnCoil();
   if (ghost) ghost.visible = false; placement = null;
-  toast('마우스를 아래로 움직이면 자석이 코일 속으로 들어가고, 위로 움직이면 빠져요. E를 누르면 손으로 돌아와요.');
+  toast('마우스를 아래로 움직이면 자석이 코일 속으로 들어가고, 위로 움직이면 빠져요. 클릭하면 손으로 되돌리거나 극을 바꿀 수 있어요.');
 }
 function exitInsert() {
   if (!insertMode.active) return;
@@ -1883,7 +2425,7 @@ function traceOne(o, d, ls, onBoard, segs) {
         if (Math.abs(den) < 1e-14) continue;
         const wx = e.ax - lo.x, wy = e.ay - lo.y;
         const t = (wx * ey - wy * ex) / den, u = (wx * ld.y - wy * ld.x) / den;
-        if (t > 1e-6 && t < best && u >= 0 && u <= 1) { best = t; hit = { L, e, u, ld }; }
+        if (t > 1e-6 && t < best && u >= -1e-7 && u <= 1 + 1e-7) { best = t; hit = { L, e, u, ld }; }
       }
     }
     const tEnd = Math.min(budget, clipDist(o, d, onBoard));
@@ -1963,10 +2505,12 @@ function updateBeams() {
   beamCore.material.opacity = lightsOn ? 0.5 : 1.0; beamGlow.material.opacity = lightsOn ? 0.11 : 0.22;
   fillBeam(beamCore, segs, norms); fillBeam(beamGlow, segs, norms);
 }
+// 회전시키기는 빛의 방향이 중요한 레이저와 광학 도구(렌즈·거울·프리즘)만
+function canRotate(it) { return isK(it, 'laser') || isK(it, 'optic'); }
 function rotateTarget() {
   const step = Math.PI / 8;   // 22.5°씩
-  if (held) { held.userData.angle = (held.userData.angle || 0) + step; return; }
-  const t = aimItem; if (!t || t.parent !== scene || t.userData.flying) return;
+  if (held) { if (canRotate(held)) held.userData.angle = (held.userData.angle || 0) + step; return; }
+  const t = aimItem; if (!t || t.parent !== scene || t.userData.flying || !canRotate(t)) return;
   const u = t.userData;
   if (u.onBoard) { t.rotation.z += step; u.angle = t.rotation.z; }
   else { t.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), step); if (u.body.world) bodyOn(t); }
@@ -2047,12 +2591,60 @@ function nearestTerminal(r, maxDist) {
   }
   return best;
 }
+// 전선이 기구를 뚫고 지나가지 않도록: 실험대 위 기구를 (반지름, 높이)의 원기둥으로 보고, 그 위로 지나가게 한다
+const OBSTACLE = { lever: [0.27, 0.4], hweight: [0.02, 0.045], coil: [0.05, COIL.top + 0.008], galv: [0.085, 0.122], balance: [0.2, 0.32], weight: [0.027, 0.077], magnet: [0.05, 0.022], laser: [0.088, 0.033], optic: [0.065, 0.022] };
+function obstacleTop(x, z) {
+  let top = -Infinity;
+  for (const it of items) {
+    if (it.parent !== scene) continue;
+    const ob = OBSTACLE[it.userData.kind]; if (!ob) continue;
+    const dx = x - it.position.x, dz = z - it.position.z;
+    if (dx * dx + dz * dz < ob[0] * ob[0]) top = Math.max(top, it.position.y + ob[1]);
+  }
+  return top;
+}
 function setGroupVisible(g, v) { g.traverse(m => { m.visible = v; }); }
 function disconnectLead(w) {
   const u = w.userData;
   for (const T of [u.endA, u.endB]) if (T && T.clip === w) T.clip = null;
   u.endA = u.endB = null;
   u.vis.tube.visible = false; for (const c of u.vis.clips) setGroupVisible(c, false);
+}
+// 길이 L(1 m)인 전선이 두 단자 사이에 느슨하게 놓인 모양:
+// 집게에서 실험대로 내려온 뒤, 실험대 위에서는 남는 길이만큼 옆으로 둥글게(살짝 비대칭으로) 휘어 놓인다
+const WIRE_LEN = 0.85;                 // 보이는 모양에 쓰는 길이 (너무 크게 휘지 않게)
+function slackPath(a, b) {
+  const ga = groundHeightAt(a.x, a.z, a.y), gb = groundHeightAt(b.x, b.z, b.y);
+  const da = Math.max(0, a.y - ga), db = Math.max(0, b.y - gb);
+  const dx = b.x - a.x, dz = b.z - a.z, D = Math.hypot(dx, dz);
+  const ux = D > 1e-4 ? dx / D : 1, uz = D > 1e-4 ? dz / D : 0;
+  const side = -uz < 0 || (Math.abs(uz) < 1e-6 && ux < 0) ? 1 : -1, nx = -uz * side, nz = ux * side;   // 옆 방향이 왼쪽(−x)을 향하게
+  const Lh = Math.max(D, WIRE_LEN - 0.85 * (da + db) - 0.05);       // 실험대 위에 놓일 길이
+  const bez = (k, s) => {                                             // 옆으로 k만큼 부푼 3차 베지어 (평면)
+    const p1x = a.x + ux * D / 3 + nx * k, p1z = a.z + uz * D / 3 + nz * k;
+    const p2x = a.x + ux * 2 * D / 3 + nx * k * 0.45, p2z = a.z + uz * 2 * D / 3 + nz * k * 0.45;
+    const r = 1 - s;
+    return [r * r * r * a.x + 3 * r * r * s * p1x + 3 * r * s * s * p2x + s * s * s * b.x, r * r * r * a.z + 3 * r * r * s * p1z + 3 * r * s * s * p2z + s * s * s * b.z];
+  };
+  const lenOf = k => { let L = 0, [px, pz] = bez(k, 0); for (let i = 1; i <= 24; i++) { const [x, z] = bez(k, i / 24); L += Math.hypot(x - px, z - pz); px = x; pz = z; } return L; };
+  let lo = 0, hi = 0.8;
+  if (lenOf(0) < Lh) { for (let i = 0; i < 22; i++) { const m = (lo + hi) / 2; if (lenOf(m) < Lh) lo = m; else hi = m; } } else hi = 0;
+  const k = hi, NS = 48, pts = [];
+  const sa = Math.min(0.3, (da * 0.9 + 0.03) / Lh), sb = Math.min(0.3, (db * 0.9 + 0.03) / Lh);
+  const ease = t => t * t * (3 - 2 * t);
+  const onTable = (p) => p.x > TABLE.minX && p.x < TABLE.maxX && p.z > TABLE.minZ && p.z < TABLE.maxZ;
+  const keepOn = onTable(a) && onTable(b);                            // 실험대 위의 두 단자면 실험대 밖으로 늘어지지 않게
+  for (let i = 0; i <= NS; i++) {
+    const s = i / NS; let [x, z] = bez(k, s);
+    if (keepOn) { x = Math.max(TABLE.minX + 0.03, Math.min(TABLE.maxX - 0.03, x)); z = Math.max(TABLE.minZ + 0.03, Math.min(TABLE.maxZ - 0.03, z)); }
+    const floor = Math.max(groundHeightAt(x, z, Math.max(a.y, b.y)) + 0.004, obstacleTop(x, z) + 0.01);
+    let y = floor;
+    if (s < sa) y = Math.max(floor, a.y + (floor - a.y) * ease(s / sa));          // 집게에서 내려온다
+    if (s > 1 - sb) y = Math.max(floor, b.y + (floor - b.y) * ease((1 - s) / sb));
+    if (i === 0) y = a.y; if (i === NS) y = b.y;
+    pts.push(new THREE.Vector3(x, y, z));
+  }
+  return pts;
 }
 function updateLeads() {
   for (const w of items) {
@@ -2066,17 +2658,21 @@ function updateLeads() {
       if (wasConnected) { scene.add(w); w.position.set(at.x, at.y + 0.05, at.z); bodyOn(w); }
       toast(`${u.name}의 집게가 빠졌어요.`); continue;
     }
-    // 늘어진 전선: 길이(1 m)가 남는 만큼 아래로 처지되, 탁자·카트·바닥 위에서는 그 위에 얹힌다
-    const sag = Math.max(0.03, (1.0 - dist) * 0.35), pts = [], NS = 24;
+    // 양쪽이 모두 물리면: 남는 길이만큼 실험대 위에서 옆으로 휘어 놓인 자연스러운 전선
+    let pts = u.endB ? slackPath(a, b) : null;   // 항상 왼쪽(실험대 앞에서 볼 때 −x 쪽)으로 휜다
+    // 한쪽만 물리고 손에 든 경우: 길이가 남는 만큼 아래로 처진다
+    if (!pts) { pts = [];
+    const sag = Math.max(0.03, (1.0 - dist) * 0.35), NS = 40;
     for (let i = 0; i <= NS; i++) {
       const t = i / NS, p = a.clone().lerp(b, t);
       p.y -= sag * 4 * t * (1 - t);
       p.y += 0.03 * Math.sin(Math.PI * Math.min(1, t * 6)) * (t < 0.2 ? 1 : 0) + 0.03 * Math.sin(Math.PI * Math.min(1, (1 - t) * 6)) * (t > 0.8 ? 1 : 0);   // 집게에서 살짝 위로 휘어 나온다
-      if (i > 0 && i < NS) p.y = Math.max(p.y, groundHeightAt(p.x, p.z, a.y + (b.y - a.y) * t) + 0.004);   // 처지기 전 높이 기준으로 아래 받침면을 찾는다
+      if (i > 0 && i < NS) p.y = Math.max(p.y, groundHeightAt(p.x, p.z, a.y + (b.y - a.y) * t) + 0.004, obstacleTop(p.x, p.z) + 0.01);   // 받침면 위, 기구 위로 지나간다
       pts.push(p);
     }
+    }
     const curve = new THREE.CatmullRomCurve3(pts);
-    vis.tube.geometry.dispose(); vis.tube.geometry = new THREE.TubeGeometry(curve, 40, 0.0028, 6, false); vis.tube.visible = true;
+    vis.tube.geometry.dispose(); vis.tube.geometry = new THREE.TubeGeometry(curve, 72, 0.0028, 6, false); vis.tube.visible = true;
     setGroupVisible(vis.clips[0], true); vis.clips[0].position.copy(a); vis.clips[0].lookAt(a.clone().add(new THREE.Vector3(0, -1, 0.3)));
     setGroupVisible(vis.clips[1], !!u.endB); if (u.endB) { vis.clips[1].position.copy(b); vis.clips[1].lookAt(b.clone().add(new THREE.Vector3(0, -1, 0.3))); }
   }
@@ -2127,8 +2723,6 @@ const touchMove = { x: 0, y: 0 };
 (function setupTouch() {
   if (!isTouch) return;
   document.body.classList.add('touch');
-  document.getElementById('overlayNote').textContent = '기구를 눌러 조준하고 오른쪽 버튼으로 행동해요. 두 손가락으로 끌면 실험대 둘레를 돌고, 벌리고 오므리면 확대·축소돼요. 가로 화면을 추천해요.';
-  document.querySelector('.card .keys').innerHTML = '<span><kbd>누르기</kbd>조준</span><span><kbd>두 손가락 끌기</kbd>시야 돌리기</span><span><kbd>두 손가락 벌리기</kbd>확대·축소</span><span><kbd>오른쪽 버튼</kbd>줍기·조작·회전·치우기</span>';
   // 이동 스틱
   const stick = document.getElementById('stick'), knob = document.getElementById('knob'); let sid = null, cx = 0, cy = 0;
   const setKnob = (dx, dy) => { knob.style.transform = `translate(${dx}px, ${dy}px)`; };
@@ -2190,6 +2784,34 @@ function linkInfo() {
     const coil = aimItem, ok = coil.parent === scene && !coil.userData.flying;
     return { valid: ok, label: '코일 위에 자석 세우기', msg: '코일이 멈춘 뒤에 해 주세요.', run: () => enterInsert(coil) };
   }
+  {                                                                              // 역학 수레 · 레일 · 저울 · 수레용 추
+    const cartOf = it => isK(it, 'cart') ? it : (it && it.userData.onCart) || null;
+    const railOf = it => isK(it, 'rail') ? it : (isK(it, 'cart') && it.userData.rail ? it.userData.rail.rail : null);
+    if (u.kind === 'cart' && railOf(aimItem)) {
+      const r = railOf(aimItem);
+      if (r.userData.carts.length >= 2) return { valid: false, label: '레일에 올리기', msg: '레일에는 수레를 2대까지 올릴 수 있어요.' };
+      return { valid: true, label: '레일에 올리기', run: () => { const c = held; attachToRail(c, r); dropHeld(false); player.reach = 1; } };
+    }
+    if (u.kind === 'cartweight' && cartOf(aimItem)) {
+      const c = cartOf(aimItem);
+      if (c.userData.loads.length >= CARTD.maxLoads) return { valid: false, label: '수레에 올리기', msg: '수레에는 추를 2개까지 올릴 수 있어요.' };
+      return { valid: true, label: '수레에 추 올리기', run: () => { const w = held; attachLoad(w, c); dropHeld(false); player.reach = 1; } };
+    }
+    if (u.kind === 'scale' && cartOf(aimItem)) {
+      const c = cartOf(aimItem);
+      if (c.userData.scale) return { valid: false, label: '수레에 걸기', msg: '이미 용수철저울이 걸려 있어요.' };
+      return { valid: true, label: '수레 앞에 걸기', run: () => { const sc = held; attachScale(sc, c); dropHeld(false); player.reach = 1; } };
+    }
+  }
+  if (isK(aimItem, 'lever') || aimItem.userData.lever) {                         // 거는 추 → 지레 눈금
+    const lev = isK(aimItem, 'lever') ? aimItem : aimItem.userData.lever.lev;
+    if (u.kind !== 'hweight') return { valid: false, label: '지레에 걸기', msg: '지레에는 거는 추(50 g)만 걸 수 있어요.' };
+    const n = aimItem.userData.lever ? aimItem.userData.lever.notch : notchAt(lev, aimHit);
+    if (!n) return { valid: false, label: '눈금을 조준해 주세요', msg: '지레 막대의 눈금(1~5)을 조준해 주세요.' };
+    const where = `${n < 0 ? '왼쪽' : '오른쪽'} 눈금 ${Math.abs(n)}`;
+    if (lev.userData.notches.get(n).items.length >= LEV.maxStack) return { valid: false, label: `${where}에 걸기`, msg: '그 눈금에는 더 걸 수 없어요.' };
+    return { valid: true, label: `${where}에 걸기`, run: () => { const w = held; attachToNotch(w, lev, n); dropHeld(false); player.reach = 1; } };
+  }
   if (isK(aimItem, 'balance')) {                                                  // 작은 기구 → 저울 접시
     const balance = aimItem;
     if (!canGoOnPan(held)) return { valid: false, label: '저울 접시에 올리기', msg: `${josa(u.name, '은', '는')} 저울 접시에 올릴 수 없어요.` };
@@ -2209,7 +2831,7 @@ function flipMagnet() {
   toast(insertMode.active ? (magnet.userData.flip ? 'S극이 아래를 향해요.' : 'N극이 아래를 향해요.') : (magnet.userData.flip ? 'S극이 앞을 향해요.' : 'N극이 앞을 향해요.'));
 }
 function doQ() {
-  if (!playing) return;
+  if (!playing || demoState.active) return;
   if (insertMode.active) { exitInsert(); return; }
   if (held) {
     const L = linkInfo();
@@ -2222,71 +2844,146 @@ function doQ() {
   if (aimItem) pickUp(aimItem);
 }
 function doW() {
-  if (!playing) return;
+  if (!playing || demoState.active) return;
   const t = insertMode.active ? insertMode.magnet : (held || aimItem);
   if (!t) return;
   if (isK(t, 'laser')) { setLaserPower(t, !t.userData.power); toast(t.userData.power ? '레이저를 켰어요.' : '레이저를 껐어요.'); }
   else if (isK(t, 'magnet') && held === t) flipMagnet();
   else if (isK(t, 'magnet') && insertMode.active) flipMagnet();
+  else if (isK(t, 'scale')) { const F = FORCE_STEPS[(FORCE_STEPS.indexOf(t.userData.force) + 1) % FORCE_STEPS.length]; setScaleForce(t, F); toast(`용수철저울의 힘을 ${F} N으로 맞췄어요.`); }
+  else if (isK(t, 'cart') && !held) cartAction(t);
 }
-function doE() { if (!playing || held || !aimItem) return; rotateTarget(); }
-function doR() { if (!playing || held || !aimItem) return; removeToInventory(aimItem); }
+function doE() { if (!playing || demoState.active || held || !aimItem) return; rotateTarget(); }
+function doR() { if (!playing || demoState.active || held || !aimItem) return; removeToInventory(aimItem); }
 function stash(it) { stopMotion(it); bodyOff(it); if (it.parent) it.parent.remove(it); it.userData.onBoard = false; setHighlight(it, false); }
 function removeToInventory(it) {
   const extra = [];
   for (const T of (it.userData.terms || [])) if (T.clip && !extra.includes(T.clip)) extra.push(T.clip);   // 물려 있던 전선도 함께
   if (isK(it, 'balance')) extra.push(...panItems(it));                                                    // 접시 위의 기구도 함께
+  if (isK(it, 'lever')) extra.push(...leverItems(it));                                                    // 지레에 걸린 추도 함께
+  const withCart = c => [...c.userData.loads, ...(c.userData.scale ? [c.userData.scale] : [])];
+  if (isK(it, 'cart')) extra.push(...withCart(it));                                                       // 수레 위의 추·저울도 함께
+  if (isK(it, 'rail')) for (const c of [...it.userData.carts]) extra.push(c, ...withCart(c));             // 레일 위의 수레도 함께
   for (const x of extra) destroyItem(x);
   destroyItem(it); refreshInventory();
   toast(extra.length ? `${josa(it.userData.name, '과', '와')} 함께 있던 기구 ${extra.length}개를 치웠어요.` : `${josa(it.userData.name, '을', '를')} 치웠어요.`);
 }
 // 행동 안내판 (오른쪽): 손이 비었을 때 4개, 들었을 때 2개, 다른 기구를 조준하면 연계하기
 let lastActKey = '';
+let curActs = [], curTitle = '', lastLink = null;
+// 화면에 보이는 이름: 역학 수레는 올린 추 개수와 전체 질량까지
+function dispName(it) {
+  const u = it.userData;
+  if (u.kind === 'cart') { const n = u.loads.length, m = +cartMass(it).toFixed(1); return n ? `역학수레+추 ${n}개(${m}kg)` : `역학수레(${m}kg)`; }
+  return u.name;
+}
+// 조작하기(R)가 실제로 무언가를 하는 기구만 이름을 돌려준다
+function operateLabel(it, isHeld) {
+  const u = it.userData;
+  if (u.kind === 'laser') return u.power ? '레이저 끄기' : '레이저 켜기';
+  if (u.kind === 'magnet' && isHeld) return '극 바꾸기';
+  return null;
+}
+// 용수철저울: 레일 위 수레에 걸려 있으면 1·2·3 N으로 끌기 (누를 때마다 수레를 처음 자리에서 다시 출발)
+function pullWith(F) {
+  const sc = aimItem, c = sc && sc.userData.onCart;
+  if (!c || !c.userData.rail) { toast('용수철저울을 레일 위의 역학 수레에 걸어 주세요.'); return; }
+  setScaleForce(sc, F); resetCart(c); startRun(c);
+  toast(`${F} N의 힘으로 끌어요. (수레 ${+cartMass(c).toFixed(1)} kg)`);
+}
 function updateActions(link) {
-  if (!playing) return;
+  if (!playing || demoState.active) { curActs = []; updateNameTip(); return; }
   let title = '', acts = [];
   if (insertMode.active) {
     title = '자석을 코일에 넣는 중';
     acts = [['hint', isTouch ? '화면을 위아래로 끌면 자석이 들어가고 나와요' : '마우스를 위아래로 움직이면 자석이 들어가고 나와요'], ['KeyQ', 'E', '손으로 되돌리기'], ['KeyW', 'R', '극 바꾸기']];
   } else if (held) {
-    title = `손에 든 기구: ${held.userData.name}`;
-    if (link) acts = [['KeyQ', 'E', link.label ? `연계하기 · ${link.label}` : '연계하기', !link.valid]];
-    else acts = [['KeyQ', 'E', '놓기', !(placement && placement.valid)], ['KeyW', 'R', '조작하기']];
+    // 손에 든 기구: 할 수 있는 일만 (연계는 그 내용 그대로, 안 되면 까닭을 안내)
+    title = `손에 든 기구: ${dispName(held)}`;
+    if (link) acts = link.valid ? [['KeyQ', 'E', link.label]] : [['hint', link.msg || '이 두 기구는 서로 연계할 수 없어요.']];
+    else acts = placement && placement.valid ? [['KeyQ', 'E', '놓기']] : [['hint', placement ? placement.msg : '놓을 곳(실험대 위)을 가리켜 주세요.']];
+    const op = operateLabel(held, true); if (op) acts.push(['KeyW', 'R', op]);
   } else if (aimItem) {
-    title = aimItem.userData.name;
-    acts = [['KeyQ', 'E', aimItem.userData.kind === 'wire' && aimItem.userData.endA ? '줍기 (전선 빼기)' : '줍기'], ['KeyW', 'R', isK(aimItem, 'laser') ? (aimItem.userData.power ? '조작하기 · 레이저 끄기' : '조작하기 · 레이저 켜기') : '조작하기'], ['KeyE', 'F', '회전시키기'], ['KeyR', 'G', '치우기']];
-  } else {
-    title = '실험기구를 조준해 보세요';
-    acts = [['hint', '왼쪽 실험기구 버튼으로 기구를 실험대에 올려요'], ['hint', isTouch ? '두 손가락으로 끌면 시야가 돌고, 벌리면 확대돼요' : 'W·A·S·D로 시야를 돌리고, 마우스 휠로 확대·축소해요 (0: 처음 시점)']];
+    // 가리킨 기구: 눌렀을 때 실제로 무언가 일어나는 것만 보여 준다
+    const u = aimItem.userData;
+    title = dispName(aimItem);
+    acts = [['KeyQ', 'E', u.kind === 'wire' && u.endA ? '줍기 (전선 빼기)' : '줍기']];
+    if (u.kind === 'cart' && u.loads.length) acts.push(['UNLOAD', '', '추 하나 내리기']);
+    const op = operateLabel(aimItem, false); if (op) acts.push(['KeyW', 'R', op]);
+    if (u.kind === 'scale' && u.onCart && u.onCart.userData.rail) for (const F of FORCE_STEPS) acts.push([`PULL${F}`, '', `${F}N으로 끌기`]);
+    if (aimItem.parent === scene && canRotate(aimItem)) acts.push(['KeyE', 'F', '회전시키기']);
+    acts.push(['KeyR', 'G', '치우기']);
   }
-  const key = title + JSON.stringify(acts);
-  if (key === lastActKey) return; lastActKey = key;
-  $('actTitle').textContent = title;
-  const list = $('actList'); list.innerHTML = '';
+  curTitle = title; curActs = acts;
+  updateNameTip(link);
+}
+// 커서 바로 위 이름표: 기구 위에서는 기구 이름, 손에 들고 있으면 놓을 곳·연계 안내
+function updateNameTip(link) {
+  const tip = $('nameTip'); if (!tip) return;
+  let text = '', heldMode = false;
+  if (playing && !demoState.active && !ctxMenu.open && !isTouch) {
+    if (insertMode.active) { text = '클릭: 자석 조작'; heldMode = true; }
+    else if (held) { heldMode = true; text = link ? (link.label || link.msg || '') : placement ? placement.msg : '놓을 곳을 가리켜 주세요'; }
+    else if (aimItem) text = dispName(aimItem);
+  }
+  tip.hidden = !text;
+  if (text) { if (tip.textContent !== text) tip.textContent = text; tip.classList.toggle('held', heldMode); tip.style.left = aimPx.x + 'px'; tip.style.top = aimPx.y + 'px'; }
+}
+// 선택창: 클릭한 곳 위에 할 수 있는 일을 버튼으로 보여 주고, 누르면 그 일을 한다
+const ctxMenu = { open: false };
+function openCtxMenu() {
+  if (!playing || demoState.active) return;
+  const acts = curActs;
+  if (!acts.length) return;
+  const btns = acts.filter(a => a[0] !== 'hint');
+  if (btns.length === 1) { runAct(btns[0][0]); return; }                 // 고를 것이 하나뿐이면 선택창 없이 바로
+  if (!btns.length) { const h = acts.find(a => a[0] === 'hint'); if (h) toast(h[1]); return; }
+  const m = $('ctxMenu');
+  m.querySelector('.cmTitle').textContent = curTitle;
+  const list = m.querySelector('.cmList'); list.innerHTML = '';
   for (const [code, k, label, off] of acts) {
     if (code === 'hint') { const d = document.createElement('div'); d.className = 'hint'; d.textContent = k; list.appendChild(d); continue; }
-    const b = document.createElement('button'); b.type = 'button'; if (off) b.className = 'off';
-    b.innerHTML = `<kbd>${k}</kbd>${label}`;
-    b.addEventListener('click', () => ({ KeyQ: doQ, KeyW: doW, KeyE: doE, KeyR: doR })[code]());
+    const b = document.createElement('button'); b.type = 'button'; if (off) b.className = 'off'; b.textContent = label;
+    b.addEventListener('click', e => { e.stopPropagation(); closeCtxMenu(); runAct(code); });
     list.appendChild(b);
   }
+  m.style.left = aimPx.x + 'px'; m.style.top = aimPx.y + 'px';
+  m.hidden = false; ctxMenu.open = true; $('nameTip').hidden = true;
+  // 화면 밖으로 나가지 않게
+  const r = m.getBoundingClientRect(), vw = view.clientWidth || innerWidth;
+  if (r.top < 4) m.style.top = (aimPx.y + (4 - r.top)) + 'px';
+  if (r.left < 4) m.style.left = (aimPx.x + (4 - r.left)) + 'px';
+  if (r.right > vw - 4) m.style.left = (aimPx.x - (r.right - vw + 4)) + 'px';
 }
+function runAct(code) {
+  const f = { KeyQ: doQ, KeyW: doW, KeyE: doE, KeyR: doR, PULL1: () => pullWith(1), PULL2: () => pullWith(2), PULL3: () => pullWith(3),
+    UNLOAD: () => { const c = aimItem, w = c && c.userData.loads[c.userData.loads.length - 1]; if (w && !held) pickUp(w); } }[code];
+  if (f) f();
+}
+function closeCtxMenu() { $('ctxMenu').hidden = true; ctxMenu.open = false; }
 
 /* ---------- 실험기구 선택창 ---------- */
 const TABLE = { y: 0.9, minX: -1.2, maxX: 1.2, minZ: -2.0, maxZ: -0.8 };
 function itemLabel(it) { return it.userData.name; }
 // 실험대 위 빈자리 찾기: 지금 보고 있는 시야의 가운데(실험대 가운데)에서 가까운 곳부터
 function findSpot(it) {
-  const r = it.userData.radius || 0.08, cands = [];
-  for (let x = -1.12; x <= 1.1201; x += 0.14) for (let z = -0.88; z >= -1.92; z -= 0.13) cands.push([x, z]);
+  const u = it.userData, fp = u.footprint;
+  const r = u.radius || 0.08, cands = [];
+  // 긴 기구(레일)는 실험대 길이 방향으로 놓고, 직사각형 크기로 빈자리를 찾는다
+  let rx = r, rz = r, th = 0;
+  if (fp) { if (u.worldYaw === undefined) u.worldYaw = Math.cos(player.yaw) >= 0 ? 0 : Math.PI; th = u.worldYaw + (u.angle || 0); const c = Math.abs(Math.cos(th)), sn = Math.abs(Math.sin(th)); rx = c * fp[0] + sn * fp[1]; rz = sn * fp[0] + c * fp[1]; }
+  for (let x = -1.12; x <= 1.1201; x += 0.07) for (let z = -0.86; z >= -1.94; z -= 0.065) cands.push([x, z]);
   const cx = view3.target.x, cz = view3.target.z;
   cands.sort((A, B) => Math.hypot(A[0] - cx, A[1] - cz) - Math.hypot(B[0] - cx, B[1] - cz));
   for (const [x, z] of cands) {
-    if (x - r < TABLE.minX || x + r > TABLE.maxX || z - r < TABLE.minZ || z + r > TABLE.maxZ) continue;
+    if (x - rx < TABLE.minX || x + rx > TABLE.maxX || z - rz < TABLE.minZ || z + rz > TABLE.maxZ) continue;
     let ok = true;
     for (const o of items) {
       if (o === it || o.parent !== scene || o.position.y < 0.5) continue;
-      if (Math.hypot(o.position.x - x, o.position.z - z) < r + (o.userData.radius || 0.08) + 0.03) { ok = false; break; }
+      if (fp) {
+        const dx = o.position.x - x, dz = o.position.z - z, lx = dx * Math.cos(th) - dz * Math.sin(th), lz = dx * Math.sin(th) + dz * Math.cos(th);
+        if (Math.hypot(Math.max(0, Math.abs(lx) - fp[0]), Math.max(0, Math.abs(lz) - fp[1])) < (o.userData.footprint ? o.userData.footprint[1] : o.userData.radius || 0.08) + 0.03) { ok = false; break; }
+      } else if (overlaps(o, x, z, r + 0.03)) { ok = false; break; }
     }
     if (ok) return { x, z };
   }
@@ -2297,13 +2994,14 @@ function placeFromInventory(entry) {
   const sp = findSpot(it);
   if (!sp) { destroyItem(it); toast('실험대에 빈 자리가 없어요. 기구를 몇 개 치워 주세요.'); return; }
   scene.add(it); it.position.set(sp.x, TABLE.y + 0.002, sp.z); setPlacedRotation(it, it, 'surface');
-  if (isK(it, 'balance')) { it.userData.phi = 0; it.userData.omega = 0; updateBalancePose(it); }
+  resetPose(it);
   bodyOn(it); refreshInventory();
   toast(`${josa(itemLabel(it), '을', '를')} 실험대에 올렸어요.`);
 }
 function refreshInventory() {
   const grid = $('invGrid'); if (!grid) return; grid.innerHTML = '';
-  for (const entry of CATALOG) {
+  const sorted = [...CATALOG].sort((A, B) => (A.name || '').localeCompare(B.name || '', 'ko'));   // 가나다순 (새로 추가되는 기구도 자동으로)
+  for (const entry of sorted) {
     const n = items.filter(it => it.userData.catalog === entry.key).length;
     const b = document.createElement('button'); b.type = 'button'; b.className = 'invItem';
     b.innerHTML = `<img alt="" src="${entry.thumb || ''}"><span>${entry.name || ''}</span><span class="st">${n ? `실험대에 ${n}개` : ''}</span>`;
@@ -2322,7 +3020,7 @@ function placeAt(key, x, z, angle = 0) {          // 실험대의 정해진 자�
   it.userData.angle = angle; player.yaw = 0;
   scene.add(it); it.position.set(x, TABLE.y + 0.002, z); setPlacedRotation(it, it, 'surface');
   player.yaw = yaw;
-  if (isK(it, 'balance')) { it.userData.phi = 0; it.userData.omega = 0; updateBalancePose(it); }
+  resetPose(it);
   bodyOn(it);
   return it;
 }
@@ -2332,9 +3030,19 @@ function connectLead(w, T1, T2) {                   // 집게 전선 양쪽 집�
   scene.add(w); w.position.set(0, -10, 0); bodyOff(w);   // 뭉치는 숨기고 전선만 그린다
 }
 const SETUPS = {
-  mech: { name: '역학', thumb: 'balance', run() {
-    placeAt('balance', 0, -1.5);
-    for (const x of [-0.3, -0.1, 0.1, 0.3]) placeAt('weight', x, -1.05);
+  lever: { name: '지레', thumb: 'lever', run() {
+    const lev = placeAt('lever', 0, -1.5);
+    const ws = [];
+    for (let i = 0; i < 10; i++) ws.push(placeAt('hweight', -0.45 + i * 0.1, -1.0));
+    return { lev, ws };
+  } },
+  fma: { name: '힘·질량·가속도', thumb: 'cart', run() {
+    const rail = placeAt('rail', 0, -1.45);
+    const cart = spawnItem(catalogOf('cart')); scene.add(cart); attachToRail(cart, rail);
+    const sc = spawnItem(catalogOf('scale')); scene.add(sc); attachScale(sc, cart); setScaleForce(sc, 1);
+    const ws = [-0.25, 0.25].map(x => placeAt('cartweight', x, -1.0));
+    measure.runs.length = 0; drawGraph();
+    return { rail, cart, sc, ws };
   } },
   optics: { name: '광학', thumb: 'laser', run() {
     const laser = placeAt('laser', -0.85, -1.3, -Math.PI / 2);     // 빛이 오른쪽(+x)으로 나가게 눕힌다
@@ -2343,18 +3051,20 @@ const SETUPS = {
     setLaserPower(laser, true);
   } },
   em: { name: '전자기학', thumb: 'coil', run() {
-    const coil = placeAt('coil', -0.25, -1.35), galv = placeAt('galv', 0.3, -1.4);
-    placeAt('magnet', -0.25, -1.0);
+    const coil = placeAt('coil', -0.25, -1.35), galv = placeAt('galv', 0, -0.98);
+    const mag = placeAt('magnet', 0.38, -1.05);
     const red = spawnItem(catalogOf('leadR')), black = spawnItem(catalogOf('leadB'));
     const [cA, cB] = coil.userData.terms, [gP, gM] = galv.userData.terms;
     connectLead(red, cB, gP); connectLead(black, cA, gM);             // 코일 B–검류계 +, 코일 A–검류계 −
+    return { coil, galv, mag };
   } },
 };
 function runSetup(key) {
   const S = SETUPS[key]; if (!S) return;
+  if (!demoState.active) $('demoBar').hidden = true;
   resetLab();
   try { S.run(); } catch (e) { console.warn('setup', e); }
-  setView(VIEW_HOME.az, VIEW_HOME.el, homeDist());
+  setView(VIEW_HOME.az, VIEW_HOME.el, homeViewDist(), true);
   refreshInventory();
   toast(`${S.name} 실험 기구를 세팅했어요.`);
 }
@@ -2366,6 +3076,213 @@ document.querySelectorAll('.setBtn').forEach(b => b.addEventListener('click', ()
   $('cbText').textContent = items.length ? `실험대를 비우고 ${S.name} 실험 기구를 세팅할까요?` : `${S.name} 실험 기구를 세팅할까요?`;
   $('confirmBox').hidden = false;
 }));
+
+/* ---------- 시범 실험: 기구를 세팅한 뒤 정해진 순서대로 자동으로 실험하며 설명을 보여 준다 ---------- */
+const DEMO_SEC = 20;                                // 시범 실험 길이 (초)
+const demoState = { active: false, stop: false, tickers: [], moved: new Set(), hideTimer: 0, elapsed: 0, shown: -1 };
+class DemoAbort extends Error {}
+function updateDemo(dt) {
+  if (demoState.tickers.length) for (const t of [...demoState.tickers]) t(dt);
+  if (demoState.active) {                           // 남은 시간 표시
+    demoState.elapsed += dt;
+    const left = Math.max(0, Math.ceil(DEMO_SEC - demoState.elapsed - 1e-6));
+    if (left !== demoState.shown) { demoState.shown = left; $('demoTime').textContent = `${left}초`; }
+  }
+}
+function tween(sec, fn, ease = t => t * t * (3 - 2 * t)) {      // 실험실 시간으로 sec초 동안 fn(진행률)
+  return new Promise((res, rej) => {
+    if (demoState.stop) { rej(new DemoAbort()); return; }
+    let el = 0;
+    const remove = () => { const k = demoState.tickers.indexOf(tick); if (k >= 0) demoState.tickers.splice(k, 1); };
+    const tick = dt => {
+      if (demoState.stop) { remove(); rej(new DemoAbort()); return; }
+      el += dt; const t = Math.min(1, sec > 0 ? el / sec : 1); fn(ease(t), t);
+      if (t >= 1) { remove(); res(); }
+    };
+    demoState.tickers.push(tick);
+  });
+}
+const wait = sec => tween(sec, () => {});
+function say(text) { $('demoText').textContent = text; }
+function setFlat(it, x, z, ang, lift = 0) {          // 실험대 위 (x, z)에 앞쪽 기준 방향 ang으로 놓인 자세
+  const yaw = player.yaw; player.yaw = 0; it.userData.angle = ang; it.userData.worldYaw = undefined;
+  it.position.set(x, TABLE.y + 0.002 + lift, z); setPlacedRotation(it, it, 'surface');
+  player.yaw = yaw;
+}
+function holdForDemo(it) { stopMotion(it); bodyOff(it); demoState.moved.add(it); }   // 시범 동안은 물리 계산 밖에서 움직인다
+async function slide(it, x, z, ang, sec = 1.2) {
+  holdForDemo(it);
+  const x0 = it.position.x, z0 = it.position.z, a0 = it.userData.angle || 0;
+  await tween(sec, t => setFlat(it, x0 + (x - x0) * t, z0 + (z - z0) * t, a0 + (ang - a0) * t, 0.04 * Math.sin(Math.PI * t)));
+}
+function putOnPan(it, bal, side, slot) {
+  stopMotion(it); bodyOff(it); demoState.moved.delete(it);
+  const p = bal.userData.pans[side];
+  p.items[slot] = it; p.slots[slot].add(it); it.userData.pan = { bal, side, slot };
+  it.position.set(0, 0, 0); it.rotation.set(0, Math.random() * 6, 0);
+  updateBalanceMass(bal);
+}
+async function flyToPan(w, bal, side) {
+  const slot = bal.userData.pans[side].items.findIndex(x => !x); if (slot < 0) return;
+  holdForDemo(w);
+  const p0 = w.position.clone(), tgt = new THREE.Vector3();
+  await tween(1.1, t => {
+    bal.userData.pans[side].slots[slot].getWorldPosition(tgt);
+    w.position.lerpVectors(p0, tgt, t); w.position.y += 0.12 * Math.sin(Math.PI * t);
+  });
+  putOnPan(w, bal, side, slot);
+}
+// 시범 실험은 모두 20초: 각 장면의 시간을 더하면 20초가 되도록 맞췄다
+const DEMOS = {
+  async lever() {                                  // 2 + 2 + 1.5 + 2.5 + 0.8 + 2.2 + 3.5 + 5.5 = 20초
+    const { lev, ws } = SETUPS.lever.run();
+    setView(0, 0.3, homeDist() * 0.62);
+    const home = ws.map(w => [w.position.x, w.position.z]);
+    const fly = async (w, n, sec = 0.7) => {                       // 추를 눈금으로 날려 건다
+      const N = lev.userData.notches.get(n), idx = N.items.length + N.pending; N.pending++;
+      holdForDemo(w); const p0 = w.position.clone(), tgt = new THREE.Vector3();
+      try {
+        await tween(sec, t => { tgt.set(0, -(idx + 1) * LEV.wh, 0); N.group.localToWorld(tgt); w.position.lerpVectors(p0, tgt, t); w.position.y += 0.15 * Math.sin(Math.PI * t); });
+      } finally { N.pending--; }
+      demoState.moved.delete(w); attachToNotch(w, lev, n);
+    };
+    const back = async (w, i, sec = 0.8) => {                      // 추를 실험대로 되돌린다
+      leaveLever(w); holdForDemo(w); const p0 = w.position.clone(), p1 = new THREE.Vector3(home[i][0], TABLE.y + 0.002, home[i][1]);
+      await tween(sec, t => { w.position.lerpVectors(p0, p1, t); w.position.y += 0.1 * Math.sin(Math.PI * t); });
+    };
+    say('지레 막대를 스탠드에 걸고 수평을 맞췄어요. 받침점 양쪽에 눈금 1~5가 있어요.'); await wait(2);
+    say('오른쪽 눈금 2에 추 1개를 걸면 오른쪽으로 기울어요.'); await fly(ws[0], 2); await wait(1.3);
+    say('왼쪽 눈금 1에 추 1개를 걸어도 아직 오른쪽이 내려가 있어요.'); await fly(ws[1], -1); await wait(0.8);
+    say('왼쪽 눈금 1에 추를 2개 걸면 수평! 1 × 2 = 2 × 1'); await fly(ws[2], -1); await wait(1.8);
+    say('추를 모두 내려놓아요.'); await Promise.all([back(ws[0], 0), back(ws[1], 1), back(ws[2], 2)]);
+    say('이번에는 오른쪽 눈금 2에 추 4개를 걸어요.'); await Promise.all([3, 4, 5, 6].map(i => fly(ws[i], 2, 0.9))); await wait(1.3);
+    say('왼쪽 눈금 4에 추 2개를 걸면 다시 수평! 4 × 2 = 2 × 4'); await Promise.all([7, 8].map(i => fly(ws[i], -4, 0.9))); await wait(2.6);
+    say('지레가 수평을 이루려면 양쪽의 (받침점까지의 거리 × 추의 무게)가 같아야 해요. 이것이 돌림힘의 평형이에요.'); await wait(5.5);
+  },
+  async fma() {                                    // 약 14초 동안 끌기 5번 + 마지막 정리 (모두 20초)
+    const { cart, sc, ws } = SETUPS.fma.run();
+    setView(0, 0.5, homeDist() * 0.85);
+    const pull = async (F, cap) => { resetCart(cart); setScaleForce(sc, F); say(cap); await startRun(cart); await wait(0.9); };
+    const load = async w => {
+      holdForDemo(w); const p0 = w.position.clone(), tgt = new THREE.Vector3();
+      await tween(0.6, t => { tgt.set(0, 0.047 + cart.userData.loads.length * 0.021, 0); cart.localToWorld(tgt); w.position.lerpVectors(p0, tgt, t); w.position.y += 0.1 * Math.sin(Math.PI * t); });
+      demoState.moved.delete(w); attachLoad(w, cart);
+    };
+    say('역학 수레(1 kg)를 레일에 올리고, 앞에 용수철저울을 걸었어요.'); await wait(2);
+    await pull(1, '1 N의 힘으로 끌어요. 속도가 일정하게 빨라져요.');
+    await pull(2, '2 N으로 끌면 속도가 더 빨리 증가해요.');
+    await pull(3, '3 N이면 더 빨리! 힘이 클수록 가속도가 커요. (a ∝ F)'); await wait(0.6);
+    resetCart(cart); say('이번에는 힘을 3 N으로 두고 수레에 1 kg 추를 올려 질량을 늘려요.'); await load(ws[0]);
+    await pull(3, '2 kg: 같은 힘이어도 속도가 천천히 증가해요.');
+    await load(ws[1]);
+    await pull(3, '3 kg: 질량이 클수록 가속도가 작아요. (a ∝ 1/m)');
+    say('그래프의 기울기가 가속도예요. 가속도는 힘에 비례하고 질량에 반비례해요: F = m a');
+    await wait(Math.max(0.5, DEMO_SEC - demoState.elapsed));
+  },
+  async optics() {                                 // 1.2 + 3.6 + 3.6 + 5.8 + 3.6 + 2.2 = 20초
+    const laser = placeAt('laser', -0.85, -1.3, -Math.PI / 2);   // 빛이 오른쪽(+x)으로
+    const keys = ['convex', 'concave', 'prism', 'plane', 'concaveMirror', 'convexMirror'], L = {}, home = {};
+    keys.forEach((k, i) => { home[k] = [-0.9 + i * 0.36, -1.8]; L[k] = placeAt(k, home[k][0], home[k][1]); });
+    const back = k => slide(L[k], home[k][0], home[k][1], 0, 0.6);
+    setView(0, 1.1, homeDist() * 0.8);
+    say('레이저를 켜요. 빛 세 줄이 나란히 나아가요.'); setLaserPower(laser, true); await wait(1.2);
+    say('볼록렌즈를 놓으면 빛이 굴절해 한 점(초점, 약 12 cm)에 모여요.');
+    await slide(L.convex, -0.35, -1.3, -Math.PI / 2, 0.8); await wait(2.2); await back('convex');
+    say('오목렌즈를 놓으면 빛이 퍼져 나가요.');
+    await slide(L.concave, -0.35, -1.3, -Math.PI / 2, 0.8); await wait(2.2); await back('concave');
+    say('직각 프리즘을 돌리면 꺾이는 정도가 달라지고, 임계각(약 42°)보다 크게 닿으면 전반사가 일어나요.');
+    await slide(L.prism, -0.35, -1.3, 0, 0.8);
+    await tween(4.4, t => setFlat(L.prism, -0.35, -1.3, 2 * Math.PI * t), t => t); await back('prism');
+    say('오목거울에서 반사된 빛은 거울 앞의 초점에 모여요.');
+    await slide(L.concaveMirror, -0.2, -1.3, -Math.PI / 2, 0.8); await wait(2.2); await back('concaveMirror');
+    say('볼록거울에서 반사된 빛은 퍼져 나가요.');
+    await slide(L.convexMirror, -0.2, -1.3, -Math.PI / 2, 0.8); await wait(1.4);
+  },
+  async em() {                                     // 2 + 1 + 2.5 + 1.5 + 2.5 + 2.8 + 1 + 4.4 + 0.8 + 1.5 = 20초
+    const { coil, mag } = SETUPS.em.run();
+    setView(0, 0.42, homeDist() * 0.6);
+    say('코일과 검류계를 집게 전선으로 연결했어요. 지금은 바늘이 0을 가리켜요.'); await wait(2);
+    say('막대자석의 N극이 아래를 향하게 해서 코일 위에 세워요.');
+    holdForDemo(mag);
+    const p0 = mag.position.clone(), q0 = mag.quaternion.clone();
+    mag.userData.flip = false; insertMode.coil = coil; insertMode.magnet = mag; insertMode.depth = INSERT_MAX;
+    magnetPoseOnCoil(); const p1 = mag.position.clone(), q1 = mag.quaternion.clone();
+    mag.position.copy(p0); mag.quaternion.copy(q0);
+    await tween(1, t => { mag.position.lerpVectors(p0, p1, t); mag.position.y += 0.08 * Math.sin(Math.PI * t); mag.quaternion.slerpQuaternions(q0, q1, t); });
+    insertMode.active = true;
+    const depth = (d, sec) => { const d0 = insertMode.depth; return tween(sec, t => { insertMode.depth = d0 + (d - d0) * t; }); };
+    say('N극을 코일 속으로 넣으면 자기 선속이 늘어나 유도 전류가 흘러 바늘이 움직여요.');
+    await depth(INSERT_MIN, 1.5); await wait(1);
+    say('자석을 멈추면 자기 선속이 변하지 않아 바늘이 0으로 돌아와요.'); await wait(1.5);
+    say('자석을 빼면 자기 선속이 줄어들어 바늘이 반대쪽으로 움직여요.');
+    await depth(INSERT_MAX, 1.5); await wait(1);
+    say('빠르게 넣고 빼면 바늘이 더 크게 움직여요. (ε = −N ΔΦ/Δt)');
+    await depth(INSERT_MIN, 0.6); await wait(0.8); await depth(INSERT_MAX, 0.6); await wait(0.8);
+    say('S극이 아래를 향하게 바꿔요.'); mag.userData.flip = true; await wait(1);
+    say('S극을 넣고 빼면 N극일 때와 반대 방향으로 바늘이 움직여요.');
+    await depth(INSERT_MIN, 1.5); await wait(0.7); await depth(INSERT_MAX, 1.5); await wait(0.7);
+    insertMode.active = false;
+    say('자석을 내려놓아요.');
+    const p2 = mag.position.clone(), q2 = mag.quaternion.clone();
+    mag.userData.flip = false; setFlat(mag, p0.x, p0.z, 0); const q3 = mag.quaternion.clone();
+    await tween(0.8, t => { mag.position.lerpVectors(p2, p0, t); mag.position.y += 0.06 * Math.sin(Math.PI * t); mag.quaternion.slerpQuaternions(q2, q3, t); });
+    await wait(1.5);
+  },
+};
+function endDemo(aborted) {
+  demoState.active = false; demoState.stop = false; demoState.tickers.length = 0;
+  insertMode.active = false;
+  for (const it of [...demoState.moved]) {           // 움직이던 기구를 실험대 위에 다시 내려놓는다
+    if (!it.parent) continue;
+    if (aborted && ['weight', 'hweight', 'magnet'].includes(it.userData.kind)) {   // 공중에서 멈춘 추·자석은 빈자리에
+      it.userData.flip = false;
+      const sp = findSpot(it) || { x: it.position.x, z: -1.0 }; setFlat(it, sp.x, sp.z, 0);
+    } else { if (it.userData.kind === 'magnet') { it.userData.flip = false; setFlat(it, it.position.x, it.position.z, 0); } it.position.y = TABLE.y + 0.002; }
+    bodyOn(it);
+  }
+  demoState.moved.clear();
+  $('actions').hidden = false; lastActKey = ''; $('demoTime').textContent = '';
+  say(aborted ? '시범 실험을 멈췄어요. 직접 실험해 볼까요, 다른 실험을 볼까요?' : '시범 실험이 끝났어요. 이제 직접 실험해 볼까요?');
+  demoButtons(false);
+}
+function demoButtons(running) {                     // 진행 중: 시범 종료 / 끝난 뒤: 실험 시작 · 다른 실험
+  $('demoStop').hidden = !running; $('demoStart').hidden = running; $('demoOther').hidden = running;
+}
+async function runDemo(key) {
+  const D = DEMOS[key]; if (!D || demoState.active) return;
+  resetLab();
+  view3.targetT.copy(VIEW_CENTER);
+  demoState.active = true; demoState.stop = false; demoState.key = key; demoState.elapsed = 0; demoState.shown = -1;
+  $('actions').hidden = true; $('demoBar').hidden = false; say(''); demoButtons(true);
+  let aborted = false;
+  try { await D(); }
+  catch (e) { aborted = e instanceof DemoAbort; if (!aborted) console.warn('demo', e); }
+  endDemo(aborted);
+  refreshInventory();
+}
+document.getElementById('demoStop').addEventListener('click', () => { if (demoState.active) demoState.stop = true; });
+document.getElementById('gClear').addEventListener('click', () => { measure.runs.length = 0; drawGraph(); });
+document.getElementById('gClose').addEventListener('click', () => { document.getElementById('graphPanel').hidden = true; });
+document.getElementById('demoStart').addEventListener('click', () => {   // 같은 실험의 기구를 다시 세팅해서 직접 실험
+  $('demoBar').hidden = true; if (demoState.key) runSetup(demoState.key);
+});
+document.getElementById('demoOther').addEventListener('click', () => {   // 실험대를 비우고 추천 실험 창 열기
+  $('demoBar').hidden = true; resetLab(); refreshInventory();
+  $('invPanel').hidden = true; $('recPanel').hidden = false;
+});
+document.querySelectorAll('.demoBtn').forEach(b => b.addEventListener('click', () => {
+  const key = b.dataset.demo, S = SETUPS[key]; if (!S) return;
+  $('recPanel').hidden = true;
+  pendingItem = null; pendingAction = () => runDemo(key);
+  $('cbImg').src = catalogOf(S.thumb).thumb || '';
+  $('cbText').textContent = items.length ? `실험대를 비우고 ${S.name} 시범 실험을 시작할까요?` : `${S.name} 시범 실험을 시작할까요?`;
+  $('confirmBox').hidden = false;
+}));
+// 시범 중에는 왼쪽 버튼(실험기구·추천 실험·실험대 비우기)을 잠시 막는다
+document.getElementById('sideBtns').addEventListener('click', e => {
+  if (!demoState.active) return;
+  e.stopPropagation(); e.preventDefault(); toast('시범 실험 중이에요. 아래의 시범 종료를 누른 뒤에 사용해 주세요.');
+}, true);
 (function setupInventory() {
   const $$ = id => document.getElementById(id);
   $$('invBtn').addEventListener('click', () => { refreshInventory(); $$('recPanel').hidden = true; $$('invPanel').hidden = !$$('invPanel').hidden; });
@@ -2382,7 +3299,7 @@ document.querySelectorAll('.setBtn').forEach(b => b.addEventListener('click', ()
   $$('clearTable').addEventListener('click', () => {
     if (!items.length) { toast('실험대가 이미 비어 있어요.'); return; }
     $$('invPanel').hidden = true; $$('recPanel').hidden = true;
-    pendingItem = null; pendingAction = () => { resetLab(); toast('실험대를 비웠어요.'); };
+    pendingItem = null; pendingAction = () => { resetLab(); $$('demoBar').hidden = true; toast('실험대를 비웠어요.'); };
     $$('cbImg').removeAttribute('src'); $$('cbText').textContent = '실험대 위의 기구를 모두 치울까요?';
     $$('confirmBox').hidden = false;
   });
@@ -2488,7 +3405,7 @@ document.addEventListener('pointerlockchange', () => {
     clearTimeout(lockTimer); everLocked = true; mode = 'lock'; playing = true; overlay.hidden = true;
   } else if (mode === 'lock' && playing) {
     playing = false; for (const k in keys) keys[k] = false; player.zoom = false; setCrouch(false);
-    startBtn.textContent = '실험 계속하기'; overlay.hidden = false;
+    startBtn.textContent = '다시 입장하기'; overlay.hidden = false;
   }
 });
 document.addEventListener('pointerlockerror', onLockFail);
@@ -2534,11 +3451,27 @@ document.addEventListener('pointermove', e => {
   if (insertMode.active) insertMode.depth = Math.max(INSERT_MIN, Math.min(INSERT_MAX, insertMode.depth - e.movementY * 0.00045));   // 마우스 아래로 → 자석이 아래로
   else player.pitch = Math.max(-1.45, Math.min(1.45, player.pitch - e.movementY * s * z));
 });
+// 기구를 클릭하면 커서 위에 선택창. 선택창이 열려 있을 때 빈 곳을 클릭하면 닫힌다
+canvas.addEventListener('click', e => {
+  if (!playing) return;
+  if (ctxMenu.open) { closeCtxMenu(); return; }
+  setAim(e.clientX, e.clientY);
+  requestAnimationFrame(() => requestAnimationFrame(openCtxMenu));   // 누른 곳을 조준한 다음 프레임에 연다 (휴대폰 터치 포함)
+});
+document.getElementById('viewGuide').addEventListener('click', e => {
+  const v = e.target.closest('button')?.dataset.view; if (!v) return;
+  closeCtxMenu();
+  if (v === 'top') setView(view3.azT, VIEW_LIM.elMax);
+  else if (v === 'left') setView(-Math.PI / 2, 0.12);
+  else if (v === 'right') setView(Math.PI / 2, 0.12);
+  else if (v === 'front') setView(0, 0.12);
+  else setView(VIEW_HOME.az, VIEW_HOME.el, homeViewDist(), true);
+});
 // 마우스 휠: 확대·축소
 canvas.addEventListener('wheel', e => {
-  e.preventDefault(); if (!playing) return;
+  e.preventDefault(); if (!playing) return; closeCtxMenu();
   const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * 400 : e.deltaY;
-  view3.distT *= Math.exp(Math.max(-0.5, Math.min(0.5, dy * 0.0012))); clampView();
+  zoomAt(aimNDC.clone(), Math.exp(Math.max(-0.5, Math.min(0.5, dy * 0.0012))));   // 마우스 커서가 있는 곳을 중심으로
 }, { passive: false });
 // 휴대폰: 두 손가락으로 끌면 둘레 돌기·위아래 보기, 벌리고 오므리면 확대·축소
 (function setupGestures() {
@@ -2549,22 +3482,23 @@ canvas.addEventListener('wheel', e => {
     if (!tps.has(e.pointerId)) return; tps.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (tps.size !== 2 || !g0 || !playing) return;
     const g = state(), [dx, dy] = screenDelta(g.mx - g0.mx, g.my - g0.my);
-    view3.azT -= dx * 0.006; view3.elT += dy * 0.006; view3.distT *= g0.d / g.d; clampView(); g0 = g;
+    view3.azT -= dx * 0.006; view3.elT += dy * 0.006; clampView();
+    setAim(g.mx, g.my); zoomAt(aimNDC.clone(), g0.d / g.d); g0 = g;    // 두 손가락 사이를 중심으로 확대·축소
   });
   const end = e => { tps.delete(e.pointerId); g0 = tps.size === 2 ? state() : null; };
   canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
 })();
-const VIEW_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Equal', 'Minus', 'NumpadAdd', 'NumpadSubtract'];
+const VIEW_KEYS = ['Equal', 'Minus', 'NumpadAdd', 'NumpadSubtract'];
 addEventListener('keydown', e => {
-  if (e.code === 'Escape') { $('invPanel').hidden = true; $('recPanel').hidden = true; $('confirmBox').hidden = true; return; }
+  if (e.code === 'Escape') { closeCtxMenu(); $('invPanel').hidden = true; $('recPanel').hidden = true; $('confirmBox').hidden = true; return; }
   if (!playing || !$('confirmBox').hidden) return;
   if (VIEW_KEYS.includes(e.code)) { e.preventDefault(); keys[e.code] = true; return; }   // 시야: 누르고 있는 동안 계속
   if (e.repeat) return;
-  if (e.code === 'Digit0' || e.code === 'Numpad0' || e.code === 'Home') { setView(VIEW_HOME.az, VIEW_HOME.el, homeDist()); return; }
-  if (e.code === 'Digit1' || e.code === 'Numpad1') { setView(0, 0.12); return; }                  // 앞에서
-  if (e.code === 'Digit2' || e.code === 'Numpad2') { setView(view3.azT, VIEW_LIM.elMax); return; } // 위에서
-  if (e.code === 'Digit3' || e.code === 'Numpad3') { setView(-Math.PI / 2, 0.12); return; }       // 왼쪽 옆에서
-  if (e.code === 'Digit4' || e.code === 'Numpad4') { setView(Math.PI / 2, 0.12); return; }        // 오른쪽 옆에서
+  if (e.code === 'KeyQ') { setView(VIEW_HOME.az, VIEW_HOME.el, homeViewDist(), true); return; }
+  if (e.code === 'KeyW') { setView(view3.azT, VIEW_LIM.elMax); return; }   // 위에서 (지금 보는 방향 그대로)
+  if (e.code === 'KeyA') { setView(-Math.PI / 2, 0.12); return; }         // 왼쪽 옆에서
+  if (e.code === 'KeyS') { setView(0, 0.12); return; }                    // 앞에서
+  if (e.code === 'KeyD') { setView(Math.PI / 2, 0.12); return; }          // 오른쪽 옆에서
   if (e.code === 'KeyE') doQ();          // 줍기·놓기·연계하기
   else if (e.code === 'KeyR') doW();     // 조작하기
   else if (e.code === 'KeyF') doE();     // 회전시키기
@@ -2582,7 +3516,12 @@ function onResize() {
 let screenRotated = false;
 function fitScreen() {
   const vv = window.visualViewport;
-  const vw = Math.round(vv ? vv.width : innerWidth), vh = Math.round(vv ? vv.height : innerHeight);
+  let vw = Math.round(vv ? vv.width : innerWidth), vh = Math.round(vv ? vv.height : innerHeight);
+  const app = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
+  if (isTouch && app && screen.width && screen.height) {            // 홈 화면 앱: 세로·가로 모두 화면 전체 크기로 똑같이
+    const L = Math.max(screen.width, screen.height), S = Math.min(screen.width, screen.height);
+    if (vh > vw) { vw = S; vh = L; } else { vw = L; vh = S; }
+  }
   screenRotated = isTouch && vh > vw;
   const b = document.body;
   b.classList.toggle('rot', screenRotated);
@@ -2738,10 +3677,14 @@ function frame() {
   camera.updateMatrixWorld();
 
   // 저울 물리
-  for (const b of items) if (isK(b, 'balance') && b.parent) stepBalance(b, dt);
+  for (const b of items) { if (!b.parent) continue; if (isK(b, 'balance')) stepBalance(b, dt); else if (isK(b, 'lever')) stepLever(b, dt); }
   physicsStep(dt);
+  updateCarts(dt);
+  updateDemo(dt);
 
-  // 조준 (마우스 커서 / 누른 곳)
+  // 조준 (마우스 커서 / 누른 곳). 선택창이 열려 있는 동안에는 클릭한 순간의 조준을 그대로 둔다
+  let link = lastLink;
+  if (!ctxMenu.open) {
   ray.setFromCamera(aimNDC, camera);
   const hits = ray.intersectObjects(scene.children, true).filter(h => h.object.raycast !== noRay && h.object.visible && !h.object.isLine);
   const hit = hits[0];
@@ -2754,16 +3697,20 @@ function frame() {
     if (wo) aimItem = wo.userData.wireOf;                                        // 연결된 전선
   }
   if (!held && aimTerm && aimTerm.clip && !aimItem) aimItem = aimTerm.clip;
+  if (!aimItem && !held) aimItem = nearItemOnScreen(PICK_PX);                  // 작은 기구는 커서 근처만 가리켜도 고른다 (들고 있을 때는 놓을 자리를 가리키므로 제외)
+  if (isK(aimItem, 'cartweight') && aimItem.userData.onCart) aimItem = aimItem.userData.onCart;   // 수레 위의 추는 수레와 한 덩어리
   const prevHover = hoverItem; hoverItem = held ? null : aimItem;
   if (hoverItem !== prevHover) { setHighlight(prevHover, false); setHighlight(hoverItem, true); }
-  placement = null;
-  let link = null;
+  placement = null; link = null;
+  if (held && !insertMode.active) {
+    link = linkInfo();
+    if (!link) placement = computePlacement(hit);
+  }
+  lastLink = link;
+  }
   if (insertMode.active) {
     const coil = insertMode.coil;
     if (!coil || coil.parent !== scene || coil.userData.flying) exitInsert(); else magnetPoseOnCoil();
-  } else if (held) {
-    link = linkInfo();
-    if (!link) placement = computePlacement(hit);
   }
   if (ghost) {
     if (placement && (placement.valid || placement.pos) && placement.type !== 'terminal' && placement.type !== 'pan') {
@@ -2775,10 +3722,12 @@ function frame() {
   }
   updateActions(link);
   cross.classList.toggle('on', !!(hoverItem || (link && link.valid) || (placement && placement.valid)));
+  cross.classList.toggle('held', !!(held || insertMode.active));
   updateBeams();
 
   animateHands(dt, moving && playing && player.jumpH === 0);
   updateEM(dt);
+  updateHandFade(dt);
   updateInfo();
   updateTouchButtons();
 
@@ -2793,13 +3742,13 @@ resetLab();
 try { makeThumbs(); } catch (e) { console.warn('thumbs', e); }
 refreshInventory();
 fitScreen(); setTimeout(fitScreen, 500);
-view3.dist = view3.distT = homeDist();      // 첫 화면: 실험대가 화면을 거의 꽉 채우게
+view3.dist = view3.distT = homeViewDist();      // 첫 화면: 실험대가 화면을 거의 꽉 채우게
 // 시작하면(휴대폰은 전체 화면·가로 전환으로 화면 비율이 바뀐다) 아직 시야를 건드리지 않았으면 다시 맞춘다
 startBtn.addEventListener('click', () => setTimeout(() => {
-  if (view3.azT === VIEW_HOME.az && view3.elT === VIEW_HOME.el && Math.abs(view3.distT - view3.homeAt) < 1e-6) view3.distT = view3.homeAt = homeDist();
+  if (view3.azT === VIEW_HOME.az && view3.elT === VIEW_HOME.el && Math.abs(view3.distT - view3.homeAt) < 1e-6) view3.distT = view3.homeAt = homeViewDist();
 }, 450));
 view3.homeAt = view3.distT;   // 홈 화면 앱은 처음 몇 순간 화면 크기를 잘못 알려 줄 때가 있다
-startBtn.disabled = false; startBtn.textContent = '실험 시작';
+startBtn.disabled = false; startBtn.textContent = '입장 하기';
 requestAnimationFrame(frame);
 
 // 자동 점검용 훅

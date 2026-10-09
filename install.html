@@ -136,7 +136,7 @@
 
   <p class="fallback" id="fallbackMsg">이 브라우저에서는 자동 설치가 지원되지 않아요.<br>Chrome, Safari, Edge 등 최신 브라우저에서<br>다시 열어봐 주세요.</p>
 
-  <p class="open-now">설치하지 않고 <a href="index.html">브라우저에서 바로 실험실 열기</a></p>
+  <p class="open-now">설치하지 않고 <a href="index.html?web=1">브라우저에서 바로 실험실 열기</a></p>
 
   <div class="ios-guide" id="iosGuide">
     <div class="ios-guide-card">
@@ -250,7 +250,7 @@
       installBtn.style.display = 'none';
       statusMsg.textContent = '설치 완료! 실험실을 엽니다…';
       statusMsg.style.display = 'block';
-      setTimeout(function(){ location.replace('index.html'); }, 600);
+      setTimeout(function(){ location.replace('index.html?web=1'); }, 600);
     });
 
     if(isIOS){
