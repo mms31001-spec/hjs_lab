@@ -44,7 +44,7 @@
 [hidden] { display: none !important; }
 html, body { height: 100%; width: 100%; overscroll-behavior: none; }
 /* 휴대폰: 가로 화면에서 글자가 저절로 커지지 않게, 화면 가장자리(노치·홈 막대) 여백은 변수로 */
-html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; background: var(--ground); }
 :root { --sa-top: env(safe-area-inset-top, 0px); --sa-right: env(safe-area-inset-right, 0px); --sa-bottom: env(safe-area-inset-bottom, 0px); --sa-left: env(safe-area-inset-left, 0px); }
 /* 세로로 든 휴대폰을 90° 돌려 가로처럼 보일 때: 가로로 들었을 때와 같은 여백이 되도록 (노치 쪽이 왼쪽·오른쪽 여백) */
 body.rot { --sa-top: 0px; --sa-left: env(safe-area-inset-top, 0px); --sa-right: env(safe-area-inset-top, 0px); --sa-bottom: calc(env(safe-area-inset-bottom, 0px) * 0.6); }
@@ -60,7 +60,7 @@ body { background: var(--ground); color: var(--ink); font-family: var(--font-ui)
 
 #prompt { left: 50%; bottom: calc(28px + var(--sa-bottom)); transform: translateX(-50%);
   background: var(--panel); border: 1px solid var(--panel-line); border-radius: 8px; padding: 8px 14px;
-  font-size: 15px; font-weight: 500; white-space: nowrap; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; }
+  font-size: 15px; font-weight: 500; white-space: nowrap; max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; }
 #prompt.bad { color: var(--warn); }
 kbd { font-family: var(--font-num); font-size: 12px; background: rgba(238,241,239,.12); border: 1px solid var(--panel-line);
   border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; margin-right: 6px; color: var(--ink); }
@@ -73,7 +73,12 @@ kbd { font-family: var(--font-num); font-size: 12px; background: rgba(238,241,23
 #viewGuide button:hover { border-color: var(--brass); color: var(--brass); }
 #viewGuide .sep { color: var(--ink-dim); margin: 0 2px; }
 body:has(#overlay:not([hidden])) #viewGuide { display: none; }
-body.touch #viewGuide .wheelHint { display: none; }   /* 휴대폰에는 마우스 휠 안내가 필요 없다 */
+#homeBtn { position: fixed; z-index: 7; right: calc(14px + var(--sa-right)); top: calc(10px + var(--sa-top)); font: 600 13px var(--font-ui); color: var(--brass);
+  background: var(--panel); border: 1px solid var(--brass); border-radius: 10px; padding: 7px 14px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+#homeBtn:hover { color: #1a1406; background: var(--brass); }
+body:has(#overlay:not([hidden])) #homeBtn { display: none; }
+body.touch #viewGuide .wheelHint, body.touch #viewGuide .fsOnly, body.noFS #viewGuide .fsOnly { display: none; }   /* 휴대폰에는 마우스 휠 안내·전체 화면 버튼이 필요 없다 */
+#viewGuide #fsBtn.on, #viewGuide #fsBtn.on:hover { color: #1a1406; background: var(--brass); border-color: var(--brass); }
 #actions { display: none !important; }
 /* 기구 이름표(커서 바로 위)와 선택창(클릭하면 커서 위에) */
 #nameTip { position: fixed; z-index: 7; transform: translate(-50%, calc(-100% - 14px)); pointer-events: none; white-space: nowrap;
@@ -91,7 +96,7 @@ body.touch #viewGuide .wheelHint { display: none; }   /* 휴대폰에는 마우�
 #ctxMenu .hint { font-size: 12px; color: var(--ink-dim); padding: 0 4px; white-space: nowrap; }
 #toast { left: 50%; top: calc(62px + var(--sa-top)); transform: translateX(-50%);
   background: var(--panel); border: 1px solid var(--panel-line); border-radius: 8px; padding: 8px 14px; font-size: 14px;
-  opacity: 0; transition: opacity .25s; max-width: calc(100vw - 32px); text-align: center; }
+  opacity: 0; transition: opacity .25s; max-width: calc(100% - 32px); text-align: center; }
 #toast.show { opacity: 1; }
 
 #help { left: 16px; top: calc(16px + var(--sa-top)); background: var(--panel); border: 1px solid var(--panel-line);
@@ -111,7 +116,10 @@ body.touch #viewGuide .wheelHint { display: none; }   /* 휴대폰에는 마우�
 #info .state.eq { color: var(--ok); }
 
 #overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding-inline: 16px; padding-block: 16px; overflow-y: auto;
-  background: radial-gradient(ellipse at center, rgba(18,22,23,.55), rgba(10,12,13,.88)); }
+  background: #000; }   /* 첫 화면: 실험실이 미리 보이지 않게 검은색으로 */
+/* 첫 화면의 글자·버튼: 화면이 넉넉하면 비율 그대로 1.5배 (컴퓨터에서 창을 줄인 경우도 최대화 때와 같게) */
+@media (min-width: 900px) and (min-height: 700px) { #overlay .card { zoom: 1.5; } }
+body.scaled #overlay .card { zoom: 1.5; }
 .card { width: min(560px, 100%); background: var(--panel); border: 1px solid var(--panel-line); border-radius: 14px;
   padding: 34px 28px 22px; display: grid; gap: 18px; justify-items: center; text-align: center; backdrop-filter: blur(6px); }
 .card[hidden] { display: none; }
@@ -119,11 +127,19 @@ body.touch #viewGuide .wheelHint { display: none; }   /* 휴대폰에는 마우�
 .card .lead { font-size: 16px; color: var(--ink); line-height: 1.7; }
 .cardBtns { display: flex; flex-direction: column; gap: 10px; width: min(240px, 100%); }
 .cardBtns button, #introBack { width: 100%; }
-#introBtn, #introBack { font: inherit; font-weight: 700; font-size: 16px; color: var(--brass); background: transparent;
+#introBtn, #introBack, #suggestBtn, #suggestBack { font: inherit; font-weight: 700; font-size: 16px; color: var(--brass); background: transparent;
   border: 1px solid var(--brass); border-radius: 8px; padding: 10px 22px; cursor: pointer; }
-#introBack { width: min(240px, 100%); }
-#introBtn:hover, #introBack:hover { background: rgba(217,180,91,.1); }
-#introText { color: var(--ink); line-height: 1.7; }
+#introBack, #suggestBack { width: min(240px, 100%); }
+#suggestText { display: grid; gap: 18px; justify-items: center; }
+#suggestText p { color: var(--ink); font-size: 14.5px; line-height: 1.85; word-break: keep-all; }
+.mailRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+#mailLink { font-size: 17px; font-weight: 700; color: var(--brass); text-decoration: none; border-bottom: 1px solid rgba(217,180,91,.5); }
+#mailLink:hover { border-bottom-color: var(--brass); }
+#mailCopy { font: 600 12.5px var(--font-ui); color: var(--ink); background: transparent; border: 1px solid var(--panel-line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+#mailCopy:hover { border-color: var(--brass); color: var(--brass); }
+#introBtn:hover, #introBack:hover, #suggestBtn:hover, #suggestBack:hover { background: rgba(217,180,91,.1); }
+#introText { color: var(--ink); line-height: 1.7; text-align: left; display: grid; gap: 12px; max-height: min(52vh, 420px); overflow-y: auto; }
+#introText p { color: var(--ink); font-size: 14.5px; line-height: 1.75; word-break: keep-all; }
 #overlayNote:empty { display: none; }
 body:has(#overlay:not([hidden])) #sideBtns { visibility: hidden; }   /* 첫 화면에서는 왼쪽 버튼을 숨긴다 */
 .card .maker { font-size: 13px; }
@@ -143,16 +159,19 @@ body:has(#overlay:not([hidden])) #sideBtns { visibility: hidden; }   /* 첫 화�
 
 /* 실험기구 선택 버튼 · 선택창 · 확인 창 · 행동 안내 */
 #sideBtns { position: fixed; z-index: 7; left: calc(16px + var(--sa-left)); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; }
-#invBtn, #recBtn { font: 700 15px var(--font-ui); color: #1a1406; background: var(--brass); border: 0; border-radius: 10px; padding: 14px 14px;
-  writing-mode: vertical-rl; letter-spacing: .12em; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
-#recBtn { background: var(--panel); color: var(--brass); border: 1px solid var(--brass); }
-#clearTable { font: 600 13px var(--font-ui); color: var(--ink); background: var(--panel); border: 1px solid var(--panel-line); border-radius: 10px; padding: 12px 12px;
-  writing-mode: vertical-rl; letter-spacing: .1em; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
-#clearTable:hover { border-color: #ff8f7a; color: #ffb4a6; }
-#clearTable:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+#sideBtns button { font: 700 15px var(--font-ui); background: var(--panel); color: var(--brass); border: 1px solid var(--brass); border-radius: 10px; padding: 14px 14px;
+  writing-mode: vertical-rl; letter-spacing: .12em; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.35); transition: background .15s, color .15s; }
+#sideBtns button.on { color: #1a1406; background: var(--brass); }   /* 지금 열려 있는 창의 버튼만 노란색 */
+#sideBtns button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 #recPanel { position: fixed; z-index: 9; left: calc(70px + var(--sa-left)); top: 16px; bottom: 16px; width: min(440px, calc(100% - 100px));
   background: var(--panel); border: 1px solid var(--panel-line); border-radius: 12px; display: flex; flex-direction: column; backdrop-filter: blur(6px); }
 #recPanel[hidden] { display: none; }
+#recTabs, #invTabs { display: flex; gap: 6px; padding: 10px 12px 0; flex-wrap: wrap; }
+#recTabs button, #invTabs button { font: 600 13px var(--font-ui); color: var(--ink-dim); background: transparent; border: 1px solid var(--panel-line); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+#recTabs button.on, #invTabs button.on { color: #1a1406; background: var(--brass); border-color: var(--brass); }
+#recList .rec[hidden], #recList .recEmpty[hidden] { display: none; }
+#invGrid .invEmpty { grid-column: 1 / -1; color: var(--ink-dim); font-size: 13.5px; text-align: center; padding: 24px 0; }
+#recList .recEmpty { color: var(--ink-dim); font-size: 13.5px; text-align: center; padding: 24px 0; }
 #recList { flex: 1; overflow-y: auto; padding: 12px; display: grid; gap: 10px; align-content: start; margin: 0; list-style: none; }
 .rec { border: 1px solid var(--panel-line); border-radius: 10px; padding: 12px 14px; background: rgba(238,241,239,.04); }
 .rec .tag { display: inline-block; font: 700 12px var(--font-ui); color: #1a1406; background: var(--brass); border-radius: 6px; padding: 2px 8px; margin-bottom: 6px; }
@@ -165,7 +184,7 @@ body:has(#overlay:not([hidden])) #sideBtns { visibility: hidden; }   /* 첫 화�
 #demoBar { position: fixed; z-index: 8; left: 50%; bottom: calc(18px + var(--sa-bottom)); transform: translateX(-50%); width: min(640px, calc(100% - 200px));
   background: var(--panel); border: 1px solid var(--brass); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; backdrop-filter: blur(6px); box-shadow: 0 6px 20px rgba(0,0,0,.4); }
 #demoBar[hidden] { display: none; }
-#graphPanel { position: fixed; z-index: 6; right: calc(14px + var(--sa-right)); top: calc(60px + var(--sa-top)); width: 330px;
+#graphPanel { position: fixed; z-index: 6; right: calc(14px + var(--sa-right)); top: calc(60px + var(--sa-top)); width: 330px; max-height: calc(100% - 76px); overflow-y: auto;
   background: var(--panel); border: 1px solid var(--panel-line); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(6px); font-size: 12.5px; }
 #graphPanel[hidden] { display: none; }
 #graphPanel .gHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -177,6 +196,9 @@ body:has(#overlay:not([hidden])) #sideBtns { visibility: hidden; }   /* 첫 화�
 #gTable table { width: 100%; border-collapse: collapse; margin-top: 6px; font-variant-numeric: tabular-nums; }
 #gTable th, #gTable td { border: 1px solid var(--panel-line); padding: 2px 4px; text-align: center; font-weight: 500; }
 #gTable th { color: var(--ink-dim); white-space: nowrap; }
+#gTable .incTable { font-size: 10.5px; }
+#gTable tr.now td { color: var(--brass); font-weight: 700; }
+#gTable .incTable th, #gTable .incTable td { padding: 1px 2px; }
 body:has(#overlay:not([hidden])) #graphPanel { display: none; }
 /* 휴대폰: 그래프 창을 작게 (오른쪽 위 구석) */
 body.touch #graphPanel { width: 220px; top: calc(52px + var(--sa-top)); padding: 6px 8px; font-size: 10.5px; }
@@ -243,18 +265,19 @@ body.touch #info { top: calc(56px + var(--sa-top)); }
 body.touch #help { display: none; }
 
 /* 가로로 눕힌 휴대폰처럼 화면이 낮을 때: 시작 카드를 간추리고 위에서부터 */
+/* 컴퓨터에서 창을 줄여 화면 전체를 축소(.scaled)할 때는 아래 간추린 모양을 쓰지 않고 최대화 때와 똑같이 */
 @media (max-height: 520px) {
-  #overlay { align-items: start; }
-  .card { padding: 14px 18px; gap: 9px; }
-  .card h1 { font-size: 24px; }
-  .card p { font-size: 13px; line-height: 1.45; }
-  .card .lead { font-size: 14px; }
-  .card ol { display: none; }
+  body:not(.scaled) #overlay { align-items: start; }
+  body:not(.scaled) .card { padding: 14px 18px; gap: 9px; }
+  body:not(.scaled) .card h1 { font-size: 24px; }
+  body:not(.scaled) .card p { font-size: 13px; line-height: 1.45; }
+  body:not(.scaled) .card .lead { font-size: 14px; }
+  body:not(.scaled) .card ol { display: none; }
 }
 @media (max-width: 720px) {
-  #help { display: none; }
-  .card { padding: 20px 18px; }
-  .card h1 { font-size: 26px; }
+  body:not(.scaled) #help { display: none; }
+  body:not(.scaled) .card { padding: 20px 18px; }
+  body:not(.scaled) .card h1 { font-size: 26px; }
 }
 </style>
 </head>
@@ -285,12 +308,13 @@ body.touch #help { display: none; }
 </svg></div>
 <div id="prompt" class="hud" hidden></div>
 <div id="toast" class="hud"></div>
-<div id="viewGuide"><b>시야 조정</b><button type="button" data-view="top">위</button><button type="button" data-view="left">왼쪽</button><button type="button" data-view="right">오른쪽</button><button type="button" data-view="front">정면</button><button type="button" data-view="home">처음 시점</button><span class="sep wheelHint">/</span><span class="wheelHint">마우스 휠: 확대·축소</span></div>
+<button id="homeBtn" type="button">돌아가기</button>
+<div id="viewGuide"><b>시야 조정</b><button type="button" data-view="home">실험 시야</button><button type="button" data-view="top">위</button><button type="button" data-view="left">왼쪽</button><button type="button" data-view="right">오른쪽</button><button type="button" data-view="front">정면</button><span class="sep wheelHint">/</span><span class="wheelHint">마우스 휠: 확대·축소</span><span class="sep fsOnly">/</span><button type="button" id="fsBtn" class="fsOnly">전체 화면</button></div>
 <div id="nameTip" hidden></div>
 <div id="ctxMenu" hidden><div class="cmTitle"></div><div class="cmList"></div></div>
 
 <!-- 실험기구 선택 -->
-<div id="sideBtns"><button id="invBtn" type="button">실험기구</button><button id="recBtn" type="button">추천 실험</button><button id="clearTable" type="button">실험대 비우기</button></div>
+<div id="sideBtns"><button id="invBtn" type="button">자유실험</button><button id="recBtn" type="button">추천 실험</button><button id="clearTable" type="button">실험대 비우기</button></div>
 <div id="graphPanel" hidden>
   <div class="gHead"><b>속도–시간 그래프</b><span><button id="gClear" type="button">지우기</button><button id="gClose" type="button">닫기</button></span></div>
   <canvas id="gCanvas" width="640" height="400"></canvas>
@@ -300,15 +324,24 @@ body.touch #help { display: none; }
 <div id="demoBar" hidden><span class="lbl">시범 실험</span><span id="demoTime"></span><div id="demoText"></div><button id="demoStop" type="button">시범 종료</button><button id="demoStart" type="button" hidden>실험 시작</button><button id="demoOther" type="button" hidden>다른 실험</button></div>
 <div id="recPanel" hidden>
   <div class="invHead"><h2>추천 실험</h2><button id="recClose" type="button">닫기</button></div>
+  <div id="recTabs" role="tablist"><button type="button" data-cat="mech" class="on">역학</button><button type="button" data-cat="thermo">열물리학</button><button type="button" data-cat="em">전자기학</button><button type="button" data-cat="wave">파동 및 광학</button></div>
   <ol id="recList">
-    <li class="rec"><span class="tag">역학</span><p>지레의 양쪽 눈금에 추를 걸어 수평을 맞추며 돌림힘의 원리 찾기</p><div class="needRow"><div class="need">필요한 기구: 지레 장치, 거는 추(50 g)</div><button class="demoBtn" type="button" data-demo="lever">시범실험</button><button class="setBtn" type="button" data-set="lever">실험하기</button></div></li>
-    <li class="rec"><span class="tag">역학</span><p>레일 위의 역학 수레를 용수철저울로 일정한 힘으로 끌어 힘·질량·가속도의 관계 알아보기</p><div class="needRow"><div class="need">필요한 기구: 역학 레일, 역학 수레, 용수철저울, 수레용 추(1 kg)</div><button class="demoBtn" type="button" data-demo="fma">시범실험</button><button class="setBtn" type="button" data-set="fma">실험하기</button></div></li>
-    <li class="rec"><span class="tag">광학</span><p>레이저와 렌즈·거울·프리즘을 실험대에 눕혀 놓고 빛의 경로 관찰하기</p><div class="needRow"><div class="need">필요한 기구: 3구 레이저, 볼록·오목렌즈, 평면·오목·볼록거울, 직각 프리즘</div><button class="demoBtn" type="button" data-demo="optics">시범실험</button><button class="setBtn" type="button" data-set="optics">실험하기</button></div></li>
-    <li class="rec"><span class="tag">전자기학</span><p>코일과 검류계를 집게 전선으로 잇고, 자석을 코일에 넣었다 빼며 바늘 관찰하기</p><div class="needRow"><div class="need">필요한 기구: 코일, 검류계, 집게 전선(빨강·검정), 막대자석</div><button class="demoBtn" type="button" data-demo="em">시범실험</button><button class="setBtn" type="button" data-set="em">실험하기</button></div></li>
+    <li class="rec" data-cat="mech"><span class="tag">역학</span><p>지레의 양쪽 눈금에 추를 걸어 수평을 맞추며 돌림힘의 원리 찾기</p><div class="needRow"><div class="need">필요한 기구: 지레 장치, 거는 추(50 g)</div><button class="demoBtn" type="button" data-demo="lever">시범실험</button><button class="setBtn" type="button" data-set="lever">실험하기</button></div></li>
+    <li class="rec" data-cat="mech"><span class="tag">역학</span><p>레일 위의 역학 수레에 일정한 힘을 작용해 힘·질량·가속도의 관계 알아보기</p><div class="needRow"><div class="need">필요한 기구: 역학 레일, 역학 수레(끌기 전용), 수레용 추(1 kg)</div><button class="demoBtn" type="button" data-demo="fma">시범실험</button><button class="setBtn" type="button" data-set="fma">실험하기</button></div></li>
+    <li class="rec" data-cat="mech"><span class="tag">역학</span><p>빗면에서 역학 수레를 가만히 놓고, 0.2초 간격의 위치를 분석해 등가속도 운동 알아보기 (핵심 탐구)</p><div class="needRow"><div class="need">필요한 기구: 빗면 실험 장치, 역학 수레</div><button class="demoBtn" type="button" data-demo="incline">시범실험</button><button class="setBtn" type="button" data-set="incline">실험하기</button></div></li>
+    <li class="rec" data-cat="mech"><span class="tag">역학</span><p>레일 위에서 역학 수레 A를 밀어 수레 B에 충돌시키고, 충돌 전후 운동량 비교하기 (핵심 탐구)</p><div class="needRow"><div class="need">필요한 기구: 역학 레일, 역학 수레 2대, 수레용 추(1 kg)</div><button class="demoBtn" type="button" data-demo="collide">시범실험</button><button class="setBtn" type="button" data-set="collide">실험하기</button></div></li>
+    <li class="rec" data-cat="mech"><span class="tag">역학</span><p>자유 낙하하는 쇠공의 높이와 속력으로 위치 에너지와 운동 에너지를 구하고, 그 합인 역학적 에너지가 보존되는지 알아보기</p><div class="needRow"><div class="need">필요한 기구: 자유 낙하 실험 장치</div><button class="demoBtn" type="button" data-demo="fall">시범실험</button><button class="setBtn" type="button" data-set="fall">실험하기</button></div></li>
+    <li class="rec" data-cat="mech"><span class="tag">역학</span><p>마찰이 없는 수평면에서 용수철에 연결된 물체를 당겼다 놓고, 운동 에너지와 탄성력에 의한 위치 에너지가 바뀌어도 그 합이 보존되는지 알아보기</p><div class="needRow"><div class="need">필요한 기구: 용수철 진동 실험 장치</div><button class="demoBtn" type="button" data-demo="spring">시범실험</button><button class="setBtn" type="button" data-set="spring">실험하기</button></div></li>
+    <li class="rec" data-cat="thermo"><span class="tag">열물리학</span><p>모래를 반쯤 넣은 스타이로폼 컵을 50회씩 흔들며 모래의 온도를 재어, 역학적 에너지가 열로 전환됨을 알아보기</p><div class="needRow"><div class="need">필요한 기구: 모래 컵(스타이로폼 컵·모래·온도 센서)</div><button class="demoBtn" type="button" data-demo="sand">시범실험</button><button class="setBtn" type="button" data-set="sand">실험하기</button></div></li>
+    <li class="rec" data-cat="thermo"><span class="tag">열물리학</span><p>얼음물로 차가워진 풍선을 뜨거운 물이 담긴 비커에 넣어, 기체가 열을 흡수하면 부피가 늘어나며 외부에 일을 함을 알아보기</p><div class="needRow"><div class="need">필요한 기구: 비커(얼음물), 비커(뜨거운 물), 풍선, 온도 센서 2개</div><button class="demoBtn" type="button" data-demo="balloon">시범실험</button><button class="setBtn" type="button" data-set="balloon">실험하기</button></div></li>
+    <li class="rec" data-cat="wave"><span class="tag">파동 및 광학</span><p>레이저와 렌즈·거울·프리즘을 실험대에 눕혀 놓고 빛의 경로 관찰하기</p><div class="needRow"><div class="need">필요한 기구: 3구 레이저, 볼록·오목렌즈, 평면·오목·볼록거울, 직각 프리즘</div><button class="demoBtn" type="button" data-demo="optics">시범실험</button><button class="setBtn" type="button" data-set="optics">실험하기</button></div></li>
+    <li class="rec" data-cat="em"><span class="tag">전자기학</span><p>코일과 검류계를 집게 전선으로 잇고, 자석을 코일에 넣었다 빼며 바늘 관찰하기</p><div class="needRow"><div class="need">필요한 기구: 코일, 검류계, 집게 전선(빨강·검정), 막대자석</div><button class="demoBtn" type="button" data-demo="em">시범실험</button><button class="setBtn" type="button" data-set="em">실험하기</button></div></li>
+    <li class="recEmpty" hidden>이 분야의 실험은 준비 중이에요.</li>
   </ol>
 </div>
 <div id="invPanel" hidden>
-  <div class="invHead"><h2>실험기구 선택</h2><button id="invClose" type="button">닫기</button></div>
+  <div class="invHead"><h2>자유 실험-실험기구 선택</h2><button id="invClose" type="button">닫기</button></div>
+  <div id="invTabs" class="catTabs" role="tablist"><button type="button" data-cat="mech" class="on">역학</button><button type="button" data-cat="thermo">열물리학</button><button type="button" data-cat="em">전자기학</button><button type="button" data-cat="wave">파동 및 광학</button></div>
   <div id="invGrid"></div>
 </div>
 <div id="confirmBox" hidden>
@@ -354,19 +387,94 @@ body.touch #help { display: none; }
     <div class="cardBtns">
       <button id="startBtn" type="button" disabled>불러오는 중…</button>
       <button id="introBtn" type="button">기획 의도</button>
+      <button id="suggestBtn" type="button">실험 제안하기</button>
     </div>
     <p class="note" id="overlayNote"></p>
-    <p class="maker">제작: 물리교사 한재상(2026, 경상남도교육청 과학교육원)</p>
+    <p class="maker">제작: 물리교사 한재상(경상남도교육청 과학교육원, 2026)<br>E-mail: hjs31001@korea.kr</p>
     <p class="ver">v1.00</p>
+  </div>
+  <div class="card" id="suggestCard" hidden>
+    <h2>실험 제안하기</h2>
+    <div id="suggestText">
+      <p>세상의 모든 물리학 실험은 함께 만들어 가는 실험실입니다.<br>추가되었으면 하는 실험 기구나 추천 실험이 있다면 언제든 메일로 보내 주세요.<br>보내 주신 소중한 의견은 꼼꼼히 검토하여 실험실을 만들어 가는 데 참고하겠습니다.</p>
+      <div class="mailRow"><a id="mailLink" href="mailto:hjs31001@korea.kr?subject=%5B%EC%84%B8.%EB%AA%A8.%EB%AC%BC%5D%20%EC%8B%A4%ED%97%98%20%EC%A0%9C%EC%95%88">hjs31001@korea.kr</a><button id="mailCopy" type="button">주소 복사</button></div>
+    </div>
+    <button id="suggestBack" type="button">돌아가기</button>
   </div>
   <div class="card" id="introCard" hidden>
     <h2>기획 의도</h2>
-    <div id="introText"><p>추가 예정</p></div>
+    <div id="introText">
+      <p>과학적으로 생각하는 힘을 기르는 가장 좋은 방법 중 하나는 실험입니다.</p>
+      <p>하지만 학교마다 갖춘 실험 기구가 다르고, 실험 하나를 준비하는 데에도 적지 않은 시간과 노력이 듭니다. 그러다 보니 유익한 실험들이 실제로 이루어지지 못하고, 설명으로만 배우고 넘어가는 경우가 많습니다.</p>
+      <p>세상의 모든 물리학 실험은 그런 실험들을 화면 속 실험대 위로 옮겨 온 가상 실험실입니다. 자유 실험을 통해 원하는 실험 기구를 꺼내고 조합하며 직접 실험을 설계해 볼 수 있고, 추천 실험을 통해 실험 기구의 세팅부터 시범 실험까지 차근차근 따라 해 볼 수도 있습니다.</p>
+      <p>실험 기구나 여건 때문에 해 보지 못했던 다양한 실험들을 이제 모든 학생이 직접 경험할 수 있기를 바랍니다.</p>
+    </div>
     <button id="introBack" type="button">돌아가기</button>
   </div>
 </div>
 
 <script>
+// 버튼 효과음: 어떤 버튼이든 누르면 짧고 부드러운 '톡' 소리 (소리 파일 없이 브라우저에서 바로 만든다)
+(function () {
+  var ctx = null;
+  function tick() {
+    try {
+      if (!ctx) { var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; ctx = new AC(); }
+      if (ctx.state === 'suspended') ctx.resume();
+      var t = ctx.currentTime, o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), g2 = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(1150, t); o.frequency.exponentialRampToValueAtTime(620, t + 0.07);   // 높은 음에서 살짝 내려가는 톡
+      o2.type = 'triangle'; o2.frequency.setValueAtTime(2300, t);                                                     // 아주 짧은 딸깍 소리를 겹친다
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+      g2.gain.setValueAtTime(0.0001, t); g2.gain.exponentialRampToValueAtTime(0.05, t + 0.002); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.02);
+      o.connect(g); o2.connect(g2); g.connect(ctx.destination); g2.connect(ctx.destination);
+      o.start(t); o2.start(t); o.stop(t + 0.1); o2.stop(t + 0.03);
+    } catch (e) {}
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('button');
+    if (b && !b.disabled) tick();
+  }, true);
+  window.__btnSound = tick;
+})();
+// 컴퓨터: 전체 화면 켜기·끄기 (Esc를 눌러도 빠져나온다)
+(function () {
+  var b = document.getElementById('fsBtn'), d = document, el = d.documentElement;
+  var req = el.requestFullscreen || el.webkitRequestFullscreen, exit = d.exitFullscreen || d.webkitExitFullscreen;
+  if (!b) return;
+  if (!req) { d.body.classList.add('noFS'); return; }
+  function isFS() { return !!(d.fullscreenElement || d.webkitFullscreenElement); }
+  function sync() { var on = isFS(); b.textContent = on ? '전체 화면 끝내기' : '전체 화면'; b.classList.toggle('on', on); }
+  b.addEventListener('click', function () {
+    try { if (isFS()) exit.call(d); else { var p = req.call(el); if (p && p.catch) p.catch(function () {}); } } catch (e) {}
+  });
+  d.addEventListener('fullscreenchange', sync); d.addEventListener('webkitfullscreenchange', sync);
+  sync();
+})();
+// 컴퓨터: 창을 최대화했을 때의 크기를 기준 화면으로 두고, 창이 작으면 글씨·버튼·실험실을 모두 같은 비율로 줄여 잘리지 않게 (휴대폰은 제외)
+(function () {
+  var touch = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window && !matchMedia('(pointer: fine)').matches);
+  window.__uiScale = 1;
+  window.__fitDesktop = function () {
+    var b = document.body; if (!b || touch) return;
+    var vw = innerWidth, vh = innerHeight;
+    var chromeH = Math.max(0, (outerHeight || 0) - innerHeight);              // 주소창·탭 등 브라우저 테두리 높이
+    var W0 = screen.availWidth || vw, H0 = (screen.availHeight || vh) - chromeH;
+    if (!(W0 > 320 && H0 > 240) || (vw >= W0 && vh >= H0)) { W0 = vw; H0 = vh; }   // 최대화·전체 화면이면 그대로
+    var sc = Math.min(1, vw / W0, vh / H0), st = b.style;
+    if (sc < 0.999) {
+      st.position = 'fixed'; st.margin = '0'; st.width = W0 + 'px'; st.height = H0 + 'px';
+      st.left = Math.round((vw - W0 * sc) / 2) + 'px'; st.top = Math.round((vh - H0 * sc) / 2) + 'px';
+      st.transformOrigin = '0 0'; st.transform = 'scale(' + sc + ')';
+      window.__uiScale = sc; b.classList.add('scaled');
+    } else {
+      b.classList.remove('scaled');
+      ['position', 'margin', 'width', 'height', 'left', 'top', 'transformOrigin', 'transform'].forEach(function (k) { st[k] = ''; });
+      window.__uiScale = 1;
+    }
+  };
+  window.__fitDesktop();
+  addEventListener('resize', window.__fitDesktop);
+})();
 (function () {
   function show(msg) {
     var b = document.getElementById('startBtn'), n = document.getElementById('overlayNote');
@@ -375,9 +483,29 @@ body.touch #help { display: none; }
     document.getElementById('overlay').hidden = false;
     document.getElementById('introCard').hidden = true; document.getElementById('mainCard').hidden = false;
   }
+  // 추천 실험 분야 탭
+  (function () {
+    var tabs = document.querySelectorAll('#recTabs button');
+    function show(cat) {
+      var any = false;
+      tabs.forEach(function (b) { b.classList.toggle('on', b.dataset.cat === cat); });
+      document.querySelectorAll('#recList .rec').forEach(function (li) { var on = li.dataset.cat === cat; li.hidden = !on; if (on) any = true; });
+      document.querySelector('#recList .recEmpty').hidden = any;
+    }
+    tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.cat); }); });
+    show('mech');
+  })();
   // 첫 화면: 기획 의도 보기 / 돌아가기 (3D가 불러와지기 전에도 동작)
   document.getElementById('introBtn').addEventListener('click', function () { document.getElementById('mainCard').hidden = true; document.getElementById('introCard').hidden = false; });
   document.getElementById('introBack').addEventListener('click', function () { document.getElementById('introCard').hidden = true; document.getElementById('mainCard').hidden = false; });
+  // 실험 제안하기: 메일 주소 안내 (누르면 메일 앱, 주소 복사)
+  document.getElementById('suggestBtn').addEventListener('click', function () { document.getElementById('mainCard').hidden = true; document.getElementById('suggestCard').hidden = false; });
+  document.getElementById('suggestBack').addEventListener('click', function () { document.getElementById('suggestCard').hidden = true; document.getElementById('mainCard').hidden = false; });
+  document.getElementById('mailCopy').addEventListener('click', function () {
+    var b = this, addr = 'hjs31001@korea.kr', done = function () { b.textContent = '복사했어요'; setTimeout(function () { b.textContent = '주소 복사'; }, 1600); };
+    try { navigator.clipboard.writeText(addr).then(done, function () { fallback(); }); } catch (e) { fallback(); }
+    function fallback() { var t = document.createElement('textarea'); t.value = addr; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); done(); } catch (e) {} t.remove(); }
+  });
   window.__labError = show;
   window.addEventListener('error', function (e) { if (!(e instanceof ErrorEvent)) return; show('오류: ' + (e.message || '스크립트를 불러오지 못했어요') + ' — 이 문구를 알려 주시면 고칠게요.'); }, true);
   window.addEventListener('unhandledrejection', function (e) { show('오류: ' + (e.reason && e.reason.message || e.reason) + ' — 이 문구를 알려 주시면 고칠게요.'); });
@@ -893,7 +1021,32 @@ function overlaps(o, x, z, r) {
     const p = o.worldToLocal(new THREE.Vector3(x, o.position.y, z));
     return Math.hypot(Math.max(0, Math.abs(p.x) - u.footprint[0]), Math.max(0, Math.abs(p.z) - u.footprint[1])) < r;
   }
+  if (u.fbox) {                                     // 실제로 실험대에 닿는 부분의 직사각형 (기구가 돈 만큼 같이 돌린다)
+    const a = yawOf(o), dx = x - o.position.x, dz = z - o.position.z;
+    const lx = dx * Math.cos(a) - dz * Math.sin(a), lz = dx * Math.sin(a) + dz * Math.cos(a), B = u.fbox;
+    return Math.hypot(Math.max(B.minX - lx, 0, lx - B.maxX), Math.max(B.minZ - lz, 0, lz - B.maxZ)) < r;
+  }
   return Math.hypot(o.position.x - x, o.position.z - z) < r + (u.radius || 0.08);
+}
+// 기구의 '실제 범위': 실험대에 놓인 자세에서 바닥 가까이(6 cm 아래)에 있는 부분만 직사각형으로 잰다
+// (지레의 막대, 저울대처럼 높이 떠 있는 부분은 그 아래에 다른 기구를 놓을 수 있으므로 뺀다)
+const _qr = new THREE.Quaternion(), _vx = new THREE.Vector3();
+function computeFootprint(it) {
+  const u = it.userData, py = player.yaw, wy = u.worldYaw, ang = u.angle;
+  player.yaw = 0; u.worldYaw = undefined; u.angle = 0;
+  it.position.set(0, 0, 0); setPlacedRotation(it, it, 'surface'); it.updateMatrixWorld(true);
+  const box = new THREE.Box3(), b = new THREE.Box3();
+  it.traverse(m => { if (!m.isMesh || !m.visible) return; b.setFromObject(m); if (b.min.y < 0.06) box.union(b); });
+  if (!box.isEmpty()) {
+    u.fbox = { minX: box.min.x, maxX: box.max.x, minZ: box.min.z, maxZ: box.max.z };
+    u.fpR = Math.hypot(Math.max(-box.min.x, box.max.x), Math.max(-box.min.z, box.max.z));   // 실제 범위를 감싸는 원의 반지름
+    u.qRefInv = it.quaternion.clone().invert();
+  }
+  player.yaw = py; u.worldYaw = wy; u.angle = ang; it.rotation.set(0, 0, 0); it.updateMatrixWorld(true);
+}
+function yawOf(o) {                                 // 실험대에 처음 놓인 방향(앞쪽 기준)에서 얼마나 돌았는지
+  o.getWorldQuaternion(_qr); if (o.userData.qRefInv) _qr.multiply(o.userData.qRefInv);
+  _vx.set(1, 0, 0).applyQuaternion(_qr); return Math.atan2(-_vx.z, _vx.x);
 }
 function makeRail() {
   const g = new THREE.Group();
@@ -956,12 +1109,38 @@ function makeSpringScale() {
   g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
   return g;
 }
+// 용수철 저울이 붙박이로 장착된 역학 수레 (힘·질량·가속도 실험용): 끌기만 할 수 있다
+function makeScaleCart() {
+  const c = makeDynCart(), sc = makeSpringScale();
+  sc.userData.grab = false; sc.userData.fixed = true;             // 따로 집히지 않고 수레와 한 덩어리
+  c.add(sc); sc.position.set(CARTD.len / 2 + 0.083, 0.002, 0);
+  Object.assign(c.userData, { scale: sc, springCart: true, name: '역학 수레(끌기 전용)' });
+  return c;
+}
 function setScaleForce(sc, F) {
   sc.userData.force = F;
   const L = sc.userData.label; if (L.material.map) L.material.map.dispose(); L.material.map = scaleLabelTex(F); L.material.needsUpdate = true;
 }
-function cartMass(c) { return CARTD.base + CARTD.load * c.userData.loads.length; }
-function restackLoads(c) { c.userData.loads.forEach((w, k) => { w.position.set(0, 0.047 + k * 0.021, 0); w.rotation.set(0, 0, 0); }); }
+// 수레 위에 올릴 수 있는 기구와 그 질량 (kg): 다른 분야의 기구도 올려 질량을 바꿀 수 있다
+const LOAD_MASS = { cartweight: 1.0, hweight: 0.05, sandcup: 0.4, beaker: 3.0, tsensor: 0.08, magnet: 0.2, optic: 0.1, laser: 0.3, coil: 0.4, galv: 0.6, balloon: 0.01 };
+const loadMass = w => w.userData.mass ?? LOAD_MASS[w.userData.kind] ?? 0.1;
+function cartMass(c) { return CARTD.base + c.userData.loads.reduce((m, w) => m + loadMass(w), 0); }
+function loadBox(w) {                                // 기구가 수레 위에서 차지하는 높이 (처음 한 번 잰다)
+  const u = w.userData; if (u.loadBox) return u.loadBox;
+  const p = w.parent, pos = w.position.clone(), rot = w.rotation.clone();
+  if (p) p.remove(w); w.position.set(0, 0, 0); w.rotation.set(0, 0, 0); w.updateMatrixWorld(true);
+  const b = new THREE.Box3(); w.traverse(m => { if (m.isMesh && m.visible) b.expandByObject(m); });
+  if (p) p.add(w); w.position.copy(pos); w.rotation.copy(rot);
+  u.loadBox = { y0: b.isEmpty() ? 0 : b.min.y, h: b.isEmpty() ? 0.02 : b.max.y - b.min.y }; return u.loadBox;
+}
+function restackLoads(c) {                           // 올린 순서대로 위로 쌓는다
+  let y = 0.047;
+  for (const w of c.userData.loads) {
+    if (isK(w, 'cartweight')) { w.position.set(0, y, 0); y += 0.021; }
+    else { const B = loadBox(w); w.position.set(0, y - B.y0, 0); y += B.h; }
+    w.rotation.set(0, 0, 0);
+  }
+}
 function attachLoad(w, c) { stopMotion(w); bodyOff(w); c.userData.loads.push(w); c.add(w); w.userData.onCart = c; restackLoads(c); }
 function attachScale(sc, c) {
   stopMotion(sc); bodyOff(sc); c.userData.scale = sc; c.add(sc); sc.userData.onCart = c;
@@ -979,26 +1158,44 @@ function railSpan(c) {                                // 레일 위에서 수레
   const front = c.userData.scale ? SCALE.len + 0.01 : 0;
   return [-RAIL.len / 2 + RAIL.stop + CARTD.len / 2 + 0.01, RAIL.len / 2 - RAIL.stop - CARTD.len / 2 - front - 0.01];
 }
-function attachToRail(c, r) {
+// 레일 위 빈자리 (다른 수레와 겹치지 않는 곳): 가운데를 먼저, 없으면 왼쪽부터
+function railFreeS(r, c, want) {
+  const [lo, hi] = railSpan(c), others = r.userData.carts.filter(o => o !== c);
+  const ok = s => s >= lo - 1e-9 && s <= hi + 1e-9 && others.every(o => Math.abs(o.userData.rail.s - s) >= CARTD.len + 0.02 + ((o.userData.scale || c.userData.scale) ? SCALE.len + 0.01 : 0));
+  if (want !== undefined && want !== null) {                   // 가리킨 자리에서 가장 가까운 빈자리
+    let best = null, bd = Infinity;
+    for (let s = lo; s <= hi + 1e-9; s += 0.005) if (ok(s) && Math.abs(s - want) < bd) { bd = Math.abs(s - want); best = s; }
+    return best;
+  }
+  if (ok(0)) return 0;
+  for (let s = lo; s <= hi + 1e-9; s += 0.02) if (ok(s)) return s;
+  return null;
+}
+function attachToRail(c, r, want) {
   stopMotion(c); bodyOff(c);
   const [s0] = railSpan(c);
   const taken = r.userData.carts.map(x => x.userData.rail.s);
-  let s = s0; while (taken.some(t => Math.abs(t - s) < CARTD.len + SCALE.len + 0.02) && s < RAIL.len / 2) s += 0.1;
+  let s = want !== undefined ? railFreeS(r, c, want) : taken.length ? railFreeS(r, c) : s0;   // 가리킨 자리에 (세팅할 때는 왼쪽 끝 → 가운데 → 빈자리)
+  if (s === null) s = s0;
   r.userData.carts.push(c); r.add(c);
   c.userData.rail = { rail: r, s, s0: s, run: null };
   c.position.set(s, RAIL.top, 0); c.rotation.set(0, 0, 0);
 }
 function leaveRail(c) {
   const R = c.userData.rail; if (!R) return;
+  if (R.rail.userData.sim) resetRail(R.rail);
   const k = R.rail.userData.carts.indexOf(c); if (k >= 0) R.rail.userData.carts.splice(k, 1);
   c.userData.rail = null; if (c.parent === R.rail) scene.attach(c);
 }
 // 측정 기록: 끌 때마다 속도–시간 자료를 모은다
-const measure = { runs: [], colors: ['#d9b45b', '#5bc0eb', '#e56b6f', '#8fd694', '#c792ea', '#f4a261'] };
-function startRun(c) {
-  const R = c.userData.rail, sc = c.userData.scale;
-  if (!R || !sc) return null;
-  const F = sc.userData.force, m = cartMass(c);
+const measure = { mode: 'vt', runs: [], colors: ['#d9b45b', '#5bc0eb', '#e56b6f', '#8fd694', '#c792ea', '#f4a261'] };
+function startRun(c, F) {                         // 레일 위 수레에 일정한 힘 F 작용 (용수철저울 없이)
+  const R = c.userData.rail;
+  if (!R) return null;
+  if (F === undefined) F = c.userData.scale ? c.userData.scale.userData.force : 1;
+  if (c.userData.scale && c.userData.scale.userData.force !== F) setScaleForce(c.userData.scale, F);   // 저울 눈금 표시도 그 힘으로
+  const m = cartMass(c);
+  if (measure.mode !== 'vt') { measure.runs.length = 0; measure.seq = 0; measure.mode = 'vt'; const cv = $('gCanvas'); if (cv) cv.height = 400; }
   const run = { F, m, t: 0, v: 0, pts: [[0, 0]], done: false, resolve: null, label: `F = ${F} N, m = ${+m.toFixed(1)} kg` };
   run.color = measure.colors[measure.runs.length % measure.colors.length];
   measure.runs.push(run); if (measure.runs.length > 6) measure.runs.shift();
@@ -1027,6 +1224,14 @@ function vAt(run, t) {                                // 기록에서 시각 t�
   return P[P.length - 1][1];
 }
 function drawGraph() {
+  const head = document.querySelector('#graphPanel .gHead b'); if (head) head.textContent = measure.mode === 'incline' ? '빗면 운동 분석 (0.2초 간격)' : measure.mode === 'energy' ? '역학적 에너지 (0.05초 간격)' : measure.mode === 'spring' ? '용수철 진동의 역학적 에너지' : measure.mode === 'sand' ? '흔든 횟수와 모래의 온도' : measure.mode === 'balloon' ? '풍선 속 기체의 온도와 부피' : measure.mode === 'momentum' ? '충돌 전후의 운동량' : '속도–시간 그래프';
+  if (measure.mode === 'incline') return drawIncline();
+  if (measure.mode === 'energy') return drawEnergy();
+  if (measure.mode === 'spring') return drawSpring();
+  if (measure.mode === 'sand') return drawSand();
+  if (measure.mode === 'balloon') return drawBalloon();
+  if (measure.mode === 'momentum') return drawMomentum();
+  const cv0 = $('gCanvas'); if (cv0 && cv0.height !== 400) cv0.height = 400;
   const cv = $('gCanvas'); if (!cv) return; const g = cv.getContext('2d'), W = cv.width, H = cv.height;
   const kk = (cv.clientWidth || 306) / W, L = Math.round(52 / kk), Rm = Math.round(12 / kk), T = Math.round(10 / kk), B = Math.round(40 / kk), pw = W - L - Rm, ph = H - T - B;   // 여백도 화면 크기 기준
   let tMax = 0.5, vMax = 1;
@@ -1066,6 +1271,858 @@ function cartActLabel(c) {
   const R = c.userData.rail;
   if (!R || !c.userData.scale) return '조작하기';
   return R.run ? '조작하기 · 처음 자리로' : `조작하기 · ${c.userData.scale.userData.force} N으로 끌기`;
+}
+
+
+/* ---------- 빗면 실험 장치: 각도를 바꿀 수 있는 눈금 빗면. 수레를 위쪽에서 가만히 놓으면 a = g sinθ 로 등가속도 운동 (마찰 무시) ----------
+   0.2초마다 위치를 기록해(동영상 분석처럼) 표와 위치–시간, 속도–시간 그래프로 보여 준다. */
+const INC = { len: 1.5, w: 0.12, top: 0.014, stop: 0.03, foot: 0.012, angles: [5, 7.5, 10] };
+function makeIncline() {
+  const g = new THREE.Group();
+  g.userData = { grab: true, kind: 'incline', name: '빗면 실험 장치', footprint: [INC.len / 2, INC.w / 2 + 0.01], radius: 0.75, physMass: 1.2, centerY: 0.05, angle: 0, deg: 10, carts: [] };
+  const alu = std({ color: 0xc3c9ce, metalness: 0.8, roughness: 0.35 }), dark = std({ color: 0x2b3034, roughness: 0.6 });
+  const tickTex = canvasTex(2048, 64, (c, w, h) => {
+    c.fillStyle = '#d6dbdf'; c.fillRect(0, 0, w, h); c.fillStyle = '#2b3a36';
+    for (let i = 0; i <= 150; i++) { const x = i / 150 * w; const L = i % 10 === 0 ? 40 : i % 5 === 0 ? 28 : 16; c.fillRect(x - 1.5, 0, 3, L); }
+    c.font = `700 22px ${FONT}`; c.textAlign = 'center';
+    for (let i = 0; i <= 15; i++) c.fillText(String(i * 10), Math.min(w - 20, Math.max(20, i / 15 * w)), 60);
+  });
+  // 빗면(기울어지는 부분): 원점 = 아래쪽 끝, 위쪽 끝이 −x
+  const track = new THREE.Group(); track.position.set(INC.len / 2, INC.foot, 0); g.add(track);
+  const base = new THREE.Mesh(new THREE.BoxGeometry(INC.len, INC.top, INC.w), [alu, alu, alu, alu, std({ map: tickTex, roughness: 0.6 }), alu]);
+  base.position.set(-INC.len / 2, INC.top / 2, 0); track.add(base);
+  for (const z of [-INC.w / 2 + 0.006, INC.w / 2 - 0.006]) { const lip = new THREE.Mesh(new THREE.BoxGeometry(INC.len, 0.012, 0.006), alu); lip.position.set(-INC.len / 2, INC.top + 0.006, z); track.add(lip); }
+  for (const x of [-INC.len + INC.stop / 2, -INC.stop / 2]) { const st = new THREE.Mesh(new THREE.BoxGeometry(INC.stop, 0.05, INC.w), dark); st.position.set(x, INC.top + 0.025, 0); track.add(st); }
+  const foot = new THREE.Mesh(new THREE.BoxGeometry(0.06, INC.foot, INC.w), dark); foot.position.set(INC.len / 2 - 0.03, INC.foot / 2, 0); g.add(foot);
+  // 위쪽 끝을 받치는 스탠드 (높이는 각도에 따라)
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.012, 0.16), dark); g.add(plate);
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 1, 12), alu); g.add(post);
+  const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.03, 12), dark); knob.rotation.x = Math.PI / 2; g.add(knob);
+  g.userData.track = track; g.userData.stand = { plate, post, knob };
+  g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  setInclineAngle(g, 10);
+  return g;
+}
+function setInclineAngle(g, deg) {
+  const u = g.userData, th = deg * Math.PI / 180, S = u.stand;
+  u.deg = deg; u.track.rotation.z = -th;
+  const xh = INC.len / 2 - INC.len * Math.cos(th) + 0.04, yh = INC.foot + (INC.len - 0.04) * Math.sin(th);   // 위쪽 끝 가까이 받친다
+  S.plate.position.set(xh, 0.006, 0); S.post.position.set(xh, yh / 2, -INC.w / 2 - 0.012); S.post.scale.y = yh;
+  S.knob.position.set(xh, yh - 0.01, -INC.w / 2 - 0.012);
+  for (const c of u.carts) resetInclineCart(c);
+}
+function inclineSpan(c) {                          // 빗면 위에서 수레가 움직일 수 있는 범위 (빗면 좌표, 위쪽 끝 = −len)
+  const front = c.userData.scale ? SCALE.len + 0.01 : 0;
+  return [-INC.len + INC.stop + CARTD.len / 2 + 0.01, -INC.stop - CARTD.len / 2 - 0.01 - front];
+}
+function attachToIncline(c, g) {
+  stopMotion(c); bodyOff(c);
+  g.userData.carts.push(c); g.userData.track.add(c);
+  const [x0] = inclineSpan(c);
+  c.userData.incl = { inc: g, x0, u: 0, run: null };
+  c.position.set(x0, INC.top, 0); c.rotation.set(0, 0, 0);
+}
+function leaveIncline(c) {
+  const I = c.userData.incl; if (!I) return;
+  const k = I.inc.userData.carts.indexOf(c); if (k >= 0) I.inc.userData.carts.splice(k, 1);
+  c.userData.incl = null; if (c.parent === I.inc.userData.track) scene.attach(c);
+}
+function resetInclineCart(c) { const I = c.userData.incl; if (!I) return; I.run = null; I.u = 0; c.position.x = I.x0; }
+function releaseOnIncline(c) {                       // 수레를 빗면 위쪽에서 가만히 놓는다
+  const I = c.userData.incl; if (!I) return null;
+  resetInclineCart(c);
+  if (measure.mode !== 'incline') { measure.runs.length = 0; measure.seq = 0; measure.mode = 'incline'; }
+  const deg = I.inc.userData.deg;
+  measure.seq = (measure.seq || 0) + 1;
+  const run = { deg, t: 0, v: 0, u: 0, pts: [[0, 0, 0]], done: false, resolve: null, label: `${measure.seq}차` };   // 1차, 2차, …
+  run.color = measure.colors[measure.runs.length % measure.colors.length];
+  measure.runs.push(run); if (measure.runs.length > 4) measure.runs.shift();
+  I.run = run; showGraph();
+  return new Promise(res => { run.resolve = res; });
+}
+function updateInclines(dt) {
+  let any = false;
+  for (const c of items) {
+    const I = c.userData.incl; if (!isK(c, 'cart') || !I || !I.run || I.run.done) continue;
+    const run = I.run, [x0, x1] = inclineSpan(c), uMax = x1 - x0, a = 9.8 * Math.sin(run.deg * Math.PI / 180);
+    run.v += a * dt; I.u += run.v * dt; run.t += dt;
+    if (I.u >= uMax) { I.u = uMax; run.done = true; run.pts.push([run.t, I.u, run.v]); if (run.resolve) run.resolve(); }
+    else run.pts.push([run.t, I.u, run.v]);
+    run.u = I.u; c.position.x = x0 + I.u; any = true;
+  }
+  if (any) drawGraph();
+}
+/* ---------- 자유 낙하 실험 장치: 쇠공(1 kg)을 전자석에서 떼어 떨어뜨리고, 위치·운동·역학적 에너지를 기록한다 ---------- */
+const FALL = { base: 0.012, pad: 0.03, R: 0.031, m: 1.0, g: 9.8, hMax: 1.0, slow: 0.25, dt: 0.05, heights: [1.0, 0.8, 0.5] };
+FALL.y0 = FALL.base + FALL.pad;                                     // 기준면(높이 0) = 받침 쿠션 윗면
+function makeFallStand() {
+  const g = new THREE.Group();
+  g.userData = { grab: true, kind: 'fall', name: '자유 낙하 실험 장치', radius: 0.15, physMass: 2.0, centerY: 0.1, angle: 0, fall: { h: FALL.hMax, run: null } };
+  const alu = std({ color: 0xc3c9ce, metalness: 0.8, roughness: 0.35 }), dark = std({ color: 0x2b3034, roughness: 0.6 });
+  const base = new THREE.Mesh(new THREE.BoxGeometry(0.26, FALL.base, 0.18), dark); base.position.y = FALL.base / 2; g.add(base);
+  const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.065, FALL.pad, 28), std({ color: 0x8a2f2f, roughness: 0.9 })); pad.position.y = FALL.base + FALL.pad / 2; g.add(pad);
+  const postH = FALL.y0 + FALL.hMax + 2 * FALL.R + 0.09;
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, postH, 14), alu); post.position.set(-0.1, postH / 2, -0.03); g.add(post);
+  // 높이 눈금자 (0 = 쿠션 윗면, 1 cm 간격)
+  const CM = 105, rulerTex = canvasTex(96, 2048, (c, w, h) => {
+    c.fillStyle = '#f3efe2'; c.fillRect(0, 0, w, h); c.fillStyle = '#2b3a36';
+    for (let i = 0; i <= CM; i++) { const y = h - i / CM * h; const L = i % 10 === 0 ? 46 : i % 5 === 0 ? 32 : 18; c.fillRect(0, y - 1.5, L, 3); }
+    c.font = `700 26px ${FONT}`; c.textAlign = 'right'; c.textBaseline = 'middle';
+    for (let i = 10; i <= 100; i += 10) c.fillText(String(i), w - 4, h - i / CM * h);
+  });
+  const ruler = new THREE.Mesh(new THREE.BoxGeometry(0.045, CM / 100, 0.006), [dark, dark, dark, dark, std({ map: rulerTex, roughness: 0.6 }), dark]);
+  ruler.position.set(-0.062, FALL.y0 + CM / 200, -0.012); g.add(ruler);
+  // 공을 붙잡는 전자석 (팔은 기둥을 따라 높이를 바꾼다)
+  const holder = new THREE.Group(); g.add(holder);
+  const clamp = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.035, 0.03), dark); clamp.position.set(-0.1, 0.03, -0.03); holder.add(clamp);
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.012, 0.012), alu); arm.position.set(-0.05, 0.03, -0.015); holder.add(arm);
+  const mag = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.026, 18), std({ color: 0xb03a2e, roughness: 0.5 })); mag.position.set(0, 0.013, 0); holder.add(mag);
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(FALL.R, 28, 20), std({ color: 0xb9c0c6, metalness: 0.95, roughness: 0.22 })); g.add(ball);
+  const ghosts = new THREE.Group(); g.add(ghosts);                  // 0.05초마다 남기는 공의 잔상 (스트로보 사진처럼)
+  Object.assign(g.userData, { holder, ball, ghosts });
+  g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  setFallHeight(g, FALL.hMax);
+  return g;
+}
+function setFallHeight(g, h) {                       // 공(아랫면)을 기준면에서 h 높이의 전자석에 붙인다
+  const u = g.userData, F = u.fall;
+  F.h = h; F.run = null; F.y = h;
+  u.holder.position.y = FALL.y0 + h + 2 * FALL.R;
+  u.ball.position.set(0, FALL.y0 + h + FALL.R, 0);
+  while (u.ghosts.children.length) { const o = u.ghosts.children.pop(); o.geometry.dispose(); }
+}
+const ghostMat = new THREE.MeshStandardMaterial({ color: 0xb9c0c6, metalness: 0.6, roughness: 0.4, transparent: true, opacity: 0.3, depthWrite: false });
+function dropBall(g, h) {                            // h 높이에서 가만히 놓기: 0.5초 뒤 전자석이 공을 놓는다
+  const F = g.userData.fall; if (!F) return Promise.resolve();
+  setFallHeight(g, h);
+  if (measure.mode !== 'energy') { measure.runs.length = 0; measure.seq = 0; measure.mode = 'energy'; }
+  measure.seq = (measure.seq || 0) + 1;
+  const run = { h0: h, t: 0, hold: 0.5, v: 0, y: h, pts: [[0, h, 0]], ghostN: 0, done: false, resolve: null, label: `${measure.seq}차 (h = ${h.toFixed(1)} m)` };
+  measure.runs.length = 0; measure.runs.push(run);                     // 표와 그래프는 가장 최근 낙하만
+  F.run = run; showGraph();
+  return new Promise(res => { run.resolve = res; });
+}
+function updateFalls(dt) {
+  let any = false;
+  for (const g of items) {
+    const F = isK(g, 'fall') && g.userData.fall, run = F && F.run; if (!run || run.done) continue;
+    any = true;
+    if (run.hold > 0) { run.hold -= dt; continue; }                     // 전자석이 공을 놓기 전
+    const T = Math.sqrt(2 * run.h0 / FALL.g);                            // 바닥에 닿는 시각
+    run.t = Math.min(T, run.t + dt * FALL.slow);                         // 실제보다 4배 느리게
+    run.y = run.h0 - 0.5 * FALL.g * run.t * run.t; run.v = FALL.g * run.t;
+    while ((run.ghostN + 1) * FALL.dt <= run.t + 1e-9) {               // 0.05초마다 잔상 하나
+      run.ghostN++; const tt = run.ghostN * FALL.dt, yy = run.h0 - 0.5 * FALL.g * tt * tt;
+      const s = new THREE.Mesh(new THREE.SphereGeometry(FALL.R, 16, 12), ghostMat); s.position.set(0, FALL.y0 + yy + FALL.R, 0); g.userData.ghosts.add(s);
+    }
+    if (run.t >= T - 1e-9) { run.y = 0; run.done = true; if (run.resolve) run.resolve(); }
+    run.pts.push([run.t, run.y, run.v]);
+    g.userData.ball.position.y = FALL.y0 + Math.max(0, run.y) + FALL.R;
+  }
+  if (any && measure.mode === 'energy') drawGraph();
+}
+function drawEnergy() {                              // 0.05초마다 위치 에너지(아래)와 운동 에너지(위)를 쌓은 막대 + 역학적 에너지 선
+  const cv = $('gCanvas'); if (!cv) return;
+  if (cv.height !== 420) cv.height = 420;
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height, k = (cv.clientWidth || 306) / W, px = v => Math.round(v / k);
+  g.clearRect(0, 0, W, H); g.fillStyle = '#121617'; g.fillRect(0, 0, W, H);
+  const run = measure.runs[measure.runs.length - 1], m = FALL.m, gg = FALL.g;
+  const E0 = run ? m * gg * run.h0 : 9.8, T = run ? Math.sqrt(2 * run.h0 / gg) : 0.45;
+  const yStep = E0 > 6 ? 2 : 1, yTop = Math.ceil(E0 / yStep + 0.3) * yStep;
+  const n = Math.floor(T / FALL.dt + 1e-9), tMax = (n + 1) * FALL.dt;
+  const L = Math.round(52 / k), Rm = Math.round(12 / k), Tp = Math.round(12 / k), B = Math.round(40 / k), pw = W - L - Rm, ph = H - Tp - B;
+  const t0 = -FALL.dt * 0.7, X = t => L + (t - t0) / (tMax - t0) * pw, Y = e => Tp + ph - e / yTop * ph;   // 첫 막대가 세로축 글씨를 가리지 않게 조금 띄운다
+  g.strokeStyle = 'rgba(238,241,239,.36)'; g.lineWidth = 1; g.fillStyle = '#c9d0d6'; g.font = `500 ${px(11)}px ${FONT}`;
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  for (let e = 0; e <= yTop + 1e-9; e += yStep) { g.beginPath(); g.moveTo(L, Y(e)); g.lineTo(L + pw, Y(e)); g.stroke(); g.fillText(String(e), L - 6, Y(e)); }
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  for (let i = 0; i <= n + 1; i++) { const t = i * FALL.dt; if (i % 2 === 0) g.fillText(t.toFixed(1), X(t), Tp + ph + 4); }
+  g.fillStyle = '#eef1ef'; g.font = `700 ${px(12.5)}px ${FONT}`; g.textBaseline = 'bottom'; g.fillText('시간 (s)', L + pw / 2, H - 2);
+  g.save(); g.translate(2, Tp + ph / 2); g.rotate(-Math.PI / 2); g.textBaseline = 'top'; g.fillText('에너지 (J)', 0, 0); g.restore();
+  if (run) {
+    const bw = Math.max(px(6), pw / (n + 2) * 0.58);
+    const bar = (t, y) => {                                            // 시각 t, 높이 y에서의 막대
+      const v = gg * t, Ep = m * gg * Math.max(0, y), Ek = 0.5 * m * v * v, x = X(t) - bw / 2;
+      g.fillStyle = '#3fb8a8'; g.fillRect(x, Y(Ep), bw, Y(0) - Y(Ep));
+      g.fillStyle = '#9fd3ff'; g.fillRect(x, Y(Ep + Ek), bw, Y(Ep) - Y(Ep + Ek));
+    };
+    const nearEnd = T - n * FALL.dt < FALL.dt * 0.4;                    // 바닥에 닿는 순간이 마지막 0.05초 칸과 거의 같으면 그 칸 대신 그린다
+    for (let i = 0; i <= n && i * FALL.dt <= run.t + 1e-9; i++) { if (run.done && nearEnd && i === n) continue; const t = i * FALL.dt; bar(t, run.h0 - 0.5 * gg * t * t); }
+    if (run.done) bar(T, 0);                                            // 바닥에 닿는 순간
+    g.strokeStyle = '#e56b6f'; g.lineWidth = px(2.2); g.setLineDash([px(6), px(4)]);
+    g.beginPath(); g.moveTo(L, Y(E0)); g.lineTo(L + pw, Y(E0)); g.stroke(); g.setLineDash([]);
+    g.fillStyle = '#e56b6f'; g.font = `700 ${px(11.5)}px ${FONT}`; g.textAlign = 'right'; g.textBaseline = 'bottom';
+    g.fillText(`역학적 에너지 ${E0.toFixed(1)} J`, L + pw - 2, Y(E0) - 3);
+  }
+  const leg = $('gLegend');
+  if (leg) leg.innerHTML = `<span><i style="background:#3fb8a8"></i>위치 에너지 (mgh)</span><span><i style="background:#9fd3ff"></i>운동 에너지 (½mv²)</span>` + (run ? `<span>${run.label}</span>` : '');
+  const tb = $('gTable'); if (!tb) return;
+  if (!run) { tb.innerHTML = ''; return; }
+  const rows = [];
+  for (let i = 0; i <= n && i * FALL.dt <= run.t + 1e-9; i++) rows.push(i * FALL.dt);
+  if (run.done) rows.push(T);
+  const tr = t => { const y = Math.max(0, run.h0 - 0.5 * gg * t * t), v = gg * t, Ep = m * gg * y, Ek = 0.5 * m * v * v;
+    return `<tr><td>${t.toFixed(t === T && Math.abs(t / FALL.dt - Math.round(t / FALL.dt)) > 1e-6 ? 3 : 2)}</td><td>${y.toFixed(3)}</td><td>${v.toFixed(2)}</td><td>${Ep.toFixed(2)}</td><td>${Ek.toFixed(2)}</td><td><b>${(Ep + Ek).toFixed(2)}</b></td></tr>`; };
+  tb.innerHTML = `<table class="incTable"><tr><th>시간<br>(s)</th><th>높이<br>(m)</th><th>속력<br>(m/s)</th><th>위치 에너지<br>(J)</th><th>운동 에너지<br>(J)</th><th>역학적<br>에너지 (J)</th></tr>${rows.map(tr).join('')}</table>`;
+}
+/* ---------- 용수철 진동 실험 장치: 마찰 없는 수평면에서 용수철(k = 50 N/m)에 연결된 물체(2 kg)를 당겼다 놓는다 ---------- */
+const SPR = { k: 50, m: 2, len: 0.8, w: 0.14, top: 0.012, wallX: -0.34, half: 0.04, amps: [0.1, 0.15, 0.2], pullSec: 0.8 };
+SPR.w0 = Math.sqrt(SPR.k / SPR.m);                                    // 각진동수 5 rad/s (주기 약 1.26초)
+function makeSpringStand() {
+  const g = new THREE.Group();
+  g.userData = { grab: true, kind: 'spring', name: '용수철 진동 실험 장치', radius: 0.4, physMass: 1.5, centerY: 0.02, angle: 0, spr: { x: 0, run: null } };
+  const alu = std({ color: 0xc3c9ce, metalness: 0.8, roughness: 0.35 }), dark = std({ color: 0x2b3034, roughness: 0.6 });
+  // 눈금 있는 매끄러운 수평면 (0 = 평형 위치, 1 cm 간격)
+  const tickTex = canvasTex(2048, 64, (c, w, h) => {
+    c.fillStyle = '#d6dbdf'; c.fillRect(0, 0, w, h); c.fillStyle = '#2b3a36';
+    for (let i = -40; i <= 40; i++) { const x = (i + 40) / 80 * w; const L = i % 10 === 0 ? 40 : i % 5 === 0 ? 28 : 16; c.fillRect(x - 1.5, 0, 3, L); }
+    c.font = `700 22px ${FONT}`; c.textAlign = 'center';
+    for (let i = -30; i <= 30; i += 10) c.fillText(String(i), (i + 40) / 80 * w, 60);
+  });
+  const base = new THREE.Mesh(new THREE.BoxGeometry(SPR.len, SPR.top, SPR.w), [alu, alu, std({ color: 0xe9ecef, metalness: 0.3, roughness: 0.15 }), alu, std({ map: tickTex, roughness: 0.6 }), alu]);
+  base.position.y = SPR.top / 2; g.add(base);
+  const wall = new THREE.Mesh(new THREE.BoxGeometry(SPR.len / 2 + SPR.wallX, 0.1, SPR.w), dark);
+  wall.position.set((-SPR.len / 2 + SPR.wallX) / 2, SPR.top + 0.05, 0); g.add(wall);
+  // 용수철: 길이 1짜리 나선을 만들어 두고 x 방향으로 늘이고 줄인다
+  class Helix extends THREE.Curve { getPoint(t, o = new THREE.Vector3()) { const a = t * Math.PI * 2 * 14; return o.set(t, 0.017 * Math.sin(a), 0.017 * Math.cos(a)); } }
+  const spring = new THREE.Mesh(new THREE.TubeGeometry(new Helix(), 420, 0.0022, 6, false), std({ color: 0x9aa3ab, metalness: 0.9, roughness: 0.3 }));
+  spring.position.set(SPR.wallX, SPR.top + 0.03, 0); g.add(spring);
+  const block = new THREE.Group(); g.add(block);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(SPR.half * 2, 0.06, 0.07), std({ color: 0x3d6fb6, metalness: 0.5, roughness: 0.35 })); body.position.y = SPR.top + 0.03; block.add(body);
+  const hook = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.012, 10), dark); hook.rotation.z = Math.PI / 2; hook.position.set(-SPR.half - 0.004, SPR.top + 0.03, 0); block.add(hook);
+  const lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.016), std({ map: labelTex('2 kg'), roughness: 0.6 })); lbl.position.set(0, SPR.top + 0.03, 0.0351); block.add(lbl);
+  const mark = new THREE.Mesh(new THREE.BoxGeometry(0.002, 0.004, 0.012), std({ color: 0xc8322d })); mark.position.set(0, SPR.top + 0.002, SPR.w / 2 - 0.006); block.add(mark);   // 눈금을 읽는 빨간 선
+  Object.assign(g.userData, { spring, block });
+  g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  setSpringX(g, 0);
+  return g;
+}
+function setSpringX(g, x) {                          // 물체 중심을 평형 위치에서 x만큼 옮기고 용수철 길이를 맞춘다
+  const u = g.userData; u.spr.x = x; u.block.position.x = x;
+  u.spring.scale.x = Math.max(0.02, x - SPR.half - 0.008 - SPR.wallX);
+}
+function pullSpring(g, A) {                          // A만큼 오른쪽으로 당겼다가 놓는다 (놓은 뒤에는 멈추기 전까지 계속 진동)
+  const S = g.userData.spr; if (!S) return Promise.resolve();
+  if (measure.mode !== 'spring') { measure.runs.length = 0; measure.seq = 0; measure.mode = 'spring'; }
+  const run = { A, x0: S.x, pre: 0.45, pull: 0, t: 0, x: S.x, v: 0, released: false, resolve: null, g };   // pre: 오른손이 물체를 잡으러 가는 시간
+  measure.runs.length = 0; measure.runs.push(run);
+  S.run = run; showGraph();
+  return new Promise(res => { run.resolve = res; });           // 놓는 순간 끝난 것으로 본다
+}
+function springGrip(g) {                            // 오른손이 물체 오른쪽 끝을 잡는 점 (실험실 좌표)
+  g.updateMatrixWorld(); return g.userData.block.localToWorld(new THREE.Vector3(SPR.half + 0.03, SPR.top + 0.045, 0));
+}
+function stopSpring(g) { const S = g.userData.spr; if (!S) return; S.run = null; setSpringX(g, 0); drawGraph(); }
+function updateSprings(dt) {
+  let any = false;
+  for (const g of items) {
+    const S = isK(g, 'spring') && g.userData.spr, run = S && S.run; if (!run) continue;
+    any = true;
+    if (!run.released && run.pre > 0) { run.pre -= dt; continue; }   // 손이 물체에 닿기 전: 그대로
+    if (!run.released) {                                               // 손으로 천천히 당기는 중
+      run.pull = Math.min(1, run.pull + dt / SPR.pullSec); const e = run.pull * run.pull * (3 - 2 * run.pull);
+      run.x = run.x0 + (run.A - run.x0) * e; run.v = 0;
+      if (run.pull >= 1) { run.released = true; run.t = 0; run.relAt = performance.now() / 1000; run.relP = springGrip(g); if (run.resolve) { run.resolve(); run.resolve = null; } }
+    } else {
+      run.t += dt; run.x = run.A * Math.cos(SPR.w0 * run.t); run.v = -run.A * SPR.w0 * Math.sin(SPR.w0 * run.t);
+    }
+    setSpringX(g, run.x);
+  }
+  if (any && measure.mode === 'spring') drawGraph();
+}
+function drawSpring() {                              // 위치 x에 따른 탄성 위치 에너지·운동 에너지·역학적 에너지 (교과서 그림 30처럼)
+  const cv = $('gCanvas'); if (!cv) return;
+  if (cv.height !== 420) cv.height = 420;
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height, k = (cv.clientWidth || 306) / W, px = v => Math.round(v / k);
+  g.clearRect(0, 0, W, H); g.fillStyle = '#121617'; g.fillRect(0, 0, W, H);
+  const run = measure.runs[measure.runs.length - 1], A = run ? run.A : 0.2, E = 0.5 * SPR.k * A * A;
+  const xMax = 0.2, yTop = E > 0.6 ? 1.2 : E > 0.3 ? 0.6 : 0.3, yStep = yTop / 6;
+  const L = Math.round(52 / k), Rm = Math.round(14 / k), Tp = Math.round(12 / k), B = Math.round(40 / k), pw = W - L - Rm, ph = H - Tp - B;
+  const X = x => L + (x + xMax) / (2 * xMax) * pw, Y = e => Tp + ph - e / yTop * ph;
+  g.strokeStyle = 'rgba(238,241,239,.36)'; g.lineWidth = 1; g.fillStyle = '#c9d0d6'; g.font = `500 ${px(11)}px ${FONT}`;
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  for (let i = 0; i <= 6; i++) { const e = i * yStep; g.beginPath(); g.moveTo(L, Y(e)); g.lineTo(L + pw, Y(e)); g.stroke(); if (i % 2 === 0) g.fillText(String(+e.toFixed(2)), L - 6, Y(e)); }
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  for (let i = -4; i <= 4; i++) { const x = i * 0.05; g.beginPath(); g.moveTo(X(x), Tp); g.lineTo(X(x), Tp + ph); g.stroke(); if (i % 2 === 0) g.fillText(String(+x.toFixed(1)), X(x), Tp + ph + 4); }
+  g.fillStyle = '#eef1ef'; g.font = `700 ${px(12.5)}px ${FONT}`; g.textBaseline = 'bottom'; g.fillText('평형 위치로부터의 위치 x (m)', L + pw / 2, H - 2);
+  g.save(); g.translate(2, Tp + ph / 2); g.rotate(-Math.PI / 2); g.textBaseline = 'top'; g.fillText('에너지 (J)', 0, 0); g.restore();
+  if (!run) { const leg = $('gLegend'); if (leg) leg.innerHTML = ''; const tb = $('gTable'); if (tb) tb.innerHTML = ''; return; }
+  const curve = (col, f, dash) => { g.strokeStyle = col; g.lineWidth = px(2.6); g.setLineDash(dash || []); g.beginPath();
+    for (let i = 0; i <= 80; i++) { const x = -A + 2 * A * i / 80; const yy = Y(f(x)); if (i) g.lineTo(X(x), yy); else g.moveTo(X(x), yy); } g.stroke(); g.setLineDash([]); };
+  curve('#3fb8a8', x => 0.5 * SPR.k * x * x);                                   // 탄성력에 의한 위치 에너지
+  curve('#9fd3ff', x => 0.5 * SPR.k * (A * A - x * x));                          // 운동 에너지
+  curve('#e56b6f', () => E, [px(6), px(4)]);                                     // 역학적 에너지
+  for (const s of [-1, 1]) { g.strokeStyle = 'rgba(238,241,239,.55)'; g.lineWidth = 1; g.setLineDash([px(3), px(3)]); g.beginPath(); g.moveTo(X(s * A), Tp); g.lineTo(X(s * A), Tp + ph); g.stroke(); g.setLineDash([]); }
+  // 지금 물체의 위치: 두 에너지를 점으로
+  const x = run.x, Ep = 0.5 * SPR.k * x * x, Ek = 0.5 * SPR.m * run.v * run.v;
+  g.strokeStyle = '#d9b45b'; g.lineWidth = px(1.6); g.beginPath(); g.moveTo(X(x), Tp); g.lineTo(X(x), Tp + ph); g.stroke();
+  for (const [e, col] of [[Ep, '#3fb8a8'], [Ek, '#9fd3ff'], [Ep + Ek, '#e56b6f']]) { g.fillStyle = col; g.beginPath(); g.arc(X(x), Y(e), px(5), 0, Math.PI * 2); g.fill(); }
+  g.fillStyle = '#e56b6f'; g.font = `700 ${px(11.5)}px ${FONT}`; g.textAlign = 'right'; g.textBaseline = 'bottom'; g.fillText(`역학적 에너지 ${E.toFixed(2)} J`, L + pw - 2, Y(E) - 3);
+  const leg = $('gLegend');
+  if (leg) leg.innerHTML = `<span><i style="background:#3fb8a8"></i>탄성력에 의한 위치 에너지 (½kx²)</span><span><i style="background:#9fd3ff"></i>운동 에너지 (½mv²)</span><span>k = ${SPR.k} N/m, m = ${SPR.m} kg, A = ${(A * 100).toFixed(0)} cm</span>`;
+  const tb = $('gTable'); if (!tb) return;
+  const row = (name, xx, vv, cls) => { const p = 0.5 * SPR.k * xx * xx, q = 0.5 * SPR.m * vv * vv;
+    return `<tr${cls ? ` class="${cls}"` : ''}><td>${name}</td><td>${xx.toFixed(3)}</td><td>${Math.abs(vv).toFixed(2)}</td><td>${p.toFixed(3)}</td><td>${q.toFixed(3)}</td><td><b>${(p + q).toFixed(3)}</b></td></tr>`; };
+  const vAtX = xx => SPR.w0 * Math.sqrt(Math.max(0, A * A - xx * xx));
+  tb.innerHTML = `<table class="incTable"><tr><th>지점</th><th>위치 x<br>(m)</th><th>속력<br>(m/s)</th><th>탄성 위치<br>에너지 (J)</th><th>운동<br>에너지 (J)</th><th>역학적<br>에너지 (J)</th></tr>` +
+    row('지금', x, run.v, 'now') + row('P (끝)', A, 0) + row('Q (중간)', A / 2, vAtX(A / 2)) + row('O (평형)', 0, vAtX(0)) + row('Q′', -A / 2, vAtX(A / 2)) + row('P′ (끝)', -A, 0) + `</table>`;
+}
+/* ---------- 모래 컵 흔들기: 스타이로폼 컵(모래 반, 디지털 온도계를 꽂은 뚜껑)을 50회씩 흔들어 모래의 온도 변화를 잰다 ----------
+   흔들 때마다 모래가 받은 역학적 에너지(약 m g h)가 열로 바뀐다: ΔT = g h / c (스타이로폼이라 열이 거의 빠져나가지 않는다) */
+const ROOM_T = 20;   // 실험실 실온 (°C)
+const SAND = { T0: ROOM_T, c: 800, h: 0.5, step: 50, max: 200, sec: 5 };
+SAND.dT = 9.8 * SAND.h / SAND.c;                                     // 한 번 흔들 때 올라가는 온도 (약 0.006 °C)
+// 온도 센서: 금속 탐침(아래쪽 끝 = 원점) + 위쪽의 파란 센서 본체(표시창). withTag면 멀리서도 보이는 큰 표시를 위에 띄운다
+function buildSensor(withTag) {
+  const sg = new THREE.Group();
+  const probe = new THREE.Mesh(new THREE.CylinderGeometry(0.0022, 0.0022, 0.24, 10), std({ color: 0xc3c9ce, metalness: 0.9, roughness: 0.3 })); probe.position.y = 0.12; sg.add(probe);
+  const unit = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.078, 0.018), std({ color: 0x3f8fd8, roughness: 0.45 })); unit.position.y = 0.275; sg.add(unit);
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 160;
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.032, 0.02), new THREE.MeshBasicMaterial({ map: tex })); screen.position.set(0, 0.29, 0.0091); sg.add(screen);
+  for (const x of [-0.008, 0.008]) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.002, 12), std({ color: 0xffffff, roughness: 0.5 })); b.rotation.x = Math.PI / 2; b.position.set(x, 0.255, 0.0095); sg.add(b); }
+  const disp = { cv, tex };
+  if (withTag) {
+    const cv2 = document.createElement('canvas'); cv2.width = 560; cv2.height = 112;
+    const tex2 = new THREE.CanvasTexture(cv2); tex2.colorSpace = THREE.SRGBColorSpace;
+    const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex2, depthTest: false, transparent: true })); tag.scale.set(0.175, 0.035, 1); tag.position.set(0, 0.345, 0); tag.renderOrder = 5; tag.raycast = () => {}; sg.add(tag);
+    Object.assign(disp, { cv2, tex2 });
+  }
+  return { sg, disp };
+}
+function drawSensorScreen(disp, txt) {
+  const c = disp.cv.getContext('2d'), w = disp.cv.width, h = disp.cv.height;
+  c.fillStyle = '#f4f8fb'; c.fillRect(0, 0, w, h); c.fillStyle = '#16324f';
+  c.font = `700 92px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, w / 2, h / 2 + 6);
+  disp.tex.needsUpdate = true;
+}
+function makeTempSensor() {                          // 자유 실험용 온도 센서 (실험대에는 눕혀 놓는다)
+  const g = new THREE.Group();
+  g.userData = { grab: true, kind: 'tsensor', name: '온도 센서', radius: 0.08, physMass: 0.08, centerY: 0.02, angle: 0 };
+  const { sg, disp } = buildSensor(true); sg.rotation.z = -Math.PI / 2; sg.position.set(-0.15, 0.02, 0); g.add(sg);
+  Object.assign(g.userData, { sg, disp, inBeaker: null, shown: null });
+  g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  sensorShow(g);
+  return g;
+}
+// 온도 센서가 재는 온도: 비커에 꽂혀 있으면 물의 온도, 아니면 실온 (자유 실험에서 다른 분야 기구와도 함께 쓴다)
+function sensorShow(g) {
+  const u = g.userData, B = u.inBeaker || u.onBalloon, T = B ? B.userData.T : ROOM_T, txt = T.toFixed(1); if (u.shown === txt + !!B) return; u.shown = txt + !!B;
+  drawSensorScreen(u.disp, txt);
+  const tag = u.sg.children.find(o => o.isSprite); if (tag) tag.visible = !!B;   // 비커에 꽂았을 때만 큰 표시
+  if (B) {
+    const c = u.disp.cv2.getContext('2d'), w = u.disp.cv2.width, h = u.disp.cv2.height;
+    c.clearRect(0, 0, w, h); c.fillStyle = 'rgba(16,22,24,.88)'; c.beginPath(); c.roundRect(4, 4, w - 8, h - 8, 22); c.fill();
+    c.strokeStyle = '#d9b45b'; c.lineWidth = 5; c.stroke(); c.fillStyle = '#ffffff'; c.font = `700 66px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(`${u.onBalloon ? '풍선 속' : '물'} ${txt} °C`, w / 2, h / 2 + 4); u.disp.tex2.needsUpdate = true;
+  }
+}
+function sensorIntoBeaker(sn, bk) {                  // 비커 안쪽 벽 가까이에 세워 꽂는다 (탐침 끝이 물속에)
+  stopMotion(sn); bodyOff(sn);
+  bk.userData.sensor = sn; sn.userData.inBeaker = bk; bk.add(sn);
+  sn.position.set(-(BLN.R - 0.008), 0.012, 0.0); sn.rotation.set(0, 0, 0);
+  sn.userData.sg.rotation.set(0, 0, 0); sn.userData.sg.position.set(0, 0, 0);   // 표시창이 앞을 향하게 세운다
+  sensorShow(sn);
+}
+function sensorOnBalloon(sn, b) {                    // 탐침을 풍선 꼭지 쪽으로 넣어 풍선 속 기체의 온도를 잰다
+  stopMotion(sn); bodyOff(sn);
+  b.userData.sensor = sn; sn.userData.onBalloon = b; b.userData.skin.add(sn);
+  sn.position.set(BLN.r0 * 0.55, 0.01, 0); sn.rotation.set(0, 0, 0);
+  sn.userData.sg.rotation.set(0, 0, 0); sn.userData.sg.position.set(0, 0, 0);
+  sensorShow(sn);
+}
+function sensorOffBalloon(sn) {
+  const b = sn && sn.userData.onBalloon; if (!b) return;
+  b.userData.sensor = null; sn.userData.onBalloon = null; if (sn.parent) scene.attach(sn);
+  sn.userData.sg.rotation.set(0, 0, -Math.PI / 2); sn.userData.sg.position.set(-0.15, 0.02, 0); sn.rotation.set(0, 0, 0); sn.scale.set(1, 1, 1);
+  sensorShow(sn);
+}
+function sensorOutOfBeaker(sn) {
+  const B = sn && sn.userData.inBeaker; if (!B) return;
+  B.userData.sensor = null; sn.userData.inBeaker = null; if (sn.parent === B) scene.attach(sn);
+  sn.userData.sg.rotation.set(0, 0, -Math.PI / 2); sn.userData.sg.position.set(-0.15, 0.02, 0); sn.rotation.set(0, 0, 0);
+  sensorShow(sn);
+}
+function makeSandCup(withSensor = true) {
+  const g = new THREE.Group();
+  g.userData = { grab: true, kind: 'sandcup', name: '', radius: 0.05, physMass: 0.4, centerY: 0.06, angle: 0, sand: { n: 0, T: SAND.T0, run: null, shown: null } };
+  const foam = std({ color: 0xf2f1ec, roughness: 0.97 });
+  const body = new THREE.Group(); g.add(body);                     // 흔들 때 위아래로 움직이는 부분
+  // 원통형 스타이로폼 컵 + 같은 굵기의 뚜껑 (모서리를 살짝 둥글게)
+  const prof = [[0, 0], [0.038, 0], [0.042, 0.004], [0.042, 0.11], [0.04, 0.114], [0, 0.114]].map(([x, y]) => new THREE.Vector2(x, y));
+  const cup = new THREE.Mesh(new THREE.LatheGeometry(prof, 40), foam); body.add(cup);
+  const seam = new THREE.Mesh(new THREE.TorusGeometry(0.0421, 0.0008, 6, 40), std({ color: 0xd9d7cf, roughness: 1 })); seam.rotation.x = Math.PI / 2; seam.position.y = 0.1; body.add(seam);   // 뚜껑 이음선
+  const { sg, disp } = buildSensor(true); body.add(sg);            // 뚜껑을 뚫고 모래까지 꽂힌 온도 센서
+  Object.assign(g.userData, { shaker: body, sensor: sg, disp });   // userData.body는 물리 엔진용이라 다른 이름
+  g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  setCupSensor(g, withSensor);
+  return g;
+}
+function setCupSensor(g, on) {                       // 컵에 온도 센서를 꽂거나 뺀다
+  const u = g.userData; u.hasSensor = on; u.sensor.visible = on;
+  u.name = on ? '모래 컵(온도 센서 꽂음)' : '스타이로폼 컵(모래)';
+  u.sand.shown = null; sandShow(g);
+}
+function sandShow(g) {                               // 센서 표시창과 큰 표시(흔든 횟수 · 온도): 0.1 °C 단위
+  const u = g.userData, S = u.sand, txt = S.T.toFixed(1), key = `${S.n}|${txt}`; if (S.shown === key) return; S.shown = key;
+  drawSensorScreen(u.disp, txt);
+  const c = u.disp.cv2.getContext('2d'), w = u.disp.cv2.width, h = u.disp.cv2.height;
+  c.clearRect(0, 0, w, h); c.fillStyle = 'rgba(16,22,24,.88)'; c.beginPath(); c.roundRect(4, 4, w - 8, h - 8, 22); c.fill();
+  c.strokeStyle = '#d9b45b'; c.lineWidth = 5; c.stroke();
+  c.textBaseline = 'middle'; c.font = `700 64px ${FONT}`;
+  c.fillStyle = '#d9b45b'; c.textAlign = 'right'; c.fillText(`${S.n}회`, w * 0.38, h / 2 + 4);
+  c.fillStyle = 'rgba(238,241,239,.5)'; c.fillRect(w * 0.43, 26, 3, h - 52);
+  c.fillStyle = '#ffffff'; c.textAlign = 'left'; c.fillText(`${txt} °C`, w * 0.48, h / 2 + 4);
+  u.disp.tex2.needsUpdate = true;
+}
+function shakeSand(g, sec = SAND.sec) {              // 50회 흔들기 (sec초 동안 보여 준다)
+  const S = g.userData.sand; if (!S || S.run || S.n >= SAND.max) return Promise.resolve();
+  if (measure.mode !== 'sand') { measure.runs.length = 0; measure.seq = 0; measure.mode = 'sand'; }
+  if (!measure.runs.length || measure.runs[0].g !== g || S.n === 0) { measure.runs.length = 0; measure.runs.push({ g, pts: [[S.n, S.T]] }); }
+  const run = { n0: S.n, T0: S.T, t: 0, sec, resolve: null }; S.run = run; showGraph();
+  return new Promise(res => { run.resolve = res; });
+}
+function resetSand(g) { if (shakeMode.cup === g) exitShake(); const S = g.userData.sand; S.run = null; S.n = 0; S.T = SAND.T0; g.userData.shaker.position.y = 0; sandShow(g); measure.runs.length = 0; drawGraph(); }
+// 직접 흔들기: 마우스(휴대폰은 화면 끌기)를 위아래로 움직이면 컵이 따라 움직이고, 위로 올렸다 내리면 1회
+const shakeMode = { active: false, cup: null, y: 0, up: false };
+const SHAKE_TOP = 0.09;
+function enterShake(g) {
+  const S = g.userData.sand; if (!S || S.run || !g.userData.hasSensor) return;
+  if (S.n >= SAND.max) { toast(`${SAND.max}회까지 흔들었어요. 처음 온도로 되돌린 뒤 다시 해 보세요.`); return; }
+  if (measure.mode !== 'sand') { measure.runs.length = 0; measure.seq = 0; measure.mode = 'sand'; }
+  if (!measure.runs.length || measure.runs[0].g !== g || S.n === 0) { measure.runs.length = 0; measure.runs.push({ g, pts: [[S.n, +S.T.toFixed(1)]] }); }
+  Object.assign(shakeMode, { active: true, cup: g, y: 0, up: false }); showGraph();
+  toast(isTouch ? '화면을 위아래로 크게 끌어 컵을 흔들어요. 50회마다 온도가 표에 기록돼요.' : '마우스를 위아래로 크게 움직여 컵을 흔들어요. 50회마다 온도가 표에 기록돼요.');
+}
+function exitShake() { if (!shakeMode.active) return; const g = shakeMode.cup; shakeMode.active = false; shakeMode.cup = null; if (g) g.userData.shaker.position.y = 0; }
+function shakeMove(dy) {                             // dy: 위로 올린 만큼 (m)
+  if (!shakeMode.active) return;
+  shakeMode.y = Math.max(0, Math.min(SHAKE_TOP, shakeMode.y + dy));
+  if (shakeMode.y > SHAKE_TOP * 0.7) shakeMode.up = true;
+  else if (shakeMode.up && shakeMode.y < SHAKE_TOP * 0.2) {           // 올렸다가 내리면 한 번
+    shakeMode.up = false;
+    const g = shakeMode.cup, S = g.userData.sand;
+    S.n++; S.T += SAND.dT; sandShow(g);   // 한 번 흔들 때마다 그만큼 올라간다 (그사이 식은 만큼은 그대로)
+    if (S.n % SAND.step === 0) { const R = measure.runs[0]; if (R && R.g === g) R.pts.push([S.n, +S.T.toFixed(1)]); toast(`${S.n}회: ${S.T.toFixed(1)} °C`); }
+    if (S.n >= SAND.max) { exitShake(); toast(`${SAND.max}회를 다 흔들었어요. 표를 확인해 보세요.`); }
+    drawGraph();
+  }
+}
+document.addEventListener('pointermove', e => { if (e.pointerType === 'mouse' && shakeMode.active && playing && !ctxMenu.open) shakeMove(-e.movementY * 0.0006); });
+function updateSands(dt) {
+  if (shakeMode.active) {
+    const g = shakeMode.cup;
+    if (!g || g.parent !== scene || held === g) exitShake();
+    else g.userData.shaker.position.y += (shakeMode.y - g.userData.shaker.position.y) * Math.min(1, dt * 30);
+  }
+  let any = false;
+  for (const g of items) {
+    const S = isK(g, 'sandcup') && g.userData.sand, run = S && S.run; if (!run) continue;
+    any = true; run.t = Math.min(run.sec, run.t + dt);
+    const f = run.t / run.sec, k = SAND.step * f;                  // 지금까지 흔든 횟수 (이번 50회 중)
+    S.n = run.n0 + Math.floor(k + 1e-9); S.T = run.T0 + (S.n - run.n0) * SAND.dT;
+    g.userData.shaker.position.y = run.t < run.sec ? 0.07 * (0.5 - 0.5 * Math.cos(2 * Math.PI * k)) : 0;   // 한 번에 한 번씩 위아래로
+    sandShow(g);
+    if (run.t >= run.sec) {
+      S.n = run.n0 + SAND.step; S.T = run.T0 + SAND.step * SAND.dT; S.run = null; sandShow(g);
+      const R = measure.runs[0]; if (R && R.g === g) R.pts.push([S.n, +S.T.toFixed(1)]);   // 온도계 눈금(0.1 °C)대로 기록
+      if (run.resolve) run.resolve();
+    }
+  }
+  if (any && measure.mode === 'sand') drawGraph();
+}
+function drawSand() {                                // 흔든 횟수에 따른 모래의 온도
+  const cv = $('gCanvas'); if (!cv) return;
+  if (cv.height !== 400) cv.height = 400;
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height, k = (cv.clientWidth || 306) / W, px = v => Math.round(v / k);
+  g.clearRect(0, 0, W, H); g.fillStyle = '#121617'; g.fillRect(0, 0, W, H);
+  const R = measure.runs[0], y0 = SAND.T0 - 0.1, y1 = SAND.T0 + 1.5;
+  const L = Math.round(66 / k), Rm = Math.round(14 / k), Tp = Math.round(12 / k), B = Math.round(40 / k), pw = W - L - Rm, ph = H - Tp - B;
+  const X = n => L + n / SAND.max * pw, Y = T => Tp + ph - (T - y0) / (y1 - y0) * ph;
+  g.strokeStyle = 'rgba(238,241,239,.36)'; g.lineWidth = 1; g.fillStyle = '#c9d0d6'; g.font = `500 ${px(11)}px ${FONT}`;
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  for (let T = SAND.T0; T <= y1 + 1e-9; T += 0.25) { g.beginPath(); g.moveTo(L, Y(T)); g.lineTo(L + pw, Y(T)); g.stroke(); if (Math.abs(T * 2 - Math.round(T * 2)) < 1e-6) g.fillText(T.toFixed(1), L - 6, Y(T)); }
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  for (let n = 0; n <= SAND.max; n += SAND.step) { g.beginPath(); g.moveTo(X(n), Tp); g.lineTo(X(n), Tp + ph); g.stroke(); g.fillText(String(n), X(n), Tp + ph + 4); }
+  g.fillStyle = '#eef1ef'; g.font = `700 ${px(12.5)}px ${FONT}`; g.textBaseline = 'bottom'; g.fillText('흔든 횟수 (회)', L + pw / 2, H - 2);
+  g.save(); g.translate(2, Tp + ph / 2); g.rotate(-Math.PI / 2); g.textBaseline = 'top'; g.fillText('온도 (°C)', 0, 0); g.restore();
+  const leg = $('gLegend'), tb = $('gTable');
+  if (!R) { if (leg) leg.innerHTML = ''; if (tb) tb.innerHTML = ''; return; }
+  const S = R.g.userData.sand;
+  g.strokeStyle = '#e56b6f'; g.lineWidth = px(2.4); g.beginPath();
+  R.pts.forEach((p, i) => { if (i) g.lineTo(X(p[0]), Y(p[1])); else g.moveTo(X(p[0]), Y(p[1])); });
+  if (S.run || shakeMode.cup === R.g) g.lineTo(X(S.n), Y(S.T)); g.stroke();
+  g.fillStyle = '#e56b6f'; for (const p of R.pts) { g.beginPath(); g.arc(X(p[0]), Y(p[1]), px(4.5), 0, Math.PI * 2); g.fill(); }
+  if (leg) leg.innerHTML = `<span>지금: ${S.n}회 흔듦, ${S.T.toFixed(1)} °C</span>`;
+  if (tb) {
+    const cols = []; for (let n = 0; n <= SAND.max; n += SAND.step) cols.push(n);
+    const at = n => R.pts.find(p => p[0] === n);
+    tb.innerHTML = `<table class="incTable"><tr><th>흔든 횟수</th>${cols.map(n => `<td>${n}</td>`).join('')}</tr>` +
+      `<tr><th>온도(°C)</th>${cols.map(n => `<td>${at(n) ? at(n)[1].toFixed(1) : ''}</td>`).join('')}</tr>` +
+      `<tr><th>온도 변화(°C)</th>${cols.map(n => `<td>${at(n) ? (at(n)[1] - SAND.T0).toFixed(1) : ''}</td>`).join('')}</tr></table>`;
+  }
+}
+/* ---------- 풍선 넣기: 얼음물·뜨거운 물 비커에 풍선을 넣어, 풍선 속 기체가 열을 흡수하면 부피가 늘어나 외부에 일을 함을 본다 ----------
+   압력이 일정(대기압)하다고 보고 V ∝ T(절대 온도). 풍선 속 공기는 물의 온도를 향해 바뀐다 (실제보다 빠르게). */
+const BLN = { T0: ROOM_T, r0: 0.07, ys: 1.08, P: 1.013e5, tauW: 2.0, tauA: 25, R: 0.085, H: 0.27, water: 0.1 };   // 5 L 비커 (지름 17 cm, 높이 27 cm), 풍선(실온 지름 14 cm)은 80 °C에서도 비커 안에 들어가는 크기
+BLN.V0 = 4 / 3 * Math.PI * BLN.r0 ** 3 * BLN.ys * 1000;            // 20 °C에서의 부피 (L)
+const balV = T => BLN.V0 * (T + 273.15) / (BLN.T0 + 273.15);
+function makeBeaker(hot) {
+  const g = new THREE.Group();
+  g.userData = { grab: true, kind: 'beaker', name: hot ? '비커(뜨거운 물)' : '비커(얼음물)', radius: 0.095, physMass: 0.9, centerY: 0.05, angle: 0, T: hot ? 80 : 0, hot, balloon: null, sensor: null };
+  const glass = new THREE.MeshStandardMaterial({ color: 0xdfeff5, transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.1, side: THREE.DoubleSide, depthWrite: false });
+  // 실제 비커 모양: 위쪽 가장자리가 바깥으로 살짝 말려 있고(테), 왼쪽에는 따르는 주둥이가 튀어나와 있다
+  const R = BLN.R, Hh = BLN.H, SPOUT = -Math.PI / 2;                 // 주둥이 방향: 왼쪽 (x−)
+  const prof = [[R - 0.004, 0.004], [R - 0.001, 0.0005], [R, 0.003], [R, Hh - 0.012], [R + 0.002, Hh - 0.005], [R + 0.005, Hh - 0.001], [R + 0.004, Hh + 0.001], [R + 0.001, Hh - 0.003]].map(([x, y]) => new THREE.Vector2(x, y));
+  const wg = new THREE.LatheGeometry(prof, 64), wp = wg.attributes.position;
+  for (let i = 0; i < wp.count; i++) {                                // 주둥이: 테 근처를 왼쪽으로 끌어내고 살짝 올린다
+    const x = wp.getX(i), y = wp.getY(i), z = wp.getZ(i), a = Math.atan2(x, z);
+    let d = Math.abs(a - SPOUT); d = Math.min(d, Math.PI * 2 - d);
+    const k = Math.max(0, 1 - d / 0.42) ** 2 * Math.max(0, (y - (Hh - 0.03)) / 0.03);
+    if (k > 0) { const r = Math.hypot(x, z), r2 = r + 0.016 * k; wp.setXYZ(i, x * r2 / r, y + 0.006 * k, z * r2 / r); }
+  }
+  wg.computeVertexNormals();
+  const wall = new THREE.Mesh(wg, glass); wall.renderOrder = 3; g.add(wall);
+  const bottom = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.003, R - 0.003, 0.004, 48), glass); bottom.position.y = 0.002; g.add(bottom);
+  // 흰색 인쇄: 500 mL 눈금, 용량, 흰 내열 표시 칸 (유리 바깥쪽 앞에서 왼쪽)
+  const mlH = 0.5e-3 / (Math.PI * (R - 0.003) ** 2);                // 500 mL에 해당하는 물 높이
+  const TH0 = -0.78, THL = 1.5;                                       // 글자가 찌그러지지 않게 (호의 길이 ≈ 높이의 절반)
+  const markTex = canvasTex(512, 1024, (c, w, h) => {
+    c.clearRect(0, 0, w, h); c.fillStyle = '#ffffff'; c.strokeStyle = '#ffffff';
+    const yOf = hh => h - hh / Hh * h;
+    for (let i = 1; i <= 10; i++) {
+      const y = yOf(0.004 + i * mlH); if (y < 40) break;
+      c.fillRect(w * 0.52, y - 4, i % 2 ? w * 0.12 : w * 0.2, 8);
+      if (i % 2 === 0) { c.font = `700 46px ${FONT}`; c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText(String(i * 500), w * 0.75, y); }
+    }
+    c.textAlign = 'center'; c.textBaseline = 'middle';               // 왼쪽 절반: 용량과 내열 표시
+    c.font = `800 54px ${FONT}`; c.fillText('5000 mL', w * 0.25, yOf(0.2));
+    // 흰색 내열 표시 (이름을 적을 수 있는 불투명한 흰 사각형, 모서리는 둥글게)
+    c.fillStyle = 'rgba(246,247,245,.93)'; c.beginPath(); c.roundRect(w * 0.05, yOf(0.1), w * 0.4, yOf(0.055) - yOf(0.1), 34); c.fill();
+  });
+  markTex.anisotropy = maxAniso;
+  const marks = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.0006, R + 0.0006, Hh, 32, 1, true, TH0 - THL / 2, THL), new THREE.MeshBasicMaterial({ map: markTex, transparent: true, depthWrite: false }));
+  marks.position.y = Hh / 2; marks.renderOrder = 4; g.add(marks);
+  const water = new THREE.Mesh(new THREE.CylinderGeometry(BLN.R - 0.002, BLN.R - 0.002, BLN.water - 0.006, 40),
+    new THREE.MeshStandardMaterial({ color: hot ? 0xd9eef2 : 0xbfe3f2, transparent: true, opacity: hot ? 0.45 : 0.5, roughness: 0.1, depthWrite: false }));
+  water.position.y = 0.006 + (BLN.water - 0.006) / 2; water.renderOrder = 2; g.add(water);
+  if (!hot) {                                                         // 물 위에 뜬 얼음 조각
+    const ice = new THREE.MeshStandardMaterial({ color: 0xf4fbff, transparent: true, opacity: 0.8, roughness: 0.2 });
+    g.userData.cubes = []; g.userData.ice = g.userData.ice0 = 6 * 0.024 * 0.02 * 0.024 * 917;   // 얼음 질량 (kg)
+    [[-0.035, 0.016, 0.3], [0.03, -0.03, 1.1], [0.04, 0.028, 2.0], [-0.012, -0.045, 0.7], [-0.048, -0.012, 1.6], [0.006, 0.05, 2.4]].forEach(([x, z, a]) => {
+      const c = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.02, 0.024), ice); c.position.set(x, BLN.water - 0.004, z); c.rotation.set(0.3, a, 0.2); g.add(c); g.userData.cubes.push(c);
+    });
+  }
+  const lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.025), std({ map: labelTex(hot ? '뜨거운 물' : '얼음물'), roughness: 0.6 }));
+  lbl.position.set(Math.sin(0.62) * (BLN.R + 0.0015), 0.215, Math.cos(0.62) * (BLN.R + 0.0015)); lbl.rotation.y = 0.62; g.add(lbl);   // 앞에서 오른쪽
+  g.traverse(m => { if (m.isMesh && m !== wall && m !== water && m !== marks) { m.castShadow = true; m.receiveShadow = true; } });
+  return g;
+}
+function makeBalloon() {
+  const g = new THREE.Group();
+  g.userData = { grab: true, kind: 'balloon', name: '풍선', radius: 0.075, physMass: 0.03, centerY: 0.08, angle: 0, T: BLN.T0, r: BLN.r0, inBeaker: null, shown: null };
+  const skin = new THREE.Group(); g.add(skin);                    // 온도에 따라 크기가 바뀌는 부분 (반지름 r0 기준)
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(BLN.r0, 32, 24), std({ color: 0x3d8ee6, roughness: 0.35, metalness: 0.05 })); ball.scale.y = BLN.ys; skin.add(ball);
+  const knot = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.012, 14), std({ color: 0x2f74c0, roughness: 0.4 })); knot.position.y = -BLN.r0 * BLN.ys - 0.003; knot.rotation.x = Math.PI; skin.add(knot);
+  skin.position.y = BLN.r0 * BLN.ys + 0.009;
+  const cv = document.createElement('canvas'); cv.width = 560; cv.height = 112;
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true })); tag.scale.set(0.175, 0.035, 1); tag.renderOrder = 6; tag.raycast = () => {}; g.add(tag);
+  Object.assign(g.userData, { skin, tag, tagCv: cv, tagTex: tex });
+  g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  balloonShape(g);
+  return g;
+}
+function balloonShape(g) {                           // 온도 → 부피 → 반지름, 그리고 위의 표시(온도 · 부피)
+  const u = g.userData, V = balV(u.T), r = BLN.r0 * Math.cbrt(V / BLN.V0); u.r = r;
+  const s = r / BLN.r0; u.skin.scale.setScalar(s); u.skin.position.y = (BLN.r0 * BLN.ys + 0.009) * s;
+  u.tag.position.y = 2 * (BLN.r0 * BLN.ys + 0.009) * s + 0.03;
+  u.tag.visible = !!u.inBeaker || (recActive && recKey === 'balloon');   // 자유 실험에서는 비커에 담겨 있는 동안만 온도·부피를 보여 준다
+  if (u.inBeaker) g.position.copy(balloonSeat(u.inBeaker, r));
+  const key = `${u.T.toFixed(1)}|${V.toFixed(3)}`; if (u.shown === key) return; u.shown = key;
+  const c = u.tagCv.getContext('2d'), w = u.tagCv.width, h = u.tagCv.height;
+  c.clearRect(0, 0, w, h); c.fillStyle = 'rgba(16,22,24,.88)'; c.beginPath(); c.roundRect(4, 4, w - 8, h - 8, 22); c.fill();
+  c.strokeStyle = '#5bc0eb'; c.lineWidth = 5; c.stroke(); c.textBaseline = 'middle'; c.font = `700 60px ${FONT}`;
+  c.fillStyle = '#ffffff'; c.textAlign = 'right'; c.fillText(`${u.T.toFixed(1)} °C`, w * 0.46, h / 2 + 4);
+  c.fillStyle = 'rgba(238,241,239,.5)'; c.fillRect(w * 0.5, 26, 3, h - 52);
+  c.fillStyle = '#9fd3ff'; c.textAlign = 'left'; c.fillText(`${V.toFixed(3)} L`, w * 0.55, h / 2 + 4);
+  u.tagTex.needsUpdate = true;
+}
+function balloonSeat(beaker, r) {                    // 비커 속 풍선의 자리 (비커 좌표): 물 위에 반쯤 잠기고, 비커보다 크면 입구에 걸린다
+  const h = r * BLN.ys, inner = BLN.R - 0.003;
+  const yb = Math.max(BLN.water - 0.4 * h, r > inner ? BLN.H - Math.sqrt(Math.max(0, r * r - inner * inner)) * BLN.ys : 0);
+  return new THREE.Vector3(0, yb - 0.009 * (r / BLN.r0), 0);
+}
+function putInBeaker(b, beaker) {
+  stopMotion(b); bodyOff(b);
+  beaker.userData.balloon = b; b.userData.inBeaker = beaker; beaker.add(b); b.rotation.set(0, 0, 0); balloonShape(b);
+  if (measure.mode !== 'balloon') { measure.runs.length = 0; measure.mode = 'balloon'; }
+  if (!measure.runs.length || measure.runs[0].b !== b) { measure.runs.length = 0; measure.runs.push({ b, pts: [[b.userData.T, balV(b.userData.T)]], ice: null, hot: null, start: { T: b.userData.T, V: balV(b.userData.T) }, acc: 0 }); }
+  showGraph();
+}
+function leaveBeaker(b) {
+  const B = b && b.userData.inBeaker; if (!B) return;
+  B.userData.balloon = null; b.userData.inBeaker = null; if (b.parent === B) scene.attach(b);
+}
+// 풍선을 비커 입구로 넣고 빼는 움직임: 오른손이 풍선 윗부분을 잡고 정해진 점들을 차례로 지난다
+const BANIM = { b: null };
+const beakerMouth = bk => { bk.updateMatrixWorld(); return bk.localToWorld(new THREE.Vector3(0, BLN.H + 0.03, 0)); };
+const beakerSeatW = bk => () => { bk.updateMatrixWorld(); return bk.localToWorld(balloonSeat(bk, BANIM.b ? BANIM.b.userData.r : BLN.r0)); };
+function animateBalloon(b, segs, onEnd) {           // segs: [[목표점 함수, 걸리는 초], …]
+  stopMotion(b); bodyOff(b);
+  Object.assign(BANIM, { b, segs, i: 0, t: 0, from: b.position.clone(), onEnd });
+  return new Promise(res => { BANIM.resolve = res; });
+}
+function updateBalloonAnim(dt) {
+  const A = BANIM, b = A.b; if (!b) return;
+  if (!items.includes(b)) { A.b = null; if (A.resolve) A.resolve(); return; }
+  const [to, dur] = A.segs[A.i]; A.t += dt;
+  const f = Math.min(1, A.t / dur), e = f * f * (3 - 2 * f);
+  b.position.lerpVectors(A.from, to(), e);
+  if (f >= 1) {
+    A.i++; A.t = 0; A.from = b.position.clone();
+    if (A.i >= A.segs.length) { A.b = null; const cb = A.onEnd, r = A.resolve; if (cb) cb(); if (r) r(); }
+  }
+}
+function balloonInFromHand(b, bk) {                  // 손에 든 풍선을 비커 입구 위로 옮긴 뒤 천천히 넣는다
+  const wp = new THREE.Vector3(); b.getWorldPosition(wp); const start = handPointToWorld(wp);
+  if (b.parent) b.parent.remove(b); scene.add(b); b.position.copy(start); b.rotation.set(0, 0, 0); b.updateMatrixWorld();
+  return animateBalloon(b, [[() => beakerMouth(bk), 0.45], [beakerSeatW(bk), 0.55]], () => putInBeaker(b, bk));
+}
+// 시간에 따른 온도 변화 (실제 시간 그대로): 물·모래는 실온(20 °C)을 향해 식거나 데워지고, 얼음은 서서히 녹는다
+const THERM = { tauWater: 3000, tauSand: 1800, Cwater: 2.1 * 4186, Lf: 334000 };   // 물 약 2.1 kg, 시간 상수(초)
+function updateThermal(dt) {
+  for (const it of items) {
+    const u = it.userData;
+    if (isK(it, 'beaker')) {
+      if (u.ice > 0) {                                                // 얼음이 남아 있으면 물은 0 °C, 들어오는 열로 얼음이 녹는다
+        u.T = 0;
+        const P = THERM.Cwater / THERM.tauWater * (ROOM_T - 0);       // 실온에서 들어오는 열 (W)
+        u.ice = Math.max(0, u.ice - P * dt / THERM.Lf);
+        const k = Math.cbrt(u.ice / u.ice0);
+        for (const c of u.cubes) { c.visible = k > 0.02; c.scale.setScalar(Math.max(0.02, k)); }
+      } else u.T += (ROOM_T - u.T) * (1 - Math.exp(-dt / THERM.tauWater));
+      if (u.sensor) sensorShow(u.sensor);
+    } else if (isK(it, 'sandcup') && !u.sand.run && shakeMode.cup !== it && u.sand.T !== ROOM_T) {
+      u.sand.T += (ROOM_T - u.sand.T) * (1 - Math.exp(-dt / THERM.tauSand));   // 스타이로폼이라 아주 천천히 식는다
+      if (Math.abs(u.sand.T - ROOM_T) < 1e-4) u.sand.T = ROOM_T;
+      sandShow(it);
+    }
+  }
+}
+function updateBalloons(dt) {
+  updateThermal(dt);
+  updateBalloonAnim(dt);
+  let any = false;
+  for (const b of items) {
+    if (!isK(b, 'balloon')) continue;
+    const u = b.userData, B = u.inBeaker, Tt = B ? B.userData.T : BLN.T0, tau = B ? BLN.tauW : BLN.tauA;
+    u.tag.visible = !!B || (recActive && recKey === 'balloon');
+    const T1 = u.T + (Tt - u.T) * (1 - Math.exp(-dt / tau));
+    if (Math.abs(T1 - u.T) < 1e-5) continue;
+    u.T = T1; balloonShape(b); if (u.sensor) sensorShow(u.sensor);
+    const R = measure.runs[0];
+    if (R && R.b === b && measure.mode === 'balloon') {
+      R.acc += dt; if (R.acc >= 0.1) { R.acc = 0; R.pts.push([u.T, balV(u.T)]); if (R.pts.length > 600) R.pts.shift(); }
+      if (B) R[B.userData.hot ? 'hot' : 'ice'] = { T: u.T, V: balV(u.T) };
+      any = true;
+    }
+  }
+  if (any) drawGraph();
+}
+function drawBalloon() {                             // 풍선 속 기체의 온도–부피 그래프 + 표
+  const cv = $('gCanvas'); if (!cv) return;
+  if (cv.height !== 400) cv.height = 400;
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height, k = (cv.clientWidth || 306) / W, px = v => Math.round(v / k);
+  g.clearRect(0, 0, W, H); g.fillStyle = '#121617'; g.fillRect(0, 0, W, H);
+  const x0 = -10, x1 = 90, y0 = Math.floor(balV(x0) * 50) / 50, y1 = Math.ceil(balV(x1) * 50) / 50;
+  const L = Math.round(60 / k), Rm = Math.round(14 / k), Tp = Math.round(12 / k), B = Math.round(40 / k), pw = W - L - Rm, ph = H - Tp - B;
+  const X = T => L + (T - x0) / (x1 - x0) * pw, Y = V => Tp + ph - (V - y0) / (y1 - y0) * ph;
+  g.strokeStyle = 'rgba(238,241,239,.36)'; g.lineWidth = 1; g.fillStyle = '#c9d0d6'; g.font = `500 ${px(11)}px ${FONT}`;
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  for (let V = y0; V <= y1 + 1e-9; V += 0.02) { g.beginPath(); g.moveTo(L, Y(V)); g.lineTo(L + pw, Y(V)); g.stroke(); if (Math.round(V * 50) % 2 === 0) g.fillText(V.toFixed(2), L - 6, Y(V)); }
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  for (let T = 0; T <= x1; T += 10) { g.beginPath(); g.moveTo(X(T), Tp); g.lineTo(X(T), Tp + ph); g.stroke(); if (T % 20 === 0) g.fillText(String(T), X(T), Tp + ph + 4); }
+  g.fillStyle = '#eef1ef'; g.font = `700 ${px(12.5)}px ${FONT}`; g.textBaseline = 'bottom'; g.fillText('풍선 속 기체의 온도 (°C)', L + pw / 2, H - 2);
+  g.save(); g.translate(2, Tp + ph / 2); g.rotate(-Math.PI / 2); g.textBaseline = 'top'; g.fillText('부피 (L)', 0, 0); g.restore();
+  g.strokeStyle = 'rgba(229,107,111,.7)'; g.lineWidth = px(1.6); g.setLineDash([px(5), px(4)]); g.beginPath(); g.moveTo(X(x0), Y(balV(x0))); g.lineTo(X(x1), Y(balV(x1))); g.stroke(); g.setLineDash([]);
+  const R = measure.runs[0], leg = $('gLegend'), tb = $('gTable');
+  if (!R) { if (leg) leg.innerHTML = ''; if (tb) tb.innerHTML = ''; return; }
+  g.strokeStyle = '#5bc0eb'; g.lineWidth = px(2.6); g.beginPath();
+  R.pts.forEach((p, i) => { if (i) g.lineTo(X(p[0]), Y(p[1])); else g.moveTo(X(p[0]), Y(p[1])); }); g.stroke();
+  const u = R.b.userData; g.fillStyle = '#5bc0eb'; g.beginPath(); g.arc(X(u.T), Y(balV(u.T)), px(5.5), 0, Math.PI * 2); g.fill();
+  if (leg) leg.innerHTML = `<span><i style="background:#5bc0eb"></i>풍선의 변화</span><span><i style="background:#e56b6f"></i>압력이 일정할 때 V ∝ T(K)</span>`;
+  if (tb) {
+    const cell = s => s ? `<td>${s.T.toFixed(1)}</td><td>${s.V.toFixed(3)}</td>` : '<td></td><td></td>';
+    let rows = `<tr><td>처음 (실온)</td>${cell(R.start)}</tr><tr><td>얼음물 속</td>${cell(R.ice)}</tr><tr><td>뜨거운 물 속</td>${cell(R.hot)}</tr>`;
+    if (R.ice && R.hot) { const dV = R.hot.V - R.ice.V; rows += `<tr class="now"><td>얼음물 → 뜨거운 물</td><td>+${(R.hot.T - R.ice.T).toFixed(1)}</td><td>+${dV.toFixed(3)}</td></tr>`;
+      rows += `<tr><td colspan="3">기체가 외부에 한 일 W = PΔV ≈ ${(BLN.P * dV / 1000).toFixed(1)} J (P = 1기압)</td></tr>`; }
+    tb.innerHTML = `<table class="incTable"><tr><th>풍선의 위치</th><th>온도 (°C)</th><th>부피 (L)</th></tr>${rows}</table>`;
+  }
+}
+function uAt(run, t) {                               // 기록에서 시각 t의 위치 (직선 보간)
+  const P = run.pts; if (t > P[P.length - 1][0] + 1e-9) return null;
+  for (let i = 1; i < P.length; i++) if (P[i][0] >= t) { const [t0, u0] = P[i - 1], [t1, u1] = P[i]; return u0 + (u1 - u0) * (t - t0) / Math.max(1e-9, t1 - t0); }
+  return P[P.length - 1][1];
+}
+function drawIncline() {
+  const cv = $('gCanvas'); if (!cv) return;
+  if (cv.height !== 640) cv.height = 640;
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height, k = (cv.clientWidth || 306) / W, px = v => Math.round(v / k);
+  g.clearRect(0, 0, W, H); g.fillStyle = '#121617'; g.fillRect(0, 0, W, H);
+  let tMax = 0.6, uMax = 0.2, vMax = 0.2;
+  for (const r of measure.runs) { tMax = Math.max(tMax, r.t); for (const p of r.pts) { uMax = Math.max(uMax, p[1]); vMax = Math.max(vMax, p[2]); } }
+  tMax = Math.ceil(tMax / 0.2 - 1e-9) * 0.2; const uTop = Math.ceil(uMax * 100 / 20) * 20, vTop = Math.ceil(vMax * 100 / 50) * 50;
+  const L = Math.round(52 / k), Rm = Math.round(12 / k), half = H / 2;
+  const plot = (y0, hgt, yTop, yStep, yName, sel) => {
+    const T = y0 + Math.round(8 / k), B = Math.round(34 / k), pw = W - L - Rm, ph = hgt - (T - y0) - B;
+    g.strokeStyle = 'rgba(238,241,239,.36)'; g.lineWidth = 1; g.fillStyle = '#c9d0d6'; g.font = `500 ${px(11)}px ${FONT}`;
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    for (let t = 0; t <= tMax + 1e-9; t += 0.2) { const x = L + t / tMax * pw; g.beginPath(); g.moveTo(x, T); g.lineTo(x, T + ph); g.stroke(); g.fillText(t.toFixed(1), x, T + ph + 4); }
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    for (let y = 0; y <= yTop + 1e-9; y += yStep) { const yy = T + ph - y / yTop * ph; g.beginPath(); g.moveTo(L, yy); g.lineTo(L + pw, yy); g.stroke(); g.fillText(String(y), L - 6, yy); }
+    g.fillStyle = '#eef1ef'; g.font = `700 ${px(12.5)}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'bottom'; g.fillText('시간 (s)', L + pw / 2, y0 + hgt - 2);
+    g.save(); g.translate(2, T + ph / 2); g.rotate(-Math.PI / 2); g.textBaseline = 'top'; g.fillText(yName, 0, 0); g.restore();
+    for (const r of measure.runs) {
+      g.strokeStyle = r.color; g.fillStyle = r.color; g.lineWidth = 3; g.beginPath();
+      r.pts.forEach((p, i) => { const x = L + p[0] / tMax * pw, y = T + ph - sel(p) * 100 / yTop * ph; if (i) g.lineTo(x, y); else g.moveTo(x, y); });
+      g.stroke();
+    }
+    return { T, ph, pw };
+  };
+  plot(0, half, uTop, uTop > 100 ? 40 : 20, '위치 (cm)', p => p[1]);
+  const P2 = plot(half, half, vTop, vTop > 200 ? 100 : 50, '속도 (cm/s)', p => p[2]);
+  // 속도–시간: 0.2초 구간 속력(구간 가운데 시각)을 점으로
+  for (const r of measure.runs) {
+    g.fillStyle = r.color;
+    for (let t = 0.2; t <= r.t + 1e-9; t += 0.2) {
+      const a = uAt(r, t - 0.2), b = uAt(r, t); if (a === null || b === null) continue;
+      const vs = (b - a) / 0.2, x = L + (t - 0.1) / tMax * P2.pw, y = P2.T + P2.ph - vs * 100 / vTop * P2.ph;
+      g.beginPath(); g.arc(x, y, px(3.2), 0, Math.PI * 2); g.fill();
+    }
+  }
+  const leg = $('gLegend'); if (leg) leg.innerHTML = measure.runs.map(r => `<span><i style="background:${r.color}"></i>${r.label}</span>`).join('');
+  // 표: 가장 최근 기록 (0.2초 간격)
+  const last = measure.runs[measure.runs.length - 1], tb = $('gTable');
+  if (tb) {
+    if (!last) { tb.innerHTML = ''; return; }
+    const ts = []; for (let t = 0; t <= last.t + 1e-9; t += 0.2) ts.push(+t.toFixed(1));
+    const pos = ts.map(t => uAt(last, t) * 100);
+    const row = (name, f) => `<tr><th>${name}</th>${ts.map((t, i) => `<td>${f(i)}</td>`).join('')}</tr>`;
+    tb.innerHTML = `<table class="incTable">${row('시간(s)', i => ts[i].toFixed(1))}${row('위치(cm)', i => pos[i].toFixed(1))}${row('구간 거리(cm)', i => i ? (pos[i] - pos[i - 1]).toFixed(1) : '')}${row('구간 속력(cm/s)', i => i ? ((pos[i] - pos[i - 1]) / 0.2).toFixed(1) : '')}</table>`;
+  }
+}
+
+
+/* ---------- 두 수레의 충돌과 운동량 보존: 레일 위 수레 A를 밀어 가운데의 수레 B에 정면으로 충돌시킨다 ----------
+   마찰은 없다고 보고, 충돌은 반발 계수 e = 0.9 (범퍼). 운동량 m₁v₁ + m₂v₂ 는 언제나 보존된다. 속도는 자동으로 측정한다. */
+const PUSH_V = [0.2, 0.4, 0.6], COL_E = 0.9;   // 속도 부여: 0.2·0.4·0.6 m/s
+// 레일 위 수레들의 운동 (밀기 실험)
+function railCarts(r) { return [...r.userData.carts].sort((a, b) => a.userData.rail.s - b.userData.rail.s); }
+function pushCart(c, v0) {
+  const R = c.userData.rail; if (!R) return null;
+  const r = R.rail; resetRail(r);
+  for (const o of r.userData.carts) o.userData.rail.v = 0;
+  R.v = v0;
+  const order = railCarts(r);                                   // 왼쪽부터 A, B, C, …
+  const others = order.filter(o => o !== c);
+  const trial = { A: c, B: others[0] || null, order, n: order.length, masses: order.map(cartMass), mA: cartMass(c), mB: others[0] ? cartMass(others[0]) : 0,
+    v: v0, vA2: null, vB2: null, vel: null, pAfter: null, done: false };
+  const sim = { t: 0, pts: [[0, ...order.map(o => o === c ? v0 : 0)]], trial, colT: null, lastColT: null, wallHit: false, resolve: null, active: true };
+  r.userData.sim = sim;
+  if (measure.mode !== 'momentum') { measure.runs.length = 0; measure.seq = 0; measure.mode = 'momentum'; }
+  measure.trials = measure.trials || [];
+  showGraph();
+  return new Promise(res => { sim.resolve = res; });
+}
+function resetRail(r) {
+  r.userData.sim = null;
+  for (const c of r.userData.carts) { const R = c.userData.rail; R.run = null; R.v = 0; R.s = R.s0; c.position.x = R.s; }
+}
+function updateRailSims(dt) {
+  let any = false;
+  for (const r of items) {
+    if (!isK(r, 'rail')) continue;
+    const sim = r.userData.sim; if (!sim || !sim.active) continue;
+    const cs = railCarts(r), n = 12, h = dt / n, T = sim.trial;   // 빠른 수레도 서로 뚫고 지나가지 않게 잘게 나눠 계산
+    for (let k = 0; k < n; k++) {
+      for (const c of cs) {
+        const R = c.userData.rail, [lo, hi] = railSpan(c);
+        R.s += R.v * h;
+        if (R.s > hi) { R.s = hi; if (Math.abs(R.v) > 1e-6) sim.wallHit = true; R.v = 0; }   // 끝의 멈춤 턱에서 멈춘다 (바깥 힘 → 이후는 기록하지 않음)
+        if (R.s < lo) { R.s = lo; if (Math.abs(R.v) > 1e-6) sim.wallHit = true; R.v = 0; }
+      }
+      let hitNow = false;
+      for (let i = 0; i + 1 < cs.length; i++) {               // 이웃한 두 수레가 맞닿으면 충돌 (수레가 여러 대여도 차례로)
+        const a = cs[i], b = cs[i + 1], Ra = a.userData.rail, Rb = b.userData.rail;
+        const gap = Rb.s - Ra.s - CARTD.len - (a.userData.scale ? SCALE.len + 0.01 : 0);
+        if (gap <= 0 && Ra.v > Rb.v) {
+          const ma = cartMass(a), mb = cartMass(b), va = Ra.v, vb = Rb.v;
+          Ra.v = (ma * va + mb * vb - mb * COL_E * (va - vb)) / (ma + mb);
+          Rb.v = (ma * va + mb * vb + ma * COL_E * (va - vb)) / (ma + mb);
+          Ra.s += gap / 2; Rb.s -= gap / 2; hitNow = true;
+        }
+      }
+      sim.t += h;
+      if (hitNow && !sim.wallHit) {                            // 수레끼리의 충돌 뒤 속도·운동량 기록 (멈춤 턱에 닿기 전까지)
+        if (sim.colT === null) { sim.colT = sim.t; T.done = true; measure.trials.push(T); if (measure.trials.length > 6) measure.trials.shift(); }
+        sim.lastColT = sim.t;
+        T.vel = T.order.map(o => o.userData.rail ? o.userData.rail.v : 0);
+        T.pAfter = T.order.reduce((p, o, i) => p + T.masses[i] * T.vel[i], 0);
+        if (T.B) { T.vA2 = T.A.userData.rail.v; T.vB2 = T.B.userData.rail.v; }
+      }
+    }
+    for (const c of cs) c.position.x = c.userData.rail.s;
+    sim.pts.push([sim.t, ...T.order.map(o => o.userData.rail ? o.userData.rail.v : 0)]);
+    const still = cs.every(c => Math.abs(c.userData.rail.v) < 1e-6);
+    if ((sim.lastColT !== null && sim.t > sim.lastColT + 1.0) || still || sim.t > 20) { if (sim.resolve) { sim.resolve(); sim.resolve = null; } }
+    if (still || sim.t > 25) sim.active = false;
+    any = true;
+  }
+  if (any) drawGraph();
+}
+function drawMomentum() {
+  const cv = $('gCanvas'); if (!cv) return;
+  if (cv.height !== 400) cv.height = 400;
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height, k = (cv.clientWidth || 306) / W, px = v => Math.round(v / k);
+  g.clearRect(0, 0, W, H); g.fillStyle = '#121617'; g.fillRect(0, 0, W, H);
+  // 가장 최근 충돌의 속도–시간 그래프 (A, B)
+  let sim = null; for (const r of items) if (isK(r, 'rail') && r.userData.sim && !r.userData.sim.cleared) sim = r.userData.sim;   // 지우기 한 기록은 그리지 않는다
+  const pts = sim ? sim.pts : [];
+  let tMax = 1, vMin = 0, vMax = 0.5;
+  for (const p of pts) { tMax = Math.max(tMax, p[0]); for (let i = 1; i < p.length; i++) { vMin = Math.min(vMin, p[i]); vMax = Math.max(vMax, p[i]); } }
+  tMax = tMax > 10 ? Math.ceil(tMax / 2) * 2 : tMax > 5 ? Math.ceil(tMax) : Math.ceil(tMax * 2) / 2; vMax = Math.ceil(vMax * 10) / 10; vMin = Math.floor(vMin * 10) / 10;
+  const L = Math.round(52 / k), Rm = Math.round(12 / k), T = Math.round(10 / k), B = Math.round(40 / k), pw = W - L - Rm, ph = H - T - B;
+  const X = t => L + t / tMax * pw, Y = v => T + ph - (v - vMin) / (vMax - vMin) * ph;
+  g.strokeStyle = 'rgba(238,241,239,.36)'; g.lineWidth = 1; g.fillStyle = '#c9d0d6'; g.font = `500 ${px(12)}px ${FONT}`;
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  const tStep = tMax > 10 ? 2 : tMax > 5 ? 1 : 0.5;
+  for (let t = 0; t <= tMax + 1e-9; t += tStep) { g.beginPath(); g.moveTo(X(t), T); g.lineTo(X(t), T + ph); g.stroke(); g.fillText(t.toFixed(1), X(t), T + ph + 6); }
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  const vStep = vMax - vMin > 6 ? 2 : vMax - vMin > 3 ? 1 : vMax - vMin > 1.2 ? 0.5 : vMax - vMin > 0.6 ? 0.2 : 0.1;
+  vMax = Math.ceil(vMax / vStep) * vStep; vMin = Math.floor(vMin / vStep) * vStep;
+  for (let v = vMin; v <= vMax + 1e-9; v += vStep) { g.beginPath(); g.moveTo(L, Y(v)); g.lineTo(L + pw, Y(v)); g.stroke(); g.fillText(v.toFixed(1), L - 8, Y(v)); }
+  g.fillStyle = '#eef1ef'; g.font = `700 ${px(13.5)}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'bottom'; g.fillText('시간 (s)', L + pw / 2, H - 4);
+  g.save(); g.translate(4, T + ph / 2); g.rotate(-Math.PI / 2); g.textBaseline = 'top'; g.fillText('속도 (m/s)', 0, 0); g.restore();
+  const COLS = ['#5bc0eb', '#e56b6f', '#8fd694', '#d9b45b', '#c792ea'], NAMES = 'ABCDE';
+  const nc = pts.length ? pts[0].length - 1 : 0;
+  for (let idx = 1; idx <= nc; idx++) {
+    g.strokeStyle = COLS[(idx - 1) % COLS.length]; g.lineWidth = 4; g.beginPath();
+    pts.forEach((p, i) => { if (i) g.lineTo(X(p[0]), Y(p[idx])); else g.moveTo(X(p[0]), Y(p[idx])); });
+    g.stroke();
+  }
+  const leg = $('gLegend');
+  if (leg) leg.innerHTML = nc > 2 ? Array.from({ length: nc }, (_, i) => `<span><i style="background:${COLS[i % COLS.length]}"></i>수레 ${NAMES[i]}</span>`).join('') + '<span>(왼쪽부터)</span>'
+    : '<span><i style="background:#5bc0eb"></i>수레 A</span><span><i style="background:#e56b6f"></i>수레 B</span>';
+  const tb = $('gTable'), TR = measure.trials || [];
+  if (tb && TR.some(r => r.n > 2)) {                            // 수레가 3대 이상: 질량·속도를 왼쪽부터 나열
+    const list = a => a.map(x => (+x.toFixed(2)).toString()).join(' · ');
+    tb.innerHTML = `<table class="incTable"><tr><th>회</th><th>질량 (kg)</th><th>충돌 후 속도 (m/s)</th><th>충돌 전<br>운동량 합</th><th>충돌 후<br>운동량 합</th></tr>` +
+      TR.map((r, i) => `<tr><td>${i + 1}</td><td>${list(r.masses)}</td><td>${r.vel ? list(r.vel) : ''}</td><td>${(r.mA * r.v).toFixed(2)}</td><td>${r.pAfter === null ? '' : r.pAfter.toFixed(2)}</td></tr>`).join('') +
+      `</table><div style="margin-top:4px;color:var(--ink-dim)">수레는 왼쪽부터 A·B·C… 순서, 민 수레의 처음 속도 ${TR.length ? TR[TR.length - 1].v : ''} m/s, 운동량 kg·m/s (오른쪽이 +)</div>`;
+  } else if (tb) tb.innerHTML = `<table class="incTable"><tr><th>회</th><th>m<sub>A</sub><br>(kg)</th><th>m<sub>B</sub><br>(kg)</th><th>충돌 전<br>v<sub>A</sub></th><th>충돌 후<br>v<sub>A</sub>'</th><th>충돌 후<br>v<sub>B</sub>'</th><th>충돌 전<br>운동량 합</th><th>충돌 후<br>운동량 합</th></tr>` +
+    TR.map((r, i) => `<tr><td>${i + 1}</td><td>${+r.mA.toFixed(1)}</td><td>${+r.mB.toFixed(1)}</td><td>${r.v.toFixed(2)}</td><td>${r.vA2 === null ? '' : r.vA2.toFixed(2)}</td><td>${r.vB2 === null ? '' : r.vB2.toFixed(2)}</td><td>${(r.mA * r.v).toFixed(2)}</td><td>${r.vA2 === null ? '' : (r.mA * r.vA2 + r.mB * r.vB2).toFixed(2)}</td></tr>`).join('') +
+    `</table><div style="margin-top:4px;color:var(--ink-dim)">속도 m/s, 운동량 kg·m/s (오른쪽이 +)</div>`;
 }
 
 /* ---------- 500 g 추 ---------- */
@@ -1337,19 +2394,28 @@ function makeLead(color, name) {
 
 /* ---------- 실험기구 목록: 선택창에서 몇 개든 새로 꺼낼 수 있다 ---------- */
 const CATALOG = [
-  { key: 'lever', name: '지레 장치', make: makeLever },
-  { key: 'rail', name: '역학 레일', make: makeRail },
-  { key: 'cart', name: '역학 수레', make: makeDynCart },
-  { key: 'scale', name: '용수철저울', make: makeSpringScale },
-  { key: 'cartweight', name: '수레용 추 (1 kg)', make: makeCartWeight },
-  { key: 'hweight', name: '거는 추 (50 g)', make: makeHangWeight },
-  { key: 'laser', name: '3구 레이저', make: makeLaser },
-  ...['convex', 'concave', 'prism', 'plane', 'concaveMirror', 'convexMirror'].map(t => ({ key: t, name: OPTIC_DEFS[t]().name, make: () => makeOptic(t) })),
-  { key: 'coil', name: '코일', make: makeCoil },
-  { key: 'magnet', name: '막대자석', make: makeMagnet },
-  { key: 'galv', name: '검류계', make: makeGalvanometer },
-  { key: 'leadR', name: '집게 전선(빨강)', make: () => makeLead(0xc8322d, '집게 전선(빨강)') },
-  { key: 'leadB', name: '집게 전선(검정)', make: () => makeLead(0x1d1d1d, '집게 전선(검정)') },
+  { key: 'lever', cat: 'mech', name: '지레 장치', make: makeLever },
+  { key: 'rail', cat: 'mech', name: '역학 레일', make: makeRail },
+  { key: 'cart', cat: 'mech', name: '역학 수레', make: makeDynCart },
+  { key: 'cartS', cat: 'mech', name: '역학 수레(끌기 전용)', make: makeScaleCart },
+  { key: 'cartweight', cat: 'mech', name: '수레용 추 (1 kg)', make: makeCartWeight },
+  { key: 'incline', cat: 'mech', name: '빗면 실험 장치', make: makeIncline },
+  { key: 'fall', cat: 'mech', name: '자유 낙하 실험 장치', make: makeFallStand },
+  { key: 'spring', cat: 'mech', name: '용수철 진동 실험 장치', make: makeSpringStand },
+  { key: 'sandcup', cat: 'thermo', name: '모래 컵(온도 센서 꽂음)', make: () => makeSandCup(true), hidden: true },   // 추천 실험 세팅용 (선택창에는 컵·센서를 따로)
+  { key: 'foamcup', cat: 'thermo', name: '스타이로폼 컵(모래)', make: () => makeSandCup(false) },
+  { key: 'tsensor', cat: 'thermo', name: '온도 센서', make: makeTempSensor },
+  { key: 'beakerIce', cat: 'thermo', name: '비커(얼음물)', make: () => makeBeaker(false) },
+  { key: 'beakerHot', cat: 'thermo', name: '비커(뜨거운 물)', make: () => makeBeaker(true) },
+  { key: 'balloon', cat: 'thermo', name: '풍선', make: makeBalloon },
+  { key: 'hweight', cat: 'mech', name: '거는 추 (50 g)', make: makeHangWeight },
+  { key: 'laser', cat: 'wave', name: '3구 레이저', make: makeLaser },
+  ...['convex', 'concave', 'prism', 'plane', 'concaveMirror', 'convexMirror'].map(t => ({ key: t, cat: 'wave', name: OPTIC_DEFS[t]().name, make: () => makeOptic(t) })),
+  { key: 'coil', cat: 'em', name: '코일', make: makeCoil },
+  { key: 'magnet', cat: 'em', name: '막대자석', make: makeMagnet },
+  { key: 'galv', cat: 'em', name: '검류계', make: makeGalvanometer },
+  { key: 'leadR', cat: 'em', name: '집게 전선(빨강)', make: () => makeLead(0xc8322d, '집게 전선(빨강)') },
+  { key: 'leadB', cat: 'em', name: '집게 전선(검정)', make: () => makeLead(0x1d1d1d, '집게 전선(검정)') },
 ];
 const items = [];          // 지금 실험실에 꺼내 놓은 기구들
 const magnetItems = [];    // 그중 자석을 가진 기구들
@@ -1371,6 +2437,10 @@ function buildBody(it) {
     com = new THREE.Vector3(0, 0.12, 0);
     const box = (hx, hy, hz, x, y, z) => b.addShape(new CANNON.Box(new CANNON.Vec3(hx, hy, hz)), new CANNON.Vec3(x, y - com.y, z));
     box(0.075, 0.008, 0.075, 0, 0.008, 0); box(0.007, (LEV.pivotY + 0.03) / 2, 0.007, 0, (LEV.pivotY + 0.03) / 2, -0.012); box(LEV.barLen / 2, 0.016, 0.006, 0, LEV.pivotY, 0);
+  } else if (u.kind === 'fall') {                  // 받침판 + 기둥 (무게중심을 낮게)
+    com = new THREE.Vector3(0, 0.08, 0);
+    const box = (hx, hy, hz, x, y, z) => b.addShape(new CANNON.Box(new CANNON.Vec3(hx, hy, hz)), new CANNON.Vec3(x, y - com.y, z));
+    box(0.13, FALL.base / 2, 0.09, 0, FALL.base / 2, 0); box(0.012, 0.58, 0.012, -0.1, 0.58, -0.03);
   } else if (u.kind === 'hweight') {
     com = new THREE.Vector3(0, 0.015, 0);
     b.addShape(new CANNON.Cylinder(0.012, 0.012, 0.03, 12));
@@ -1676,7 +2746,7 @@ function spawnItem(entry) {
   const it = entry.make();
   it.userData.catalog = entry.key;
   it.traverse(m => { if (!m.isMesh || !m.material) return; if (Array.isArray(m.material)) m.material = m.material.map(x => x.clone()); else if (!m.material.isMeshBasicMaterial) m.material = m.material.clone(); });
-  it.updateMatrixWorld(true); buildBody(it); setPolesFor(it);
+  it.updateMatrixWorld(true); buildBody(it); setPolesFor(it); computeFootprint(it);
   items.push(it); if (it.userData.poles) magnetItems.push(it);
   return it;
 }
@@ -1697,15 +2767,24 @@ function destroyItem(it) {
   leaveLever(it);
   if (u.kind === 'lever') for (const x of leverItems(it)) x.userData.lever = null;
   detachFromCart(it); leaveRail(it);
-  if (u.kind === 'cart') { for (const x of [...u.loads]) x.userData.onCart = null; if (u.scale) u.scale.userData.onCart = null; u.loads = []; u.scale = null; }
+  if (u.kind === 'cart') { for (const x of [...u.loads]) x.userData.onCart = null; if (u.scale && !u.springCart) { u.scale.userData.onCart = null; u.scale = null; } u.loads = []; }
   if (u.kind === 'rail') for (const c of u.carts) c.userData.rail = null;
+  leaveIncline(it);
+  if (u.kind === 'incline') for (const c of u.carts) c.userData.incl = null;
   if (u.kind === 'laser') setLaserPower(it, false);
+  if (u.kind === 'balloon') leaveBeaker(it);
+  if (u.kind === 'beaker' && u.balloon) { const b = u.balloon; leaveBeaker(b); destroyItem(b); }
+  if (u.kind === 'beaker' && u.sensor) { const sn = u.sensor; sensorOutOfBeaker(sn); destroyItem(sn); }
+  if (u.kind === 'tsensor') { sensorOutOfBeaker(it); sensorOffBalloon(it); }
+  if (u.kind === 'balloon' && u.sensor) { const sn = u.sensor; sensorOffBalloon(sn); destroyItem(sn); }
   stash(it);
   let k = items.indexOf(it); if (k >= 0) items.splice(k, 1);
   k = magnetItems.indexOf(it); if (k >= 0) magnetItems.splice(k, 1);
 }
 
+let recActive = false, recKey = null;               // 지금 실험대가 추천 실험(실험하기·시범실험)으로 세팅되어 있는지
 function resetLab() {               // 실험대를 비운다 (모든 기구를 치운다)
+  recActive = false; recKey = null;
   insertMode.active = false;
   dropHeld(true);
   while (items.length) destroyItem(items[items.length - 1]);
@@ -1956,6 +3035,46 @@ function clampView() {
   view3.elT = Math.max(VIEW_LIM.elMin, Math.min(VIEW_LIM.elMax, view3.elT));
   view3.distT = Math.max(VIEW_LIM.distMin, Math.min(VIEW_LIM.distMax, view3.distT));
 }
+// 실험대 위의 모든 기구가 화면(버튼·그래프 창에 가리지 않는 곳)에 다 들어오면서 가장 크게 보이는 시점으로
+const EXP_EL = 15 * Math.PI / 180;   // 실험 시야: 정면에서 15° 위에서 본 각도
+// 레이저·렌즈·거울(광학) 실험은 바닥에 눕힌 빛의 경로가 보이도록 위에서 내려다본다
+const expEl = () => items.some(it => it.parent === scene && (isK(it, 'laser') || isK(it, 'optic'))) ? VIEW_LIM.elMax : EXP_EL;
+const SETUP_EL = { balloon: 0.3, lever: 0.3, fma: 0.5, collide: 0.45, incline: 0.35, optics: 1.1, em: 0.42, fall: 0.25, spring: 0.45 };   // 실험마다 보기 좋은 높이 각도
+function fitViewToItems(el = VIEW_HOME.el, az = 0, fill = 0.94) {
+  const box = new THREE.Box3();
+  // 레일·빗면이 있으면 그 길이에 맞춰 잡는다 (앞쪽에 놓인 작은 추 때문에 덜 확대되지 않게: 레일·빗면 실험은 같은 시야)
+  const longs = items.filter(it => it.parent === scene && it !== held && (isK(it, 'rail') || isK(it, 'incline')));
+  for (const it of (longs.length ? longs : items)) if (it.parent === scene && it !== held && it.position.y > 0.5) box.expandByObject(it);
+  if (box.isEmpty()) { setView(VIEW_HOME.az, VIEW_HOME.el, homeViewDist(), true); return; }   // 빈 실험대: 첫 장면의 시야
+  const P = []; for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) P.push(new THREE.Vector3(x, y, z));
+  const W = view.clientWidth || innerWidth, H = view.clientHeight || innerHeight, asp = W / H, th = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  // 가리는 것들: 왼쪽 버튼, 위쪽 시야 조정 줄, 오른쪽 그래프 창(측정하는 실험일 때), 아래쪽 시범 안내 줄
+  const sb = $('sideBtns'), left = (sb ? sb.offsetLeft + sb.offsetWidth : 70) + 14;
+  const graphy = items.some(it => ['rail', 'incline', 'fall', 'cart', 'spring', 'sandcup', 'balloon', 'beaker'].includes(it.userData.kind));
+  const right = graphy ? (isTouch ? 236 : 352) : 20, top = isTouch ? 50 : 58, bottom = demoState.active ? 96 : 24;
+  let xl = -1 + 2 * left / W, xr = 1 - 2 * right / W, fx = fill;
+  const yt = 1 - 2 * top / H, yb = -1 + 2 * bottom / H;
+  if (items.some(it => it.parent === scene && (isK(it, 'rail') || isK(it, 'incline')))) {   // 긴 레일·빗면: 오른쪽은 그대로, 왼쪽 끝을 왼쪽 버튼 바로 옆까지 당겨 더 크게
+    xr -= (1 - fill) / 2 * (xr - xl); xl = -1 + 2 * ((sb ? sb.offsetLeft + sb.offsetWidth : 66) - 4) / W; fx = 1;
+  }
+  const ce = Math.cos(el), dir = new THREE.Vector3(Math.sin(az) * ce, Math.sin(el), Math.cos(az) * ce);
+  const f = dir.clone().negate(), rt = new THREE.Vector3().crossVectors(f, new THREE.Vector3(0, 1, 0)).normalize(), up = new THREE.Vector3().crossVectors(rt, f);
+  const T = box.getCenter(new THREE.Vector3());
+  const bounds = d => {                                 // 거리 d에서 모든 꼭짓점이 화면에 맺히는 범위 (NDC)
+    const c = T.clone().addScaledVector(dir, d); let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const p of P) { const v = p.clone().sub(c), dp = Math.max(1e-3, v.dot(f)), nx = v.dot(rt) / (dp * th * asp), ny = v.dot(up) / (dp * th); x0 = Math.min(x0, nx); x1 = Math.max(x1, nx); y0 = Math.min(y0, ny); y1 = Math.max(y1, ny); }
+    return { x0, x1, y0, y1 };
+  };
+  let d = VIEW_LIM.distMax;
+  for (let it = 0; it < 6; it++) {
+    let lo = VIEW_LIM.distMin, hi = VIEW_LIM.distMax;              // 가장 가까운(크게 보이는) 거리 찾기
+    for (let i = 0; i < 28; i++) { const mid = (lo + hi) / 2, b = bounds(mid); if (b.x1 - b.x0 > (xr - xl) * fx || b.y1 - b.y0 > (yt - yb) * fill || b.y0 < -5) lo = mid; else hi = mid; }
+    d = hi;
+    const b = bounds(d), sx = (b.x0 + b.x1) / 2 - (xl + xr) / 2, sy = (b.y0 + b.y1) / 2 - (yb + yt) / 2;   // 보이는 칸의 가운데로 옮기기
+    T.addScaledVector(rt, sx * th * asp * d).addScaledVector(up, sy * th * d);
+  }
+  view3.targetT.copy(T); setView(az, el, d);
+}
 function setView(az, el, dist, recenter) {  // 정해 둔 시점으로 (가장 가까운 방향으로 돈다)
   view3.azT = view3.az + angDiff(view3.az, az); view3.elT = el; if (dist !== undefined) view3.distT = dist;
   if (recenter) view3.targetT.copy(VIEW_CENTER);
@@ -2029,14 +3148,15 @@ function collide() {
 /* ---------- 상호작용 ---------- */
 const ray = new THREE.Raycaster(); ray.far = 12;
 const center = new THREE.Vector2(0, -0.08);
+let uiScale = 1;   // 컴퓨터: 창이 작아지면 화면 전체를 같은 비율로 줄인 배율
 const aimNDC = new THREE.Vector2(0, -0.08), aimPx = { x: 0, y: 0 };      // 조준점: 마우스 커서(휴대폰은 누른 곳)
 function setAim(clientX, clientY) {
   let cx, cy, W, H;
   const vw = window.innerWidth;
   if (typeof screenRotated !== 'undefined' && screenRotated) { cx = clientY; cy = vw - clientX; W = view.clientWidth; H = view.clientHeight; }
   else { const r = canvas.getBoundingClientRect(); cx = clientX - r.left; cy = clientY - r.top; W = r.width; H = r.height; }
-  aimNDC.set(cx / W * 2 - 1, -(cy / H * 2 - 1)); aimPx.x = cx; aimPx.y = cy;
-  const ch = document.getElementById('crosshair'); ch.style.left = cx + 'px'; ch.style.top = cy + 'px';
+  aimNDC.set(cx / W * 2 - 1, -(cy / H * 2 - 1)); aimPx.x = cx / uiScale; aimPx.y = cy / uiScale;   // 화면 배율만큼 되돌려 화면 안 좌표로
+  const ch = document.getElementById('crosshair'); ch.style.left = aimPx.x + 'px'; ch.style.top = aimPx.y + 'px';
 }
 canvas.addEventListener('pointermove', e => { if (e.pointerType === 'mouse') { setAim(e.clientX, e.clientY); document.getElementById('crosshair').classList.remove('away'); } });
 canvas.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') document.getElementById('crosshair').classList.add('away'); });   // 버튼·창 위에서는 보통 화살표
@@ -2084,7 +3204,7 @@ function setPlacedRotation(obj, it, type) {
   const yaw = u.worldYaw ?? player.yaw;             // 집기 전에 놓여 있던 방향을 기억하면 그 방향으로, 아니면 나를 향하게
   if (type === 'board') obj.rotation.set(0, 0, ang);
   else if (u.restX !== undefined) obj.rotation.set(u.restX, 0, yaw + Math.PI / 2 + ang);
-  else if (['balance', 'lever', 'rail', 'cart', 'scale', 'cartweight'].includes(u.kind)) obj.rotation.set(0, yaw + ang, 0);
+  else if (['balance', 'lever', 'rail', 'incline', 'cart', 'scale', 'cartweight', 'fall', 'spring'].includes(u.kind)) obj.rotation.set(0, yaw + ang, 0);
   else if (u.faceYaw !== undefined) obj.rotation.set(0, yaw + u.faceYaw + ang, 0);   // 눈금판·코일 끝이 나를 향하게
   else if (u.kind === 'magnet') obj.rotation.set(0, yaw - Math.PI / 2 + ang, 0);
   else obj.rotation.set(0, ang, 0);
@@ -2151,22 +3271,25 @@ function computePlacement(hit) {
   if (!s) return { valid: false, msg: '여기에는 놓을 수 없어요' };
   const n = hit.face.normal.clone().transformDirection(o.matrixWorld);
   if (n.y < 0.9) return { valid: false, msg: '평평한 윗면에 놓아야 해요' };
-  const r = held.userData.radius, fp = held.userData.footprint;
+  const r = held.userData.fpR ?? held.userData.radius, fp = held.userData.footprint;
   // 긴 기구(레일)는 놓일 방향에 맞춘 직사각형으로 공간을 잰다
   let rx = r, rz = r, th = 0;
   if (fp) { th = (held.userData.worldYaw ?? player.yaw) + (held.userData.angle || 0); const c = Math.abs(Math.cos(th)), sn = Math.abs(Math.sin(th)); rx = c * fp[0] + sn * fp[1]; rz = sn * fp[0] + c * fp[1]; }
-  if (s.maxX - s.minX < 2 * rx || s.maxZ - s.minZ < 2 * rz) return { valid: false, msg: '공간이 좁아요' };
-  const x = Math.min(s.maxX - rx, Math.max(s.minX + rx, hit.point.x));
-  const z = Math.min(s.maxZ - rz, Math.max(s.minZ + rz, hit.point.z));
+  // 길쭉한 기구(끌기 전용 수레 등)는 실제 범위를 작은 원 여러 개로 잰다
+  const circ = !fp && held.userData.fbox && held.userData.fbox.maxX - held.userData.fbox.minX > 0.2 ? fpCircles(held, (held.userData.worldYaw ?? player.yaw) + (held.userData.angle || 0)) : null;
+  let ex0 = rx, ex1 = rx, ez0 = rz, ez1 = rz;
+  if (circ) { ex0 = Math.max(...circ.map(q => q[2] - q[0])); ex1 = Math.max(...circ.map(q => q[0] + q[2])); ez0 = Math.max(...circ.map(q => q[2] - q[1])); ez1 = Math.max(...circ.map(q => q[1] + q[2])); }
+  if (s.maxX - s.minX < ex0 + ex1 || s.maxZ - s.minZ < ez0 + ez1) return { valid: false, msg: '공간이 좁아요' };
+  const x = Math.min(s.maxX - ex1, Math.max(s.minX + ex0, hit.point.x));
+  const z = Math.min(s.maxZ - ez1, Math.max(s.minZ + ez0, hit.point.z));
   for (const it of items) {
     if (it === held || it.parent !== scene) continue;
     if (Math.abs(it.position.y - s.y) > 0.25) continue;
     const d = Math.hypot(it.position.x - x, it.position.z - z);
     let hit2;
-    if (fp) {                                       // 든 기구가 레일이면: 다른 기구가 레일 직사각형에 닿는지
-      const dx = it.position.x - x, dz = it.position.z - z, lx = dx * Math.cos(th) - dz * Math.sin(th), lz = dx * Math.sin(th) + dz * Math.cos(th);
-      hit2 = Math.hypot(Math.max(0, Math.abs(lx) - fp[0]), Math.max(0, Math.abs(lz) - fp[1])) < (it.userData.footprint ? it.userData.footprint[1] : it.userData.radius || 0.08);
-    } else hit2 = held.userData.magnetic && it.userData.magnetic ? d < 0.02 : overlaps(it, x, z, r);   // 납작한 광학 도구끼리는 바짝 붙여 놓을 수 있다
+    if (fp) hit2 = rectHits(it, x, z, th, fp, 0);   // 든 기구가 레일·빗면이면: 다른 기구가 그 직사각형에 닿는지
+    else if (circ) hit2 = circ.some(([dx, dz, cr]) => overlaps(it, x + dx, z + dz, cr));
+    else hit2 = held.userData.magnetic && it.userData.magnetic ? d < 0.02 : overlaps(it, x, z, r);   // 납작한 광학 도구끼리는 바짝 붙여 놓을 수 있다
     if (hit2) {
       const tip = held.userData.kind === 'weight' && isK(it, 'balance') ? ' (접시를 겨냥해 보세요)' : '';
       return { valid: false, msg: `${josa(it.userData.name, '과', '와')} 겹쳐요${tip}`, pos: new THREE.Vector3(x, s.y, z) };
@@ -2187,18 +3310,30 @@ function rememberYaw(it) {
   else if (u.kind === 'magnet') { u.worldYaw = phi + Math.PI / 2; u.angle = 0; }
   else { u.worldYaw = undefined; u.angle = phi; }
 }
-function pickUp(it) {
+function pickUp(it, force) {
+  if (BANIM.b === it) return;                                         // 비커에 넣고 빼는 중
+  if (!force && isK(it, 'balloon') && it.userData.inBeaker) {         // 비커 속 풍선: 입구 위로 끌어올린 뒤 손에 든다
+    const bk = it.userData.inBeaker; leaveBeaker(it);
+    animateBalloon(it, [[() => beakerMouth(bk), 0.5]], () => pickUp(it, true)); return;
+  }
   if (isK(it, 'balance') && panItems(it).length > 0) { toast('저울 접시 위의 추를 먼저 내려놓으세요.'); return; }
   if (isK(it, 'lever') && leverItems(it).length > 0) { toast('지레에 걸린 추를 먼저 내려놓으세요.'); return; }
   if (isK(it, 'rail') && it.userData.carts.length > 0) { toast('레일 위의 수레를 먼저 내려놓으세요.'); return; }
+  if (isK(it, 'incline') && it.userData.carts.length > 0) { toast('빗면 위의 수레를 먼저 내려놓으세요.'); return; }
+  if (isK(it, 'beaker') && it.userData.balloon) { toast('비커 속 풍선을 먼저 꺼내 주세요.'); return; }
+  if (isK(it, 'beaker') && it.userData.sensor) { toast('비커에 꽂힌 온도 센서를 먼저 빼 주세요.'); return; }
+  if (isK(it, 'tsensor')) { sensorOutOfBeaker(it); sensorOffBalloon(it); }   // 비커·풍선에 꽂힌 센서를 뺄 때
+  leaveBeaker(it);   // 비커 속 풍선을 꺼낼 때
   rememberYaw(it);
   setHighlight(it, false); stopMotion(it); bodyOff(it); it.userData.body.userData_init = false;
   it.userData.onBoard = false;
   leavePan(it);   // 저울 접시에서 집기
   leaveLever(it); // 지레 눈금에서 빼기
-  detachFromCart(it); leaveRail(it);
-  if (it.userData.kind === 'rail') {
+  detachFromCart(it); leaveRail(it); leaveIncline(it);
+  if (it.userData.kind === 'rail' || it.userData.kind === 'incline' || it.userData.kind === 'spring') {
     carry.add(it); it.position.set(0.12, 0.1, -0.3); it.rotation.set(0, 1.15, 0);   // 1.6 m 레일은 앞쪽으로 비스듬히 들어야 화면에 보인다
+  } else if (it.userData.kind === 'fall') {    // 1.2 m 높이의 자유 낙하 장치는 눕히듯 비스듬히 들어야 화면을 가리지 않는다
+    carry.add(it); it.position.set(0.18, -0.02, -0.38); it.rotation.set(0, 0.5, 1.15);
   } else if (['cart', 'scale', 'cartweight'].includes(it.userData.kind)) {
     holdR.add(it); it.position.set(0, -0.01, 0); it.rotation.set(0, 0, 0);
   } else if (it.userData.kind === 'hweight') {
@@ -2212,7 +3347,7 @@ function pickUp(it) {
   } else if (it.userData.kind === 'wire') {
     disconnectLead(it);
     holdR.add(it); it.position.set(0, 0.0, 0.0); it.rotation.set(0, 0, 0);
-  } else if (it.userData.kind === 'coil' || it.userData.kind === 'galv') {
+  } else if (it.userData.kind === 'coil' || it.userData.kind === 'galv' || it.userData.kind === 'sandcup' || it.userData.kind === 'tsensor' || it.userData.kind === 'beaker' || it.userData.kind === 'balloon') {
     holdR.add(it); it.position.set(0, -0.02, 0.0); it.rotation.set(0, 0, 0);
   } else if (it.userData.kind === 'laser') {    // 레이저는 가로로 쥐고, 빛은 왼쪽 앞으로 비스듬히 나간다
     holdR.add(it); it.position.set(0, 0.05, 0.0); it.rotation.set(0, Math.PI - 0.5, 0);
@@ -2251,6 +3386,7 @@ function placeHeld(pl) {
     if (it.userData.onBoard) bodyOff(it); else bodyOn(it);
   }
   dropHeld(false); player.reach = 1;
+  if (!demoState.active) fitViewToItems(expEl());                     // 기구를 옮겨 놓을 때마다 실험 시야로
 }
 function dropHeld(silent) {
   if (ghost) { scene.remove(ghost); ghost = null; }
@@ -2259,6 +3395,7 @@ function dropHeld(silent) {
 function interact() {
   if (!playing) return;
   if (insertMode.active) { exitInsert(); return; }
+  if (shakeMode.active) { exitShake(); return; }
   if (cartState.pushing) { releaseCart(); return; }
   if (aimSwitch) { setLights(!lightsOn); toast(lightsOn ? '조명을 켰어요.' : '조명을 껐어요.'); return; }
   if (!held && !hoverItem && aimCart) { grabCart(); return; }
@@ -2500,6 +3637,14 @@ function updateBeams() {
         le.getWorldQuaternion(_q2); const ln = new THREE.Vector3(0, 0, 1).applyQuaternion(_q2);
         return Math.abs(ln.dot(nrm)) > 0.985 && Math.abs(le.getWorldPosition(new THREE.Vector3()).sub(lp).dot(nrm)) < 0.012;
       });
+      const by = laser.localToWorld(new THREE.Vector3(0.087, 0, 0.01)).y;          // 비커의 물: 빛이 지나는 높이가 물속이면 원기둥 모양의 물(n = 1.33)로 꺾인다
+      if (!u.onBoard) for (const bk of items) {
+        if (!isK(bk, 'beaker') || !onTable(bk)) continue;
+        const ly = by - bk.position.y; if (ly < 0.006 || ly > BLN.water - 0.002) continue;
+        let P = bk.userData.optProxy;
+        if (!P) { P = new THREE.Object3D(); P.rotation.x = -Math.PI / 2; P.userData.optic = { kind: 'refract', edges: arcEdges(0, 0, BLN.R - 0.002, 0, Math.PI * 2, 96, 1, 'refract'), n: 1.33 }; bk.add(P); bk.userData.optProxy = P; }
+        P.position.set(0, ly, 0); P.updateMatrixWorld(true); ls.push(P);
+      }
       for (const off of [-0.02, 0, 0.02]) traceOne(laser.localToWorld(new THREE.Vector3(0.087, off, 0.01)), dir0.clone(), ls, u.onBoard, segs);
     }
     for (let i = n0; i < segs.length; i += 2) norms.push(nrm);
@@ -2746,6 +3891,7 @@ const touchMove = { x: 0, y: 0 };
     const k = 0.0045 * (player.fov / 70) * (cartState.pushing ? 0.5 : 1);
     player.yaw -= dx * k;
     if (insertMode.active) insertMode.depth = Math.max(INSERT_MIN, Math.min(INSERT_MAX, insertMode.depth - dy * 0.0006));
+    else if (shakeMode.active) shakeMove(-dy * 0.0009);
     else player.pitch = Math.max(-1.45, Math.min(1.45, player.pitch - dy * k));
   });
   const endLook = e => looks.delete(e.pointerId);
@@ -2790,14 +3936,44 @@ function linkInfo() {
   {                                                                              // 역학 수레 · 레일 · 저울 · 수레용 추
     const cartOf = it => isK(it, 'cart') ? it : (it && it.userData.onCart) || null;
     const railOf = it => isK(it, 'rail') ? it : (isK(it, 'cart') && it.userData.rail ? it.userData.rail.rail : null);
+    const inclOf = it => isK(it, 'incline') ? it : (isK(it, 'cart') && it.userData.incl ? it.userData.incl.inc : null);
+    if (u.kind === 'cart' && inclOf(aimItem)) {
+      const g = inclOf(aimItem);
+      if (g.userData.carts.length >= 1) return { valid: false, label: '빗면에 올리기', msg: '빗면에는 수레를 1대만 올릴 수 있어요.' };
+      return { valid: true, label: '빗면 위쪽에 놓기', run: () => { const c = held; attachToIncline(c, g); dropHeld(false); player.reach = 1; } };
+    }
     if (u.kind === 'cart' && railOf(aimItem)) {
       const r = railOf(aimItem);
-      if (r.userData.carts.length >= 2) return { valid: false, label: '레일에 올리기', msg: '레일에는 수레를 2대까지 올릴 수 있어요.' };
-      return { valid: true, label: '레일에 올리기', run: () => { const c = held; attachToRail(c, r); dropHeld(false); player.reach = 1; } };
+      if (r.userData.carts.length >= 5) return { valid: false, label: '레일에 올리기', msg: '레일에는 수레를 5대까지 올릴 수 있어요.' };
+      const want = aimHit && (isK(aimItem, 'rail') || isK(aimItem, 'cart')) ? r.worldToLocal(aimHit.point.clone()).x : 0;   // 가리킨 레일 위 자리
+      if (railFreeS(r, held, want) === null) return { valid: false, label: '레일에 올리기', msg: '레일에 빈자리가 없어요.' };
+      return { valid: true, label: '레일에 올리기', run: () => { const c = held; attachToRail(c, r, want); dropHeld(false); player.reach = 1; } };
+    }
+    if (u.kind === 'balloon' && isK(aimItem, 'beaker')) {                       // 풍선 → 비커에 넣기
+      const bk = aimItem;
+      if (bk.userData.balloon) return { valid: false, label: '비커에 넣기', msg: '이미 풍선이 들어 있어요.' };
+      return { valid: true, label: `${josa(bk.userData.name, '에', '에')} 풍선 넣기`, run: () => { const b = held; dropHeld(false); balloonInFromHand(b, bk); toast(bk.userData.hot ? '풍선을 뜨거운 물에 넣었어요. (실제보다 빠르게 데워져요)' : '풍선을 얼음물에 넣었어요. (실제보다 빠르게 식어요)'); } };
+    }
+    if (u.kind === 'tsensor' && isK(aimItem, 'beaker')) {                       // 온도 센서 → 비커 물의 온도 재기 (다른 분야 기구끼리도)
+      const bk = aimItem;
+      if (bk.userData.sensor) return { valid: false, label: '비커에 꽂기', msg: '이미 온도 센서가 꽂혀 있어요.' };
+      return { valid: true, label: '온도 센서를 비커 물에 꽂기', run: () => { const sn = held; dropHeld(false); sensorIntoBeaker(sn, bk); toast(`물의 온도는 ${bk.userData.T.toFixed(1)} °C예요.`); } };
+    }
+    if (u.kind === 'tsensor' && isK(aimItem, 'sandcup')) {                     // 온도 센서 → 컵 뚜껑에 꽂기
+      const cup = aimItem;
+      if (cup.userData.hasSensor) return { valid: false, label: '컵에 꽂기', msg: '이미 온도 센서가 꽂혀 있어요.' };
+      return { valid: true, label: '온도 센서를 컵 뚜껑에 꽂기', run: () => { const sItem = held; dropHeld(false); destroyItem(sItem); setCupSensor(cup, true); refreshInventory(); toast('온도 센서를 모래까지 꽂았어요.'); } };
+    }
+    if (u.kind !== 'cartweight' && LOAD_MASS[u.kind] !== undefined && cartOf(aimItem)) {   // 다른 기구도 수레 위에 올려 질량을 바꾼다
+      const c = cartOf(aimItem);
+      if (c.userData.loads.length >= 3) return { valid: false, label: '수레에 올리기', msg: '수레에는 기구를 3개까지 올릴 수 있어요.' };
+      if (u.inBeaker || (isK(held, 'beaker') && (u.balloon || u.sensor))) return null;
+      return { valid: true, label: `수레 위에 올리기 (+${loadMass(held) >= 1 ? loadMass(held).toFixed(1) + ' kg' : Math.round(loadMass(held) * 1000) + ' g'})`, run: () => { const w = held; attachLoad(w, c); dropHeld(false); player.reach = 1; toast(`수레의 질량: ${+cartMass(c).toFixed(2)} kg`); } };
     }
     if (u.kind === 'cartweight' && cartOf(aimItem)) {
       const c = cartOf(aimItem);
-      if (c.userData.loads.length >= CARTD.maxLoads) return { valid: false, label: '수레에 올리기', msg: '수레에는 추를 2개까지 올릴 수 있어요.' };
+      if (c.userData.loads.filter(w => isK(w, 'cartweight')).length >= CARTD.maxLoads) return { valid: false, label: '수레에 올리기', msg: '수레에는 수레용 추를 2개까지 올릴 수 있어요.' };
+      if (c.userData.loads.length >= 3) return { valid: false, label: '수레에 올리기', msg: '수레에는 기구를 3개까지 올릴 수 있어요.' };
       return { valid: true, label: '수레에 추 올리기', run: () => { const w = held; attachLoad(w, c); dropHeld(false); player.reach = 1; } };
     }
     if (u.kind === 'scale' && cartOf(aimItem)) {
@@ -2864,9 +4040,9 @@ function removeToInventory(it) {
   for (const T of (it.userData.terms || [])) if (T.clip && !extra.includes(T.clip)) extra.push(T.clip);   // 물려 있던 전선도 함께
   if (isK(it, 'balance')) extra.push(...panItems(it));                                                    // 접시 위의 기구도 함께
   if (isK(it, 'lever')) extra.push(...leverItems(it));                                                    // 지레에 걸린 추도 함께
-  const withCart = c => [...c.userData.loads, ...(c.userData.scale ? [c.userData.scale] : [])];
+  const withCart = c => [...c.userData.loads, ...(c.userData.scale && !c.userData.springCart ? [c.userData.scale] : [])];   // 붙박이 저울은 수레와 함께 사라진다
   if (isK(it, 'cart')) extra.push(...withCart(it));                                                       // 수레 위의 추·저울도 함께
-  if (isK(it, 'rail')) for (const c of [...it.userData.carts]) extra.push(c, ...withCart(c));             // 레일 위의 수레도 함께
+  if (isK(it, 'rail') || isK(it, 'incline')) for (const c of [...it.userData.carts]) extra.push(c, ...withCart(c));   // 레일·빗면 위의 수레도 함께
   for (const x of extra) destroyItem(x);
   destroyItem(it); refreshInventory();
   toast(extra.length ? `${josa(it.userData.name, '과', '와')} 함께 있던 기구 ${extra.length}개를 치웠어요.` : `${josa(it.userData.name, '을', '를')} 치웠어요.`);
@@ -2877,7 +4053,7 @@ let curActs = [], curTitle = '', lastLink = null;
 // 화면에 보이는 이름: 역학 수레는 올린 추 개수와 전체 질량까지
 function dispName(it) {
   const u = it.userData;
-  if (u.kind === 'cart') { const n = u.loads.length, m = +cartMass(it).toFixed(1); return n ? `역학수레+추 ${n}개(${m}kg)` : `역학수레(${m}kg)`; }
+  if (u.kind === 'cart') { const n = u.loads.length, m = +cartMass(it).toFixed(1); const nm = u.springCart ? '역학 수레(끌기 전용)' : '역학수레'; const allW = u.loads.every(w => isK(w, 'cartweight')); return n ? `${nm}+${allW ? '추' : '기구'} ${n}개(${+cartMass(it).toFixed(2)}kg)` : `${nm}(${m}kg)`; }
   return u.name;
 }
 // 조작하기(R)가 실제로 무언가를 하는 기구만 이름을 돌려준다
@@ -2889,15 +4065,21 @@ function operateLabel(it, isHeld) {
 }
 // 용수철저울: 레일 위 수레에 걸려 있으면 1·2·3 N으로 끌기 (누를 때마다 수레를 처음 자리에서 다시 출발)
 function pullWith(F) {
-  const sc = aimItem, c = sc && sc.userData.onCart;
-  if (!c || !c.userData.rail) { toast('용수철저울을 레일 위의 역학 수레에 걸어 주세요.'); return; }
-  setScaleForce(sc, F); resetCart(c); startRun(c);
+  const c = isK(aimItem, 'cart') ? aimItem : null;
+  if (!c || !c.userData.rail) { toast('역학 수레를 역학 레일 위에 올려 주세요.'); return; }
+  if (c.userData.rail.rail.userData.carts.length !== 1) { toast('끌기는 레일 위에 수레가 1대만 있을 때 할 수 있어요.'); return; }
+  resetCart(c); startRun(c, F);
   toast(`${F} N의 힘으로 끌어요. (수레 ${+cartMass(c).toFixed(1)} kg)`);
 }
+// 선택창 안의 작은 선택창: 끌기 → 1·2·3 N / 밀기 → 0.2·0.4·0.6 m/s
+function openSubMenu(title, acts) { curTitle = title; curActs = acts; openCtxMenu(); }
 function updateActions(link) {
   if (!playing || demoState.active) { curActs = []; updateNameTip(); return; }
   let title = '', acts = [];
-  if (insertMode.active) {
+  if (shakeMode.active) {
+    title = `모래 컵 흔드는 중 (${shakeMode.cup.userData.sand.n}회)`;
+    acts = [['hint', isTouch ? '화면을 위아래로 크게 끌면 컵이 흔들려요' : '마우스를 위아래로 크게 움직이면 컵이 흔들려요'], ['SANDSTOP', '', '그만 흔들기']];
+  } else if (insertMode.active) {
     title = '자석을 코일에 넣는 중';
     acts = [['hint', isTouch ? '화면을 위아래로 끌면 자석이 들어가고 나와요' : '마우스를 위아래로 움직이면 자석이 들어가고 나와요'], ['KeyQ', 'E', '손으로 되돌리기'], ['KeyW', 'R', '극 바꾸기']];
   } else if (held) {
@@ -2911,9 +4093,35 @@ function updateActions(link) {
     const u = aimItem.userData;
     title = dispName(aimItem);
     acts = [['KeyQ', 'E', u.kind === 'wire' && u.endA ? '줍기 (전선 빼기)' : '줍기']];
-    if (u.kind === 'cart' && u.loads.length) acts.push(['UNLOAD', '', '추 하나 내리기']);
+    if (u.kind === 'cart' && u.loads.length) { const w = u.loads[u.loads.length - 1]; acts.push(['UNLOAD', '', isK(w, 'cartweight') ? '추 하나 내리기' : `${josa(w.userData.name, '을', '를')} 내리기`]); }
+    if (u.kind === 'cart' && u.rail) {                                             // 레일 위 수레: 끌기 / 밀기
+      const rr = u.rail.rail, moved = rr.userData.sim || rr.userData.carts.some(o => o.userData.rail.run);
+      if (moved) acts.push(['RAILRESET', '', rr.userData.carts.length > 1 ? '수레들을 처음 자리로' : '처음 자리로 다시 옮기기']);
+      else {
+        // 용수철 저울 장착 수레 → 끌기 (레일 위 수레가 1대일 때만), 그냥 역학 수레 → 밀기
+        if (u.springCart) { if (rr.userData.carts.length === 1) acts.push(['SUB_FORCE', '', '끌기']); else acts.push(['hint', '끌기는 레일 위에 수레가 1대만 있을 때 할 수 있어요.']); }
+        else acts.push(['SUB_VEL', '', '밀기']);
+      }
+    }
+    if (u.kind === 'balloon' && u.inBeaker) acts.push(['hint', '풍선 속 기체의 온도와 부피가 바뀌고 있어요. 꺼내려면 줍기를 누르세요.']);
+    if (u.kind === 'sandcup' && !u.sand.run && !u.hasSensor) acts.push(['hint', '온도 센서를 들고 컵을 가리켜 뚜껑에 꽂아 주세요.']);
+    if (u.kind === 'sandcup' && !u.sand.run && u.hasSensor) {                         // 모래 컵: 직접 흔들기 / 처음 온도로 / 센서 빼기
+      if (u.sand.n < SAND.max) acts.push(['SANDSHAKE', '', '흔들기']);
+      else acts.push(['hint', `${SAND.max}회까지 흔들었어요.`]);
+      if (u.sand.n > 0) acts.push(['SANDRESET', '', '모래를 식혀 처음 온도로']);
+      if (!(recActive && recKey === 'sand')) acts.push(['SENSOROUT', '', '온도 센서 빼기']);   // 추천 실험에서는 필요 없음
+    }
+    if (u.kind === 'spring') {                                                        // 용수철: 당겼다 놓기 / 멈추기
+      acts.push(['SUB_PULLSPR', '', u.spr.run ? '다시 당겼다 놓기' : '당겼다 놓기']);
+      if (u.spr.run) acts.push(['SPRSTOP', '', '멈추기']);
+    }
+    if (u.kind === 'fall') {                                                          // 자유 낙하: 떨어뜨리기 / 공 다시 올리기
+      const run = u.fall.run;
+      if (!run || run.done) acts.push(['SUB_DROP', '', '떨어뜨리기']);
+      if (run && run.done) acts.push(['FALLRESET', '', '공 다시 올리기']);
+    }
+    if (u.kind === 'cart' && u.incl) acts.push(u.incl.run ? ['LIFT', '', '빗면 위쪽으로 다시 올리기'] : ['DROP', '', '빗면에서 손 놓기']);
     const op = operateLabel(aimItem, false); if (op) acts.push(['KeyW', 'R', op]);
-    if (u.kind === 'scale' && u.onCart && u.onCart.userData.rail) for (const F of FORCE_STEPS) acts.push([`PULL${F}`, '', `${F}N으로 끌기`]);
     if (aimItem.parent === scene && canRotate(aimItem)) acts.push(['KeyE', 'F', '회전시키기']);
     acts.push(['KeyR', 'G', '치우기']);
   }
@@ -2926,6 +4134,7 @@ function updateNameTip(link) {
   let text = '', heldMode = false;
   if (playing && !demoState.active && !ctxMenu.open && !isTouch) {
     if (insertMode.active) { text = '클릭: 자석 조작'; heldMode = true; }
+    else if (shakeMode.active) { text = '위아래로 움직여 흔들기 · 클릭: 그만'; heldMode = true; }
     else if (held) { heldMode = true; text = link ? (link.label || link.msg || '') : placement ? placement.msg : '놓을 곳을 가리켜 주세요'; }
     else if (aimItem) text = dispName(aimItem);
   }
@@ -2953,13 +4162,34 @@ function openCtxMenu() {
   m.style.left = aimPx.x + 'px'; m.style.top = aimPx.y + 'px';
   m.hidden = false; ctxMenu.open = true; $('nameTip').hidden = true;
   // 화면 밖으로 나가지 않게
-  const r = m.getBoundingClientRect(), vw = view.clientWidth || innerWidth;
+  const r0 = m.getBoundingClientRect(), vw = view.clientWidth || innerWidth, br = document.body.getBoundingClientRect();
+  const r = uiScale === 1 ? r0 : { top: (r0.top - br.top) / uiScale, left: (r0.left - br.left) / uiScale, right: (r0.right - br.left) / uiScale };
   if (r.top < 4) m.style.top = (aimPx.y + (4 - r.top)) + 'px';
   if (r.left < 4) m.style.left = (aimPx.x + (4 - r.left)) + 'px';
   if (r.right > vw - 4) m.style.left = (aimPx.x - (r.right - vw + 4)) + 'px';
 }
+function setIncl(d) { if (isK(aimItem, 'incline')) { setInclineAngle(aimItem, d); toast(`빗면 각도를 ${d}°로 바꿨어요.`); } }
 function runAct(code) {
   const f = { KeyQ: doQ, KeyW: doW, KeyE: doE, KeyR: doR, PULL1: () => pullWith(1), PULL2: () => pullWith(2), PULL3: () => pullWith(3),
+    PUSH0: () => pushCart(aimItem, PUSH_V[0]), PUSH1: () => pushCart(aimItem, PUSH_V[1]), PUSH2: () => pushCart(aimItem, PUSH_V[2]),
+    RAILRESET: () => { if (isK(aimItem, 'cart') && aimItem.userData.rail) { resetRail(aimItem.userData.rail.rail); toast('수레를 처음 자리로 옮겼어요.'); } },
+    SANDSHAKE: () => { if (isK(aimItem, 'sandcup')) enterShake(aimItem); },
+    SANDSTOP: () => { exitShake(); toast('흔들기를 멈췄어요.'); },
+    SENSOROUT: () => { const cup = aimItem; if (!isK(cup, 'sandcup') || held || !cup.userData.hasSensor) return;
+      setCupSensor(cup, false); const sItem = spawnItem(catalogOf('tsensor')); scene.add(sItem); sItem.position.copy(cup.position); pickUp(sItem); refreshInventory(); },
+    SANDRESET: () => { if (isK(aimItem, 'sandcup')) { resetSand(aimItem); toast('모래를 처음 온도(20.0 °C)로 되돌렸어요.'); } },
+    SUB_PULLSPR: () => openSubMenu('당겼다 놓기', SPR.amps.map((a, i) => [`SPRA${i}`, '', `${Math.round(a * 100)} cm 당기기`])),
+    ...Object.fromEntries(SPR.amps.map((a, i) => [`SPRA${i}`, () => { if (isK(aimItem, 'spring')) { pullSpring(aimItem, a); toast(`${Math.round(a * 100)} cm 당겼다가 놓아요.`); } }])),
+    SPRSTOP: () => { if (isK(aimItem, 'spring')) { stopSpring(aimItem); toast('물체를 평형 위치에 멈췄어요.'); } },
+    SUB_DROP: () => openSubMenu('떨어뜨리기', FALL.heights.map((h, i) => [`DROPH${i}`, '', `높이 ${h.toFixed(1)} m에서`])),
+    ...Object.fromEntries(FALL.heights.map((h, i) => [`DROPH${i}`, () => { if (isK(aimItem, 'fall')) { dropBall(aimItem, h); toast(`${h.toFixed(1)} m 높이에서 떨어뜨려요. (실제보다 4배 느리게)`); } }])),
+    FALLRESET: () => { if (isK(aimItem, 'fall')) { setFallHeight(aimItem, aimItem.userData.fall.h); toast('공을 전자석에 다시 붙였어요.'); } },
+    SUB_FORCE: () => openSubMenu('끌기', FORCE_STEPS.map(F => [`PULL${F}`, '', `${F} N`])),
+    SUB_VEL: () => openSubMenu('밀기', PUSH_V.map((v, i) => [`PUSH${i}`, '', `${v} m/s`])),
+    RAILBACK: () => { if (isK(aimItem, 'cart')) { resetCart(aimItem); toast('수레를 레일 왼쪽 출발점으로 옮겼어요.'); } },
+    DROP: () => { if (isK(aimItem, 'cart')) releaseOnIncline(aimItem); },
+    LIFT: () => { if (isK(aimItem, 'cart')) { resetInclineCart(aimItem); toast('수레를 빗면 위쪽에 올려 손으로 잡고 있어요.'); } },   // 올려 두기만 (손 놓기 전까지 고정)
+    ANG5: () => setIncl(5), 'ANG7.5': () => setIncl(7.5), ANG10: () => setIncl(10),
     UNLOAD: () => { const c = aimItem, w = c && c.userData.loads[c.userData.loads.length - 1]; if (w && !held) pickUp(w); } }[code];
   if (f) f();
 }
@@ -2968,24 +4198,59 @@ function closeCtxMenu() { $('ctxMenu').hidden = true; ctxMenu.open = false; }
 /* ---------- 실험기구 선택창 ---------- */
 const TABLE = { y: 0.9, minX: -1.2, maxX: 1.2, minZ: -2.0, maxZ: -0.8 };
 function itemLabel(it) { return it.userData.name; }
-// 실험대 위 빈자리 찾기: 지금 보고 있는 시야의 가운데(실험대 가운데)에서 가까운 곳부터
+// 실험대 위 빈자리 찾기: 실험대 한가운데에서 가까운 곳부터
+// 실제 범위(fbox)를 긴 쪽으로 늘어선 작은 원들로 덮는다: [놓인 방향으로 돌린 중심 dx, dz, 반지름]
+function fpCircles(it, th) {
+  const B = it.userData.fbox, lx = B.maxX - B.minX, lz = B.maxZ - B.minZ, long = lx >= lz, L = long ? lx : lz, h = (long ? lz : lx) / 2;
+  const n = Math.max(1, Math.ceil(L / (2 * Math.max(h, 0.03)))), seg = L / n, rad = Math.hypot(h, seg / 2);
+  const c = Math.cos(th), sn = Math.sin(th), out = [];
+  for (let i = 0; i < n; i++) {
+    const px = long ? B.minX + seg * (i + 0.5) : (B.minX + B.maxX) / 2, pz = long ? (B.minZ + B.maxZ) / 2 : B.minZ + seg * (i + 0.5);
+    out.push([px * c + pz * sn, -px * sn + pz * c, rad]);           // three.js의 y축 회전과 같은 방향으로 돌린다
+  }
+  return out;
+}
+// 직사각형 기구(레일·빗면)를 (x, z)에 th 방향으로 놓을 때 다른 기구 o와 닿는지 (길쭉한 o는 작은 원들로)
+function rectHits(o, x, z, th, fp, margin) {
+  const ou = o.userData, long = !ou.footprint && ou.fbox && ou.fbox.maxX - ou.fbox.minX > 0.2;
+  const pts = long ? fpCircles(o, o.rotation.y).map(([dx, dz, cr]) => [o.position.x + dx, o.position.z + dz, cr])
+                   : [[o.position.x, o.position.z, ou.footprint ? ou.footprint[1] : ou.fpR ?? ou.radius ?? 0.08]];
+  return pts.some(([px, pz, cr]) => {
+    const dx = px - x, dz = pz - z, lx = dx * Math.cos(th) - dz * Math.sin(th), lz = dx * Math.sin(th) + dz * Math.cos(th);
+    return Math.hypot(Math.max(0, Math.abs(lx) - fp[0]), Math.max(0, Math.abs(lz) - fp[1])) < cr + margin;
+  });
+}
 function findSpot(it) {
   const u = it.userData, fp = u.footprint;
-  const r = u.radius || 0.08, cands = [];
+  const r = u.fpR ?? u.radius ?? 0.08, cands = [];
   // 긴 기구(레일)는 실험대 길이 방향으로 놓고, 직사각형 크기로 빈자리를 찾는다
   let rx = r, rz = r, th = 0;
   if (fp) { if (u.worldYaw === undefined) u.worldYaw = Math.cos(player.yaw) >= 0 ? 0 : Math.PI; th = u.worldYaw + (u.angle || 0); const c = Math.abs(Math.cos(th)), sn = Math.abs(Math.sin(th)); rx = c * fp[0] + sn * fp[1]; rz = sn * fp[0] + c * fp[1]; }
-  for (let x = -1.12; x <= 1.1201; x += 0.07) for (let z = -0.86; z >= -1.94; z -= 0.065) cands.push([x, z]);
-  const cx = view3.target.x, cz = view3.target.z;
-  cands.sort((A, B) => Math.hypot(A[0] - cx, A[1] - cz) - Math.hypot(B[0] - cx, B[1] - cz));
+  // 실험대 한가운데부터 2 cm 간격으로 빈자리를 찾는다: 가운데 → 가운데에서 가까운 빈자리 → 없으면 안내
+  const cx = (TABLE.minX + TABLE.maxX) / 2, cz = (TABLE.minZ + TABLE.maxZ) / 2, STEP = 0.02;
+  for (let i = -Math.floor((TABLE.maxX - cx) / STEP); i <= Math.floor((TABLE.maxX - cx) / STEP); i++)
+    for (let j = -Math.floor((TABLE.maxZ - cz) / STEP); j <= Math.floor((TABLE.maxZ - cz) / STEP); j++) cands.push([cx + i * STEP, cz + j * STEP]);
+  const dd = c => Math.hypot(c[0] - cx, (c[1] - cz) * 3);         // 앞뒤보다 좌우로 먼저 늘어놓는다 (정면에서 한눈에 보이게)
+  cands.sort((A, B) => dd(A) - dd(B));
+  // 길쭉한 기구(끌기 전용 수레 등): 큰 원 하나 대신 실제 범위(fbox)를 작은 원 여러 개로 덮어 빈자리를 찾는다
+  const circles = !fp && u.fbox ? fpCircles(it, player.yaw + (u.angle || 0)) : null;
   for (const [x, z] of cands) {
+    if (circles) {
+      if (circles.some(([dx, dz, cr]) => x + dx - cr < TABLE.minX || x + dx + cr > TABLE.maxX || z + dz - cr < TABLE.minZ || z + dz + cr > TABLE.maxZ)) continue;
+      let ok = true;
+      for (const o of items) {
+        if (o === it || o.parent !== scene || o.position.y < 0.5) continue;
+        if (circles.some(([dx, dz, cr]) => overlaps(o, x + dx, z + dz, cr + 0.03))) { ok = false; break; }
+      }
+      if (ok) return { x, z };
+      continue;
+    }
     if (x - rx < TABLE.minX || x + rx > TABLE.maxX || z - rz < TABLE.minZ || z + rz > TABLE.maxZ) continue;
     let ok = true;
     for (const o of items) {
       if (o === it || o.parent !== scene || o.position.y < 0.5) continue;
       if (fp) {
-        const dx = o.position.x - x, dz = o.position.z - z, lx = dx * Math.cos(th) - dz * Math.sin(th), lz = dx * Math.sin(th) + dz * Math.cos(th);
-        if (Math.hypot(Math.max(0, Math.abs(lx) - fp[0]), Math.max(0, Math.abs(lz) - fp[1])) < (o.userData.footprint ? o.userData.footprint[1] : o.userData.radius || 0.08) + 0.03) { ok = false; break; }
+        if (rectHits(o, x, z, th, fp, 0.03)) { ok = false; break; }
       } else if (overlaps(o, x, z, r + 0.03)) { ok = false; break; }
     }
     if (ok) return { x, z };
@@ -2999,22 +4264,31 @@ function placeFromInventory(entry) {
   scene.add(it); it.position.set(sp.x, TABLE.y + 0.002, sp.z); setPlacedRotation(it, it, 'surface');
   resetPose(it);
   bodyOn(it); refreshInventory();
+  fitViewToItems(expEl());                                       // 실험 시야로
   toast(`${josa(itemLabel(it), '을', '를')} 실험대에 올렸어요.`);
 }
 function refreshInventory() {
   const grid = $('invGrid'); if (!grid) return; grid.innerHTML = '';
-  const sorted = [...CATALOG].sort((A, B) => (A.name || '').localeCompare(B.name || '', 'ko'));   // 가나다순 (새로 추가되는 기구도 자동으로)
+  document.querySelectorAll('#invTabs button').forEach(b => b.classList.toggle('on', b.dataset.cat === invCat));
+  const sorted = [...CATALOG].filter(e => e.cat === invCat && !e.hidden).sort((A, B) => (A.name || '').localeCompare(B.name || '', 'ko'));   // 가나다순 (새로 추가되는 기구도 자동으로)
   for (const entry of sorted) {
     const n = items.filter(it => it.userData.catalog === entry.key).length;
     const b = document.createElement('button'); b.type = 'button'; b.className = 'invItem';
     b.innerHTML = `<img alt="" src="${entry.thumb || ''}"><span>${entry.name || ''}</span><span class="st">${n ? `실험대에 ${n}개` : ''}</span>`;
     b.addEventListener('click', () => {
-      pendingItem = entry; pendingAction = null; $('cbImg').src = entry.thumb || ''; $('cbText').textContent = `${josa(entry.name || '기구', '을', '를')} 실험대에 올리시겠습니까?`;
+      $('cbImg').src = entry.thumb || '';
+      if (recActive && items.length) {   // 추천 실험 중이면: 실험대를 비우고 자유 실험으로
+        pendingItem = null; pendingAction = () => { resetLab(); $('demoBar').hidden = true; placeFromInventory(entry); };
+        $('cbText').textContent = '실험대 위의 기구를 모두 치우고 올리시겠습니까?';
+      } else { pendingItem = entry; pendingAction = null; $('cbText').textContent = `${josa(entry.name || '기구', '을', '를')} 실험대에 올리시겠습니까?`; }
       $('confirmBox').hidden = false;
     });
     grid.appendChild(b);
   }
+  if (!sorted.length) grid.innerHTML = '<div class="invEmpty">이 분야의 실험기구는 준비 중이에요.</div>';
 }
+let invCat = 'mech';   // 자유실험 창에서 고른 분야 탭
+document.querySelectorAll('#invTabs button').forEach(b => b.addEventListener('click', () => { invCat = b.dataset.cat; refreshInventory(); }));
 let pendingItem = null, pendingAction = null;
 /* ---------- 추천 실험 바로 세팅: 실험대를 비우고 그 실험에 필요한 기구를 알맞게 놓는다 ---------- */
 const catalogOf = key => CATALOG.find(e => e.key === key);
@@ -3041,13 +4315,47 @@ const SETUPS = {
     for (let i = 0; i < 10; i++) ws.push(placeAt('hweight', -0.45 + i * 0.1, LAB_ROW.front));   // 수레용 추와 같은 줄
     return { lev, ws };
   } },
-  fma: { name: '힘·질량·가속도', thumb: 'cart', run() {
+  fma: { name: '힘·질량·가속도', thumb: 'cartS', run() {
     const rail = placeAt('rail', 0, LAB_ROW.back);               // 앞쪽: 수레용 추 바로 뒤
-    const cart = spawnItem(catalogOf('cart')); scene.add(cart); attachToRail(cart, rail);
-    const sc = spawnItem(catalogOf('scale')); scene.add(sc); attachScale(sc, cart); setScaleForce(sc, 1);
+    const cart = spawnItem(catalogOf('cartS')); scene.add(cart); attachToRail(cart, rail);
     const ws = [-0.25, 0.25].map(x => placeAt('cartweight', x, LAB_ROW.front));   // 레일 앞면과 실험대 앞 끝의 한가운데
-    measure.runs.length = 0; drawGraph();
-    return { rail, cart, sc, ws };
+    measure.runs.length = 0; measure.seq = 0; drawGraph();
+    return { rail, cart, ws };
+  } },
+  collide: { name: '충돌과 운동량', thumb: 'cart', run() {
+    const rail = placeAt('rail', 0, LAB_ROW.back);
+    const A = spawnItem(catalogOf('cart')); scene.add(A); attachToRail(A, rail);          // 왼쪽 끝
+    const B = spawnItem(catalogOf('cart')); scene.add(B); attachToRail(B, rail);          // 가운데
+    const ws = [-0.25, 0.25].map(x => placeAt('cartweight', x, LAB_ROW.front));
+    measure.runs.length = 0; measure.seq = 0; measure.trials = []; measure.mode = 'momentum'; drawGraph();
+    return { rail, A, B, ws };
+  } },
+  balloon: { name: '풍선 넣기', thumb: 'balloon', run() {
+    const ice = placeAt('beakerIce', -0.2, -1.35), hot = placeAt('beakerHot', 0.2, -1.35), b = placeAt('balloon', 0, -1.15);
+    for (const bk of [ice, hot]) { const sn = spawnItem(catalogOf('tsensor')); scene.add(sn); sensorIntoBeaker(sn, bk); }   // 각 비커에 온도 센서
+    measure.runs.length = 0; measure.mode = 'balloon'; drawGraph();
+    return { ice, hot, b };
+  } },
+  sand: { name: '모래 컵 흔들기', thumb: 'sandcup', run() {
+    const cup = placeAt('sandcup', 0, -1.3);
+    measure.runs.length = 0; measure.seq = 0; measure.mode = 'sand'; drawGraph();
+    return { cup };
+  } },
+  spring: { name: '용수철 진동', thumb: 'spring', run() {
+    const st = placeAt('spring', 0, -1.3);
+    measure.runs.length = 0; measure.seq = 0; measure.mode = 'spring'; drawGraph();
+    return { st };
+  } },
+  fall: { name: '역학적 에너지 보존', thumb: 'fall', run() {
+    const st = placeAt('fall', 0, -1.35);
+    measure.runs.length = 0; measure.seq = 0; measure.mode = 'energy'; drawGraph();
+    return { st };
+  } },
+  incline: { name: '빗면 운동', thumb: 'incline', run() {
+    const inc = placeAt('incline', 0, LAB_ROW.back);              // 뒷줄 (역학 레일 자리)
+    const cart = spawnItem(catalogOf('cart')); scene.add(cart); attachToIncline(cart, inc);
+    measure.runs.length = 0; measure.seq = 0; measure.mode = 'incline'; drawGraph();
+    return { inc, cart };
   } },
   optics: { name: '광학', thumb: 'laser', run() {
     const laser = placeAt('laser', -0.85, -1.3, -Math.PI / 2);     // 빛이 오른쪽(+x)으로 나가게 눕힌다
@@ -3056,8 +4364,8 @@ const SETUPS = {
     setLaserPower(laser, true);
   } },
   em: { name: '전자기학', thumb: 'coil', run() {
-    const coil = placeAt('coil', -0.25, -1.35), galv = placeAt('galv', 0, -0.98);
-    const mag = placeAt('magnet', 0.38, -1.05);
+    const coil = placeAt('coil', 0.25, -1.35), galv = placeAt('galv', 0, -0.98);   // 코일은 검류계 오른쪽 뒤, 자석은 왼쪽 앞 (예전 배치를 좌우로 뒤집은 모양)
+    const mag = placeAt('magnet', -0.38, -1.05);
     const red = spawnItem(catalogOf('leadR')), black = spawnItem(catalogOf('leadB'));
     const [cA, cB] = coil.userData.terms, [gP, gM] = galv.userData.terms;
     connectLead(red, cB, gP); connectLead(black, cA, gM);             // 코일 B–검류계 +, 코일 A–검류계 −
@@ -3069,7 +4377,8 @@ function runSetup(key) {
   if (!demoState.active) $('demoBar').hidden = true;
   resetLab();
   try { S.run(); } catch (e) { console.warn('setup', e); }
-  setView(VIEW_HOME.az, VIEW_HOME.el, homeViewDist(), true);
+  recActive = true; recKey = key;
+  fitViewToItems(expEl());                                       // 실험 시야: 세팅한 기구가 모두 보이면서 가장 크게
   refreshInventory();
   toast(`${S.name} 실험 기구를 세팅했어요.`);
 }
@@ -3141,7 +4450,7 @@ async function flyToPan(w, bal, side) {
 const DEMOS = {
   async lever() {                                  // 2 + 2 + 1.5 + 2.5 + 0.8 + 2.2 + 3.5 + 5.5 = 20초
     const { lev, ws } = SETUPS.lever.run();
-    setView(0, 0.3, homeDist() * 0.62);
+    fitViewToItems(0.3);
     const home = ws.map(w => [w.position.x, w.position.z]);
     const fly = async (w, n, sec = 0.7) => {                       // 추를 눈금으로 날려 건다
       const N = lev.userData.notches.get(n), idx = N.items.length + N.pending; N.pending++;
@@ -3165,15 +4474,15 @@ const DEMOS = {
     say('지레가 수평을 이루려면 양쪽의 (받침점까지의 거리 × 추의 무게)가 같아야 해요. 이것이 돌림힘의 평형이에요.'); await wait(5.5);
   },
   async fma() {                                    // 약 14초 동안 끌기 5번 + 마지막 정리 (모두 20초)
-    const { cart, sc, ws } = SETUPS.fma.run();
-    setView(0, 0.5, homeDist() * 0.85);
-    const pull = async (F, cap) => { resetCart(cart); setScaleForce(sc, F); say(cap); await startRun(cart); await wait(0.9); };
+    const { cart, ws } = SETUPS.fma.run();
+    fitViewToItems(0.5);
+    const pull = async (F, cap) => { resetCart(cart); say(cap); await startRun(cart, F); await wait(0.9); };
     const load = async w => {
       holdForDemo(w); const p0 = w.position.clone(), tgt = new THREE.Vector3();
       await tween(0.6, t => { tgt.set(0, 0.047 + cart.userData.loads.length * 0.021, 0); cart.localToWorld(tgt); w.position.lerpVectors(p0, tgt, t); w.position.y += 0.1 * Math.sin(Math.PI * t); });
       demoState.moved.delete(w); attachLoad(w, cart);
     };
-    say('역학 수레(1 kg)를 레일에 올리고, 앞에 용수철저울을 걸었어요.'); await wait(2);
+    say('용수철 저울을 장착한 역학 수레(1 kg)를 레일 왼쪽에 올렸어요. 일정한 힘으로 끌어 볼게요.'); await wait(2);
     await pull(1, '1 N의 힘으로 끌어요. 속도가 일정하게 빨라져요.');
     await pull(2, '2 N으로 끌면 속도가 더 빨리 증가해요.');
     await pull(3, '3 N이면 더 빨리! 힘이 클수록 가속도가 커요. (a ∝ F)'); await wait(0.6);
@@ -3184,12 +4493,87 @@ const DEMOS = {
     say('그래프의 기울기가 가속도예요. 가속도는 힘에 비례하고 질량에 반비례해요: F = m a');
     await wait(Math.max(0.5, DEMO_SEC - demoState.elapsed));
   },
+  async collide() {                                // 충돌 3번 + 정리 (모두 20초)
+    const { rail, A, B, ws } = SETUPS.collide.run();
+    fitViewToItems(0.45);
+    const load = async (w, c) => {
+      holdForDemo(w); const p0 = w.position.clone(), tgt = new THREE.Vector3();
+      await tween(0.6, t => { tgt.set(0, 0.047 + c.userData.loads.length * 0.021, 0); c.localToWorld(tgt); w.position.lerpVectors(p0, tgt, t); w.position.y += 0.1 * Math.sin(Math.PI * t); });
+      demoState.moved.delete(w); attachLoad(w, c);
+    };
+    say('레일 가운데에 수레 B를, 왼쪽에 수레 A를 놓았어요. 두 수레의 속도를 자동으로 측정해요.'); await wait(2);
+    say('A(1 kg)를 밀어 B(1 kg)에 충돌시켜요.'); await pushCart(A, 0.6);
+    say('충돌 전 운동량의 합과 충돌 후 운동량의 합이 같아요. (표를 보세요)'); await wait(1.8);
+    resetRail(rail); say('B에 1 kg 추를 올려 B를 2 kg으로 해요.'); await load(ws[0], B);
+    say('A(1 kg)를 밀어 B(2 kg)에 충돌시켜요. A는 튕겨 나와요.'); await pushCart(A, 0.6); await wait(1.2);
+    resetRail(rail); say('A에도 추를 올려 A를 2 kg으로 해요.'); await load(ws[1], A);
+    say('A(2 kg)를 밀어 B(2 kg)에 충돌시켜요.'); await pushCart(A, 0.6);
+    say('질량과 속도가 달라도 충돌 전후 운동량의 합은 항상 같아요: m₁v₁ + m₂v₂ = m₁v₁′ + m₂v₂′ (운동량 보존 법칙)');
+    await wait(Math.max(0.5, DEMO_SEC - demoState.elapsed));
+  },
+  async balloon() {                                // 얼음물 → 뜨거운 물 (모두 20초)
+    const { ice, hot, b } = SETUPS.balloon.run(); fitViewToItems(0.3);
+    say('왼쪽 비커에는 얼음물(0 °C), 오른쪽 비커에는 뜨거운 물(80 °C)이 있어요. 풍선 속 공기는 20 °C예요.'); await wait(2.5);
+    const fly = async bk => {                                     // 오른손으로 풍선을 잡아 (꺼내고) 비커 입구로 넣는다
+      const from = b.userData.inBeaker, segs = [];
+      if (from) { leaveBeaker(b); segs.push([() => beakerMouth(from), 0.45]); }
+      else segs.push([() => b.position.clone().add(new THREE.Vector3(0, 0.12, 0)), 0.35]);
+      segs.push([() => beakerMouth(bk), 0.5], [beakerSeatW(bk), 0.5]);
+      await animateBalloon(b, segs, () => putInBeaker(b, bk));
+    };
+    say('풍선을 얼음물에 넣어요. (실제보다 빠르게 보여 줘요)'); await fly(ice); await wait(3.8);
+    say('풍선 속 공기가 열을 잃어 온도가 내려가고, 부피가 줄어들었어요.'); await wait(2);
+    say('차가워진 풍선을 뜨거운 물이 담긴 비커에 넣어요.'); await fly(hot); await wait(4.2);
+    say('풍선 속 공기가 열을 흡수해 온도가 올라가고 부피가 늘어나요. 늘어나면서 바깥 공기를 밀어내는 일(W = PΔV)을 해요: 열 → 일');
+    await wait(Math.max(0.5, DEMO_SEC - demoState.elapsed));
+  },
+  async sand() {                                   // 50회씩 4번 흔들기 + 정리 (모두 20초)
+    const { cup } = SETUPS.sand.run(); fitViewToItems(0.3);
+    say('스타이로폼 컵에 모래를 반쯤 넣고, 온도 센서를 꽂은 뚜껑을 덮었어요. 처음 모래의 온도는 20.0 °C예요.'); await wait(2.5);
+    say('컵을 위아래로 50회 흔들어요.'); await shakeSand(cup, 2.2); await wait(0.5);
+    say('50회 더 흔들어요. 온도가 조금씩 올라가요.'); await shakeSand(cup, 2.2); await wait(0.5);
+    say('150회째…'); await shakeSand(cup, 2.2); await wait(0.4);
+    say('200회째…'); await shakeSand(cup, 2.2); await wait(0.6);
+    say('흔든 횟수가 많을수록 모래의 온도가 높아져요. 컵을 흔드는 일(역학적 에너지)이 모래의 열로 전환된 거예요.');
+    await wait(Math.max(0.5, DEMO_SEC - demoState.elapsed));
+  },
+  async spring() {                                 // 당겼다 놓기 + P·O·전체 설명 + 멈추기 (모두 20초)
+    const { st } = SETUPS.spring.run(); fitViewToItems(SETUP_EL.spring);
+    say('마찰이 없는 수평면에서 용수철(k = 50 N/m)에 2 kg 물체를 연결했어요. 지금은 평형 위치(0)에 있어요.'); await wait(2.5);
+    say('물체를 오른쪽으로 20 cm 당겼다가 놓아요.'); await pullSpring(st, 0.2); await wait(1);
+    say('양 끝(P)에서는 물체가 잠깐 멈추므로 운동 에너지는 0, 탄성력에 의한 위치 에너지가 가장 커요. (½kA² = 1.0 J)'); await wait(3.8);
+    say('평형 위치(O)를 지날 때는 탄성력에 의한 위치 에너지가 0, 운동 에너지가 가장 커요. (속력 1 m/s)'); await wait(3.8);
+    say('어느 위치에서나 두 에너지의 합은 1.0 J로 일정해요: ½kA² = ½kx² + ½mv² (역학적 에너지 보존)'); await wait(3.8);
+    say('물체를 잡아 멈춰요.'); stopSpring(st);
+    await wait(Math.max(0.5, DEMO_SEC - demoState.elapsed));
+  },
+  async fall() {                                   // 1.0 m 낙하 + 0.5 m 낙하 + 정리 (모두 20초)
+    const { st } = SETUPS.fall.run(); fitViewToItems(SETUP_EL.fall);
+    say('자유 낙하 실험 장치의 전자석에 1 kg 쇠공을 붙였어요. 공의 아랫면이 쿠션에서 1.0 m 높이예요.'); await wait(2.5);
+    say('전자석을 끄면 공이 떨어져요. (실제보다 4배 느리게 보여 줘요)'); await dropBall(st, 1.0); await wait(0.8);
+    say('공이 내려올수록 위치 에너지(청록색)는 줄고, 운동 에너지(하늘색)는 늘어나요.'); await wait(3.5);
+    say('그런데 두 에너지를 더한 역학적 에너지는 어느 순간에나 9.8 J로 같아요. (표의 맨 오른쪽 칸)'); await wait(3.5);
+    say('이번에는 0.5 m 높이에서 떨어뜨려요.'); await dropBall(st, 0.5); await wait(0.8);
+    say('역학적 에너지는 4.9 J로 일정해요: mgh = mgh′ + ½mv′² (역학적 에너지 보존 법칙)');
+    await wait(Math.max(0.5, DEMO_SEC - demoState.elapsed));
+  },
+  async incline() {                                // 빗면 10° 고정: 놓기 1번 + 분석 설명 (모두 20초)
+    const { cart } = SETUPS.incline.run();
+    fitViewToItems(0.35);
+    say('빗면(10°) 위쪽에 역학 수레를 놓았어요. 빗면에는 cm 눈금이 있어요.'); await wait(2);
+    say('수레를 가만히 놓아요. 0.2초마다 수레의 위치를 기록해요.'); await releaseOnIncline(cart); await wait(1);
+    say('표를 보면 같은 0.2초 동안 이동한 거리(구간 거리)가 점점 늘어나요.'); await wait(3.5);
+    say('구간 거리가 매번 일정하게(약 6.8 cm씩) 늘어나요. 속력이 일정하게 빨라진다는 뜻이에요.'); await wait(3.5);
+    say('위치–시간 그래프는 포물선, 속도–시간 그래프는 기울어진 직선: 등가속도 운동이에요.'); await wait(3.5);
+    say('속도–시간 그래프의 기울기가 가속도예요. (약 170 cm/s² = g sin10°)');
+    await wait(Math.max(0.5, DEMO_SEC - demoState.elapsed));
+  },
   async optics() {                                 // 1.2 + 3.6 + 3.6 + 5.8 + 3.6 + 2.2 = 20초
     const laser = placeAt('laser', -0.85, -1.3, -Math.PI / 2);   // 빛이 오른쪽(+x)으로
     const keys = ['convex', 'concave', 'prism', 'plane', 'concaveMirror', 'convexMirror'], L = {}, home = {};
     keys.forEach((k, i) => { home[k] = [-0.9 + i * 0.36, -1.8]; L[k] = placeAt(k, home[k][0], home[k][1]); });
     const back = k => slide(L[k], home[k][0], home[k][1], 0, 0.6);
-    setView(0, 1.1, homeDist() * 0.8);
+    fitViewToItems(1.1);
     say('레이저를 켜요. 빛 세 줄이 나란히 나아가요.'); setLaserPower(laser, true); await wait(1.2);
     say('볼록렌즈를 놓으면 빛이 굴절해 한 점(초점, 약 12 cm)에 모여요.');
     await slide(L.convex, -0.35, -1.3, -Math.PI / 2, 0.8); await wait(2.2); await back('convex');
@@ -3205,7 +4589,7 @@ const DEMOS = {
   },
   async em() {                                     // 2 + 1 + 2.5 + 1.5 + 2.5 + 2.8 + 1 + 4.4 + 0.8 + 1.5 = 20초
     const { coil, mag } = SETUPS.em.run();
-    setView(0, 0.42, homeDist() * 0.6);
+    fitViewToItems(0.42);
     say('코일과 검류계를 집게 전선으로 연결했어요. 지금은 바늘이 0을 가리켜요.'); await wait(2);
     say('막대자석의 N극이 아래를 향하게 해서 코일 위에 세워요.');
     holdForDemo(mag);
@@ -3255,7 +4639,7 @@ function demoButtons(running) {                     // 진행 중: 시범 종료
 }
 async function runDemo(key) {
   const D = DEMOS[key]; if (!D || demoState.active) return;
-  resetLab();
+  resetLab(); recActive = true; recKey = key;
   view3.targetT.copy(VIEW_CENTER);
   demoState.active = true; demoState.stop = false; demoState.key = key; demoState.elapsed = 0; demoState.shown = -1;
   $('actions').hidden = true; $('demoBar').hidden = false; say(''); demoButtons(true);
@@ -3266,13 +4650,17 @@ async function runDemo(key) {
   refreshInventory();
 }
 document.getElementById('demoStop').addEventListener('click', () => { if (demoState.active) demoState.stop = true; });
-document.getElementById('gClear').addEventListener('click', () => { measure.runs.length = 0; drawGraph(); });
+document.getElementById('gClear').addEventListener('click', () => {   // 그래프와 표를 모두 처음 상태로
+  measure.runs.length = 0; measure.seq = 0; measure.trials = [];
+  for (const r of items) if (isK(r, 'rail') && r.userData.sim) r.userData.sim.cleared = true;
+  drawGraph();
+});
 document.getElementById('gClose').addEventListener('click', () => { document.getElementById('graphPanel').hidden = true; });
 document.getElementById('demoStart').addEventListener('click', () => {   // 같은 실험의 기구를 다시 세팅해서 직접 실험
   $('demoBar').hidden = true; if (demoState.key) runSetup(demoState.key);
 });
 document.getElementById('demoOther').addEventListener('click', () => {   // 실험대를 비우고 추천 실험 창 열기
-  $('demoBar').hidden = true; resetLab(); refreshInventory();
+  $('demoBar').hidden = true; resetLab(); refreshInventory(); fitViewToItems(expEl());
   $('invPanel').hidden = true; $('recPanel').hidden = false;
 });
 document.querySelectorAll('.demoBtn').forEach(b => b.addEventListener('click', () => {
@@ -3288,6 +4676,18 @@ document.getElementById('sideBtns').addEventListener('click', e => {
   if (!demoState.active) return;
   e.stopPropagation(); e.preventDefault(); toast('시범 실험 중이에요. 아래의 시범 종료를 누른 뒤에 사용해 주세요.');
 }, true);
+// 왼쪽 버튼: 그 버튼으로 연 창(자유 실험·추천 실험·비우기 확인)이 떠 있는 동안 노란색
+let clearAsk = false;
+function syncSideBtns() {
+  const cb = document.getElementById('confirmBox');
+  if (cb.hidden) clearAsk = false;
+  document.getElementById('invBtn').classList.toggle('on', !document.getElementById('invPanel').hidden);
+  document.getElementById('recBtn').classList.toggle('on', !document.getElementById('recPanel').hidden);
+  document.getElementById('clearTable').classList.toggle('on', clearAsk && !cb.hidden);
+}
+{ const mo = new MutationObserver(syncSideBtns);
+  for (const id of ['invPanel', 'recPanel', 'confirmBox']) mo.observe(document.getElementById(id), { attributes: true, attributeFilter: ['hidden'] });
+  syncSideBtns(); }
 (function setupInventory() {
   const $$ = id => document.getElementById(id);
   $$('invBtn').addEventListener('click', () => { refreshInventory(); $$('recPanel').hidden = true; $$('invPanel').hidden = !$$('invPanel').hidden; });
@@ -3304,8 +4704,8 @@ document.getElementById('sideBtns').addEventListener('click', e => {
   $$('clearTable').addEventListener('click', () => {
     if (!items.length) { toast('실험대가 이미 비어 있어요.'); return; }
     $$('invPanel').hidden = true; $$('recPanel').hidden = true;
-    pendingItem = null; pendingAction = () => { resetLab(); $$('demoBar').hidden = true; toast('실험대를 비웠어요.'); };
-    $$('cbImg').removeAttribute('src'); $$('cbText').textContent = '실험대 위의 기구를 모두 치울까요?';
+    pendingItem = null; pendingAction = () => { resetLab(); $$('demoBar').hidden = true; fitViewToItems(expEl()); toast('실험대를 비웠어요.'); };   // 빈 실험대의 실험 시야로
+    clearAsk = true; $$('cbImg').removeAttribute('src'); $$('cbText').textContent = '실험대 위의 기구를 모두 치울까요?';
     $$('confirmBox').hidden = false;
   });
 })();
@@ -3323,6 +4723,7 @@ function makeThumbs() {
     try {
       ts.add(it); it.position.set(0, 0, 0);
       it.rotation.set(0, it.userData.kind === 'optic' ? 0 : (it.userData.kind === 'laser' ? -0.3 : -0.6), 0);
+      if (isK(it, 'beaker')) it.traverse(m => { if (m.isMesh && m.material.transparent && !m.material.isMeshBasicMaterial) { m.material.opacity = Math.min(0.75, m.material.opacity * 2.6); m.material.depthWrite = true; } });   // 그림에서는 유리가 잘 보이게
       it.updateMatrixWorld(true);
       const box = new THREE.Box3().setFromObject(it), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
       const R = Math.max(sz.x, sz.y, sz.z) * 0.62, dist = R / Math.tan(THREE.MathUtils.degToRad(14));
@@ -3405,6 +4806,22 @@ function onLockFail() {
   setDragMode();
 }
 startBtn.addEventListener('click', enterPlay);
+// 오른쪽 위 [돌아가기]: 확인 후 실험실을 정리하고 첫 화면으로
+function goMain() {
+  exitShake(); closeCtxMenu(); resetLab();
+  for (const id of ['invPanel', 'recPanel', 'graphPanel', 'demoBar', 'confirmBox']) $(id).hidden = true;
+  measure.runs.length = 0; measure.seq = 0; measure.trials = [];
+  playing = false; for (const k in keys) keys[k] = false;
+  if (document.pointerLockElement) document.exitPointerLock?.();
+  setView(VIEW_HOME.az, VIEW_HOME.el, homeViewDist(), true);
+  $('introCard').hidden = true; $('suggestCard').hidden = true; $('mainCard').hidden = false; startBtn.textContent = '입장 하기'; overlay.hidden = false;
+}
+$('homeBtn').addEventListener('click', () => {
+  pendingItem = null;
+  pendingAction = () => { if (demoState.active) { demoState.stop = true; setTimeout(goMain, 120); } else goMain(); };
+  $('cbImg').removeAttribute('src'); $('cbText').textContent = '메인 화면으로 돌아가시겠습니까?';
+  $('confirmBox').hidden = false;
+});
 document.addEventListener('pointerlockchange', () => {
   if (document.pointerLockElement === canvas) {
     clearTimeout(lockTimer); everLocked = true; mode = 'lock'; playing = true; overlay.hidden = true;
@@ -3454,6 +4871,7 @@ document.addEventListener('pointermove', e => {
   const z = player.fov / 70;
   player.yaw -= e.movementX * s * z * (cartState.pushing ? 0.5 : 1);   // 카트를 밀 때는 몸도 천천히 돈다
   if (insertMode.active) insertMode.depth = Math.max(INSERT_MIN, Math.min(INSERT_MAX, insertMode.depth - e.movementY * 0.00045));   // 마우스 아래로 → 자석이 아래로
+  else if (shakeMode.active) {}
   else player.pitch = Math.max(-1.45, Math.min(1.45, player.pitch - e.movementY * s * z));
 });
 // 기구를 클릭하면 커서 위에 선택창. 선택창이 열려 있을 때 빈 곳을 클릭하면 닫힌다
@@ -3470,7 +4888,7 @@ document.getElementById('viewGuide').addEventListener('click', e => {
   else if (v === 'left') setView(-Math.PI / 2, 0.12);
   else if (v === 'right') setView(Math.PI / 2, 0.12);
   else if (v === 'front') setView(0, 0.12);
-  else setView(VIEW_HOME.az, VIEW_HOME.el, homeViewDist(), true);
+  else fitViewToItems(expEl());   // 실험 시야
 });
 // 마우스 휠: 확대·축소
 canvas.addEventListener('wheel', e => {
@@ -3498,7 +4916,7 @@ addEventListener('keydown', e => {
   if (!playing || !$('confirmBox').hidden) return;
   if (VIEW_KEYS.includes(e.code)) { e.preventDefault(); keys[e.code] = true; return; }   // 시야: 누르고 있는 동안 계속
   if (e.repeat) return;
-  if (e.code === 'KeyQ') { setView(VIEW_HOME.az, VIEW_HOME.el, homeViewDist(), true); return; }
+  if (e.code === 'KeyQ') { fitViewToItems(expEl()); return; }   // 실험 시야
   if (e.code === 'KeyW') { setView(view3.azT, VIEW_LIM.elMax); return; }   // 위에서 (지금 보는 방향 그대로)
   if (e.code === 'KeyA') { setView(-Math.PI / 2, 0.12); return; }         // 왼쪽 옆에서
   if (e.code === 'KeyS') { setView(0, 0.12); return; }                    // 앞에서
@@ -3530,6 +4948,10 @@ function fitScreen() {
   const b = document.body;
   b.classList.toggle('rot', screenRotated);
   if (isTouch) { b.style.width = (screenRotated ? vh : vw) + 'px'; b.style.height = (screenRotated ? vw : vh) + 'px'; }
+  else {
+    if (window.__fitDesktop) window.__fitDesktop();
+    uiScale = window.__uiScale || 1;
+  }
   onResize();
 }
 // 화면을 돌린 상태에서 손가락 움직임(화면 기준)을 실험실 화면 기준으로 바꾼다
@@ -3580,8 +5002,55 @@ function animateHands(dt, moving) {
     carry.position.set(0, -0.33, -0.62);
     return;
   }
+  // 용수철 당기기: 오른손이 물체 오른쪽을 잡고 당겼다가, 놓은 자리에서 손을 펴고 거둔다
+  let sprHand = null;
+  if (BANIM.b) {                                                      // 풍선을 비커에 넣고 빼는 중: 오른손이 풍선 윗부분을 쥔다
+    const b = BANIM.b, s = b.userData.r / BLN.r0; b.updateMatrixWorld();
+    sprHand = { p: b.localToWorld(new THREE.Vector3(0.03 * s, 2 * (BLN.r0 * BLN.ys + 0.009) * s - 0.005, 0.01)), curl: 0.75, g: b, snap: true };
+  }
+  if (!held && !sprHand) for (const o of items) {
+    const r = isK(o, 'spring') && o.userData.spr.run; if (!r) continue;
+    if (!r.released) sprHand = { p: springGrip(o), curl: r.pre > 0.15 ? 0.35 : 0.9, g: o };
+    else if (performance.now() / 1000 - r.relAt < 0.35) sprHand = { p: r.relP.clone().add(new THREE.Vector3(0.02, 0.01, 0)), curl: 0.1, g: o };
+    if (sprHand) break;
+  }
+  if (!held && !sprHand) for (const o of items) {                     // 모래 컵 흔들기: 오른손이 컵 옆을 쥐고 함께 위아래로
+    if (!isK(o, 'sandcup') || !(o.userData.sand.run || shakeMode.cup === o)) continue;
+    o.updateMatrixWorld(); sprHand = { p: o.userData.shaker.localToWorld(new THREE.Vector3(0.05, 0.06, 0.012)), curl: 0.95, g: o, snap: true }; break;
+  }
+  // 끌기: 용수철 저울 장착 수레가 움직이는 동안 오른손이 저울 고리를 걸어 쥐고 함께 끌고 간다
+  const pullCart = !held ? items.find(o => o.userData.springCart && o.userData.rail && o.userData.rail.run && !o.userData.rail.run.done) : null;
   for (const [h, p] of [[handR, pr], [handL, pl]]) {
     const c = h.userData.cur;
+    if (h === handR && sprHand) {
+      const camInv = camera.quaternion.clone().invert();
+      const dirW = new THREE.Vector3(1, 0, 0).transformDirection(sprHand.g.matrixWorld).setY(0).normalize();   // 당기는 방향 (오른쪽)
+      const tp = worldToHandPoint(sprHand.p);
+      const away = sprHand.p.clone().sub(camera.position).setY(0).normalize();
+      const fwd = away.multiplyScalar(0.6).addScaledVector(dirW, -0.8).normalize().applyQuaternion(camInv);   // 손끝이 물체 쪽을 향해 감싸 쥔다
+      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camInv);
+      const tq = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(new THREE.Vector3(), fwd, up));
+      const kk = sprHand.snap && c.p.distanceTo(tp) < 0.08 ? 1 : Math.min(1, k * 2.5);   // 흔드는 컵은 바로 따라간다
+      c.p.lerp(tp, kk); h.position.copy(c.p); h.quaternion.slerp(tq, kk);
+      c.c = lerp(c.c, sprHand.curl, kk); setCurl(h, c.c);
+      continue;
+    }
+    if (h === handR && pullCart) {
+      pullCart.updateMatrixWorld();
+      const sc = pullCart.userData.scale, camInv = camera.quaternion.clone().invert();
+      const ring = sc.localToWorld(new THREE.Vector3(0.083, 0.03, 0));
+      const dirW = new THREE.Vector3(1, 0, 0).transformDirection(pullCart.matrixWorld).setY(0).normalize();   // 끄는 방향 (레일 오른쪽)
+      const tp = worldToHandPoint(ring.clone().addScaledVector(dirW, 0.03).add(new THREE.Vector3(0, 0.035, 0)));
+      // 손가락이 수레 쪽(고리)을 향하고 앞으로 살짝 기울게: 고리에 손가락을 걸어 당기는 모양
+      const away = ring.clone().sub(camera.position).setY(0).normalize();
+      const fwd = away.multiplyScalar(0.6).addScaledVector(dirW, -0.8).normalize().applyQuaternion(camInv);
+      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camInv);
+      const tq = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(new THREE.Vector3(), fwd, up));
+      const kk = Math.min(1, k * 2.5);                             // 수레를 놓치지 않게 빨리 따라간다
+      c.p.lerp(tp, kk); h.position.copy(c.p); h.quaternion.slerp(tq, kk);
+      c.c = lerp(c.c, 0.85, kk); setCurl(h, c.c);
+      continue;
+    }
     if (h === handR && insertMode.active && insertMode.magnet) {   // 오른손이 코일 위 자석의 윗부분을 쥔다
       const magnet = insertMode.magnet;
       const topEnd = magnet.localToWorld(new THREE.Vector3(magnet.userData.flip ? -0.035 : 0.035, 0.0075, 0).multiplyScalar(1)).clone();
@@ -3684,6 +5153,12 @@ function frame() {
   for (const b of items) { if (!b.parent) continue; if (isK(b, 'balance')) stepBalance(b, dt); else if (isK(b, 'lever')) stepLever(b, dt); }
   physicsStep(dt);
   updateCarts(dt);
+  updateInclines(dt);
+  updateFalls(dt);
+  updateSprings(dt);
+  updateSands(dt);
+  updateBalloons(dt);
+  updateRailSims(dt);
   updateDemo(dt);
 
   // 조준 (마우스 커서 / 누른 곳). 선택창이 열려 있는 동안에는 클릭한 순간의 조준을 그대로 둔다
@@ -3703,6 +5178,10 @@ function frame() {
   if (!held && aimTerm && aimTerm.clip && !aimItem) aimItem = aimTerm.clip;
   if (!aimItem && !held) aimItem = nearItemOnScreen(PICK_PX);                  // 작은 기구는 커서 근처만 가리켜도 고른다 (들고 있을 때는 놓을 자리를 가리키므로 제외)
   if (isK(aimItem, 'cartweight') && aimItem.userData.onCart) aimItem = aimItem.userData.onCart;   // 수레 위의 추는 수레와 한 덩어리
+  if (!held && isK(aimItem, 'beaker')) {                                      // 투명한 비커 너머로 풍선·온도 센서가 보이면 그것을 고른다
+    const bk = aimItem, bl = bk.userData.balloon, inside = [bk.userData.sensor, bl, bl && bl.userData.sensor].filter(Boolean);
+    const h2 = hits.find(h => inside.includes(grabRoot(h.object))); if (h2) aimItem = grabRoot(h2.object);
+  }
   const prevHover = hoverItem; hoverItem = held ? null : aimItem;
   if (hoverItem !== prevHover) { setHighlight(prevHover, false); setHighlight(hoverItem, true); }
   placement = null; link = null;
@@ -3726,7 +5205,7 @@ function frame() {
   }
   updateActions(link);
   cross.classList.toggle('on', !!(hoverItem || (link && link.valid) || (placement && placement.valid)));
-  cross.classList.toggle('held', !!(held || insertMode.active));
+  cross.classList.toggle('held', !!(held || insertMode.active || shakeMode.active));
   updateBeams();
 
   animateHands(dt, moving && playing && player.jumpH === 0);
