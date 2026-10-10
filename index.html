@@ -464,6 +464,27 @@ body.touch #help { display: none; }
     if (b && !b.disabled) tick();
   }, true);
   window.__btnSound = tick;
+  // 입장하기를 누르는 순간 소리 장치를 켜 두고, 그 뒤로는 계속 소리가 나게 한다
+  //  - 아이폰은 무음(벨소리 끔) 스위치가 켜져 있으면 웹 효과음이 꺼지므로 '미디어 재생'으로 분류해 둔다
+  var keep = null;
+  window.__audioUnlock = function () {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    try {
+      if (!navigator.audioSession && !keep) {          // 예전 아이폰: 들리지 않는 소리를 계속 틀어 두면 무음 스위치와 관계없이 소리가 난다
+        keep = new Audio('data:audio/wav;base64,UklGRsQPAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YaAPAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA'); keep.loop = true; keep.setAttribute('playsinline', '');
+        var pp = keep.play(); if (pp && pp.catch) pp.catch(function () {});
+      }
+    } catch (e) {}
+    unlock();
+  };
+  // 앱을 잠깐 나갔다 오면 소리 장치가 다시 잠들 수 있어서 깨운다
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && ctx && ctx.state !== 'running') { try { ctx.resume(); } catch (e) {} }
+    if (document.visibilityState === 'visible' && keep && keep.paused) { var pp = keep.play(); if (pp && pp.catch) pp.catch(function () {}); }
+  });
+  document.addEventListener('click', function (e) {     // 입장하기 버튼
+    if (e.target && e.target.closest && e.target.closest('#startBtn')) window.__audioUnlock();
+  }, true);
 })();
 // 컴퓨터: 전체 화면 켜기·끄기 (Esc를 눌러도 빠져나온다)
 (function () {
@@ -2569,11 +2590,18 @@ const circuitState = { warned: false };
 const BATLINK = { meshes: [] };
 function batteryPairs() {
   const bs = items.filter(b => isK(b, 'battery') && b.parent === scene && !inHand(b)), out = [];
-  for (const a of bs) for (const b of bs) {
+  const W = T => worldPointOf(T.mesh, T.attach);
+  for (const a of bs) for (const b of bs) {                // 직렬: 한쪽 + 단자와 다른 쪽 − 단자가 맞닿음
     if (a === b) continue;
     const P = a.userData.terms[0], M = b.userData.terms[1];
-    const pa = worldPointOf(P.mesh, P.attach), pb = worldPointOf(M.mesh, M.attach);
+    const pa = W(P), pb = W(M);
     if (pa.distanceTo(pb) < 0.03 && Math.abs(pa.y - pb.y) < 0.01) out.push([P, M, pa, pb]);
+  }
+  for (let i = 0; i < bs.length; i++) for (let j = i + 1; j < bs.length; j++) {   // 병렬: 나란히 놓여 + 끼리, − 끼리 가까움
+    const [aP, aM] = bs[i].userData.terms, [bP, bM] = bs[j].userData.terms;
+    const pa = W(aP), ma = W(aM), pb = W(bP), mb = W(bM);
+    if (pa.distanceTo(pb) < 0.065 && ma.distanceTo(mb) < 0.065 && Math.abs(pa.y - pb.y) < 0.01 && pa.clone().sub(ma).dot(pb.clone().sub(mb)) > 0)
+      out.push([aP, bP, pa, pb], [aM, bM, ma, mb]);
   }
   return out;
 }
@@ -2645,7 +2673,7 @@ function updateCircuit() {
     const ma = rA.it.userData.meas, mb = rB.it.userData.meas, A1 = f(ma.a), A2 = f(ma.b), B1 = f(mb.a), B2 = f(mb.b), sa = [A1, A2].sort(), sb = [B1, B2].sort();
     const kind = sa[0] === sb[0] && sa[1] === sb[1] ? 'par' : (A1 === B1 || A1 === B2 || A2 === B1 || A2 === B2) ? 'ser' : null;
     if (kind) {
-      const rec = { A: { I: Math.abs(ma.I), V: Math.abs(ma.V) }, B: { I: Math.abs(mb.I), V: Math.abs(mb.V) }, T: { I: Math.max(...bats.map(b => Math.abs(b.it.userData.meas.I))), V: bats.filter(b => Math.abs(b.it.userData.meas.I) > 1e-4).reduce((v, b) => v + Math.abs(b.it.userData.meas.V), 0) } };   // 회로 전체: 직렬로 이은 건전지들의 전압 합
+      const rec = { A: { I: Math.abs(ma.I), V: Math.abs(ma.V) }, B: { I: Math.abs(mb.I), V: Math.abs(mb.V) }, T: kind === 'ser' ? { I: Math.abs(ma.I), V: Math.abs(ma.V) + Math.abs(mb.V) } : { I: Math.abs(ma.I) + Math.abs(mb.I), V: Math.abs(ma.V) } };   // 회로 전체: 두 저항 전체의 전류·전압 (건전지를 병렬로 이어도 맞게)
       if (measure.mode !== 'circuit') { measure.runs.length = 0; measure.mode = 'circuit'; measure.circ = {}; showGraph(); }
       measure.circ = measure.circ || {}; const old = measure.circ[kind];
       measure.circ[kind] = rec; measure.circNow = kind;
@@ -4207,6 +4235,15 @@ function linkInfo() {
   }
   if (!aimItem || aimItem === held) return null;
   if (u.kind === 'wire' && (isK(aimItem, 'coil') || isK(aimItem, 'galv'))) return { valid: false, label: '단자를 조준해 주세요', msg: `${josa(aimItem.userData.name, '의', '의')} 금속 단자를 조준해 주세요.` };
+  if (u.kind === 'battery' && isK(aimItem, 'battery')) {                          // 건전지 → 다른 건전지: 직렬 / 병렬 연결
+    const tg = aimItem;
+    if (tg.parent !== scene) return { valid: false, label: '건전지 연결하기', msg: '실험대 위의 건전지를 가리켜 주세요.' };
+    const ser = batterySpot(tg, held, 'ser'), par = batterySpot(tg, held, 'par');
+    if (!ser && !par) return { valid: false, label: '건전지 연결하기', msg: '이 건전지 옆에 빈자리가 없어요.' };
+    const choices = [ser ? ['BATSER', '', '직렬연결 (+극과 −극을 맞붙이기)'] : ['hint', '직렬연결: 양옆에 빈자리가 없어요.'],
+                     par ? ['BATPAR', '', '병렬연결 (나란히 놓고 같은 극끼리 잇기)'] : ['hint', '병렬연결: 앞뒤에 빈자리가 없어요.']];
+    return { valid: true, label: '건전지 연결하기', choices, run: () => openSubMenu('건전지 연결하기', choices) };
+  }
   if (u.kind === 'magnet' && isK(aimItem, 'coil')) {                             // 자석 → 코일 위에 세우기
     const coil = aimItem, ok = coil.parent === scene && !coil.userData.flying;
     return { valid: ok, label: '코일 위에 자석 세우기', msg: '코일이 멈춘 뒤에 해 주세요.', run: () => enterInsert(coil) };
@@ -4280,6 +4317,33 @@ function linkInfo() {
     return { valid: true, label: `${where}에 올리기`, run: () => placeHeld({ type: 'pan', bal: balance, side, slot }) };
   }
   return { valid: false, label: '', msg: '이 두 기구는 서로 연계할 수 없어요.' };
+}
+// 건전지 끼우개 잇기: 직렬은 끝과 끝을 맞대어 (+ 단자와 − 단자가 맞닿음), 병렬은 앞뒤로 나란히 (같은 극 단자끼리 연결판으로)
+const BAT_JOIN = { ser: [[0.128, 0], [-0.128, 0]], par: [[0, -0.05], [0, 0.05]] };
+function batterySpot(tg, it, mode) {
+  tg.updateMatrixWorld(true);
+  for (const [ox, oz] of BAT_JOIN[mode]) {
+    const p = tg.localToWorld(new THREE.Vector3(ox, 0, oz)); p.y = tg.position.y;
+    if (p.x < TABLE.minX + 0.07 || p.x > TABLE.maxX - 0.07 || p.z < TABLE.minZ + 0.03 || p.z > TABLE.maxZ - 0.03) continue;
+    let ok = true;
+    for (const o of items) {
+      if (o === tg || o === it || o.parent !== scene || o.position.y < 0.5) continue;
+      if (overlaps(o, p.x, p.z, 0.02)) { ok = false; break; }
+    }
+    if (ok) return { p };
+  }
+  return null;
+}
+function joinBattery(mode) {
+  const tg = aimItem, it = held;
+  if (!isK(it, 'battery') || !isK(tg, 'battery')) return;
+  const sp = batterySpot(tg, it, mode); if (!sp) { toast('이 건전지 옆에 빈자리가 없어요.'); return; }
+  stopMotion(it); scene.add(it);
+  it.position.copy(sp.p); it.quaternion.copy(tg.quaternion);
+  it.userData.angle = tg.userData.angle; it.userData.worldYaw = tg.userData.worldYaw;
+  bodyOn(it); dropHeld(false); player.reach = 1;
+  if (!demoState.active) fitViewToItems(expEl());
+  toast(mode === 'ser' ? '두 건전지를 직렬로 연결했어요. (+극과 −극이 연결판으로 바로 이어져요)' : '두 건전지를 병렬로 연결했어요. (+극끼리, −극끼리 연결판으로 이어져요)');
 }
 function flipMagnet() {
   const magnet = insertMode.active ? insertMode.magnet : held; if (!isK(magnet, 'magnet')) return;
@@ -4363,7 +4427,7 @@ function updateActions(link) {
   } else if (held) {
     // 손에 든 기구: 할 수 있는 일만 (연계는 그 내용 그대로, 안 되면 까닭을 안내)
     title = `손에 든 기구: ${dispName(held)}`;
-    if (link) acts = link.valid ? [['KeyQ', 'E', link.label]] : [['hint', link.msg || '이 두 기구는 서로 연계할 수 없어요.']];
+    if (link) acts = link.valid ? (link.choices || [['KeyQ', 'E', link.label]]) : [['hint', link.msg || '이 두 기구는 서로 연계할 수 없어요.']];
     else acts = placement && placement.valid ? [['KeyQ', 'E', '놓기']] : [['hint', placement ? placement.msg : '놓을 곳(실험대 위)을 가리켜 주세요.']];
     const op = operateLabel(held, true); if (op) acts.push(['KeyW', 'R', op]);
   } else if (aimItem) {
@@ -4457,6 +4521,7 @@ function runAct(code) {
     SENSOROUT: () => { const cup = aimItem; if (!isK(cup, 'sandcup') || held || !cup.userData.hasSensor) return;
       setCupSensor(cup, false); const sItem = spawnItem(catalogOf('tsensor')); scene.add(sItem); sItem.position.copy(cup.position); pickUp(sItem); refreshInventory(); },
     SANDRESET: () => { if (isK(aimItem, 'sandcup')) { resetSand(aimItem); toast('모래를 처음 온도(20.0 °C)로 되돌렸어요.'); } },
+    BATSER: () => joinBattery('ser'), BATPAR: () => joinBattery('par'),
     SWTOGGLE: () => { if (isK(aimItem, 'switch')) { setSwitch(aimItem, !aimItem.userData.on); toast(aimItem.userData.on ? '스위치를 닫았어요.' : '스위치를 열었어요.'); } },
     SUB_PULLSPR: () => openSubMenu('당겼다 놓기', SPR.amps.map((a, i) => [`SPRA${i}`, '', `${Math.round(a * 100)} cm 당기기`])),
     ...Object.fromEntries(SPR.amps.map((a, i) => [`SPRA${i}`, () => { if (isK(aimItem, 'spring')) { pullSpring(aimItem, a); toast(`${Math.round(a * 100)} cm 당겼다가 놓아요.`); } }])),
@@ -5531,7 +5596,7 @@ function onResize() {
 }
 // 화면 크기를 실제 보이는 영역에 딱 맞추고, 휴대폰이 세로면 90° 돌려 가로로 보여 준다
 let screenRotated = false;
-const TOUCH_REF_H = 940;                            // 휴대폰도 컴퓨터(최대화한 창 높이 약 940 px)와 같은 비율로
+const TOUCH_REF_H = 720;                            // 휴대폰도 컴퓨터 전체 화면(노트북 1920×1080·배율 150%의 화면 높이 720 px)과 같은 비율로
 function fitScreen() {
   const vv = window.visualViewport;
   let vw = Math.round(vv ? vv.width : innerWidth), vh = Math.round(vv ? vv.height : innerHeight);
