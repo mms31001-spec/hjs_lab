@@ -2,6 +2,14 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<meta name="google-site-verification" content="_k9ztOFhjr8dkxmSPcUSNrZajC7bp1-ZsuC6VspfIaY" />
+<meta name="description" content="세상의 모든 물리학 실험(세.모.물) - 실험 기구를 직접 꺼내 조합하며 실험을 설계하는 3D 가상 물리 실험실. 역학, 열물리학, 파동 및 광학, 전자기학, 현대 물리학 추천 실험과 시범실험을 웹브라우저에서 바로 해 볼 수 있습니다.">
+<link rel="canonical" href="https://mms31001-spec.github.io/hjs_lab/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="세상의 모든 물리학 실험">
+<meta property="og:description" content="실험 기구를 직접 꺼내 조합하며 실험을 설계하는 3D 가상 물리 실험실">
+<meta property="og:url" content="https://mms31001-spec.github.io/hjs_lab/">
+<meta property="og:image" content="https://mms31001-spec.github.io/hjs_lab/icon-512.png">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest">
 <script>
@@ -11,7 +19,8 @@
     var ua = navigator.userAgent || '';
     var mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
     var app = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
-    if (mobile && !app) location.replace('install.html');
+    var bot = /bot|crawl|spider|slurp|Yeti|Google|Lighthouse/i.test(ua);   // 검색 로봇은 실험실 본문을 그대로 읽도록
+    if (mobile && !app && !bot) location.replace('install.html');
   } catch (e) {}
 })();
 </script>
