@@ -174,6 +174,8 @@ body.scaled #overlay .card { zoom: 1.5; }
 #overlayNote:empty { display: none; }
 body:has(#overlay:not([hidden])) #sideBtns { visibility: hidden; }   /* 첫 화면에서는 왼쪽 버튼을 숨긴다 */
 .card .maker { font-size: 13px; }
+.card .visits { font-size: 14px; color: var(--brass); margin: 0; }
+.card .visits b { font-family: var(--font-num); font-weight: 700; }
 .card .ver { font-size: 12px; font-family: var(--font-num); opacity: .7; margin-top: -8px; }
 .card .eyebrow { font-family: var(--font-num); font-size: 12px; color: var(--brass); letter-spacing: .12em; }
 .card h1 { margin: 0; font-size: 34px; line-height: 1.25; text-wrap: balance; }
@@ -441,6 +443,7 @@ body.touch #help { display: none; }
       <button id="suggestBtn" type="button">실험 제안하기</button>
     </div>
     <p class="note" id="overlayNote"></p>
+    <p class="visits" id="visitCount" hidden>누적 방문 <b id="visitNum"></b>회</p>
     <p class="maker">제작: 물리교사 한재상(경상남도교육청 과학교육원, 2026)<br>E-mail: hjs31001@korea.kr</p>
     <p class="ver">v1.00</p>
   </div>
@@ -593,6 +596,24 @@ body.touch #help { display: none; }
     var nr = document.getElementById('nRecs'); if (nr) nr.textContent = document.querySelectorAll('#recList .rec').length;   // 기획 의도의 추천 실험 수 (실험이 늘면 저절로)
     tabs.forEach(function (b) { var sp = document.createElement('span'); sp.className = 'cnt'; sp.textContent = '(' + document.querySelectorAll('#recList .rec[data-cat="' + b.dataset.cat + '"]').length + ')'; b.appendChild(sp); });   // 분야 이름 아래에 실험 수: (6)
     show('mech');
+  })();
+  // 누적 방문 수 (Firebase 실시간 데이터베이스): 브라우저 탭마다 한 번 1을 늘리고, 첫 화면에 보여 준다. 숫자만 저장하고 누가 왔는지는 기록하지 않는다
+  (function () {
+    var DB = 'https://semomul-default-rtdb.asia-southeast1.firebasedatabase.app/stats/visits.json';
+    try {                                            // 휴대폰 브라우저로 열어 설치 안내 화면으로 넘어가는 경우는 세지 않는다
+      var ua = navigator.userAgent || '';
+      var mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+      var app = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
+      if (mobile && !app) return;
+    } catch (e) {}
+    function show(n) { if (typeof n !== 'number' || !isFinite(n)) return; document.getElementById('visitNum').textContent = n.toLocaleString('ko-KR'); document.getElementById('visitCount').hidden = false; }
+    function read() { return fetch(DB).then(function (r) { return r.ok ? r.json() : null; }).then(show); }
+    var counted = false; try { counted = sessionStorage.getItem('semomulVisit') === '1'; } catch (e) {}
+    if (counted) { read().catch(function () {}); return; }   // 같은 탭에서 새로 고침한 것은 다시 세지 않는다
+    fetch(DB, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ '.sv': { increment: 1 } }) })
+      .then(function (r) { if (!r.ok) throw new Error('count ' + r.status); try { sessionStorage.setItem('semomulVisit', '1'); } catch (e) {} return r.json(); })
+      .then(function (v) { if (typeof v === 'number') show(v); else return read(); })
+      .catch(function () { read().catch(function () {}); });   // 인터넷이 없거나 막히면 숫자만 숨긴다
   })();
   // 첫 화면: 기획 의도 보기 / 돌아가기 (3D가 불러와지기 전에도 동작)
   document.getElementById('introBtn').addEventListener('click', function () { document.getElementById('mainCard').hidden = true; document.getElementById('introCard').hidden = false; });
