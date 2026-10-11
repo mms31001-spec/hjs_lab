@@ -466,7 +466,7 @@ body.touch #help { display: none; }
     <p class="note" id="overlayNote"></p>
     <p class="visits" id="visitCount" hidden>지금까지 실험실이 <b id="visitNum"></b>번 열렸어요</p>
     <p class="maker">제작: 물리교사 한재상(경상남도교육청 과학교육원, 2026)<br>E-mail: hjs31001@korea.kr</p>
-    <p class="ver">v1.00</p>
+    <p class="ver">v1.01</p>
   </div>
   <div class="card" id="suggestCard" hidden>
     <h2>실험 제안하기</h2>
@@ -8027,10 +8027,30 @@ document.addEventListener('pointermove', e => {
 // 기구를 클릭하면 커서 위에 선택창. 선택창이 열려 있을 때 빈 곳을 클릭하면 닫힌다
 canvas.addEventListener('click', e => {
   if (!playing) return;
+  if (performance.now() < touchHold.eatClick) return;   // 휴대폰에서 들고 있던 기구를 손 떼기로 이미 처리함
   if (ctxMenu.open) { closeCtxMenu(); return; }
   setAim(e.clientX, e.clientY);
   requestAnimationFrame(() => requestAnimationFrame(openCtxMenu));   // 누른 곳을 조준한 다음 프레임에 연다 (휴대폰 터치 포함)
 });
+// 휴대폰: 기구를 들고 있을 때 누르고 있는 동안 놓을 자리를 미리 보여 주고, 손을 떼면 그 자리에 놓는다
+const touchHold = { id: null, cancel: false, eatClick: 0, lastTouch: false };
+document.addEventListener('pointerdown', e => { touchHold.lastTouch = e.pointerType === 'touch'; }, true);
+canvas.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'touch') return;
+  if (touchHold.id !== null) { touchHold.cancel = true; return; }   // 두 번째 손가락: 놓기 취소 (확대·축소만)
+  if (!playing || !held || ctxMenu.open || demoState.active || insertMode.active || nearMode.active || slideMode.active || shakeMode.active) return;
+  touchHold.id = e.pointerId; touchHold.cancel = false; setAim(e.clientX, e.clientY);
+});
+canvas.addEventListener('pointermove', e => { if (e.pointerId === touchHold.id && !touchHold.cancel) setAim(e.clientX, e.clientY); });
+canvas.addEventListener('pointerup', e => {
+  if (e.pointerId !== touchHold.id) return;
+  const ok = !touchHold.cancel && playing && held; touchHold.id = null;
+  touchHold.eatClick = performance.now() + 500;          // 뒤따르는 click은 무시
+  if (!ok) return;
+  setAim(e.clientX, e.clientY);
+  requestAnimationFrame(() => requestAnimationFrame(openCtxMenu));   // PC에서 클릭한 것과 같이: 놓기(고를 것이 여럿이면 선택창)
+});
+canvas.addEventListener('pointercancel', e => { if (e.pointerId === touchHold.id) { touchHold.id = null; touchHold.eatClick = performance.now() + 500; } });
 document.getElementById('viewGuide').addEventListener('click', e => {
   const v = e.target.closest('button')?.dataset.view; if (!v) return;
   closeCtxMenu();
@@ -8388,7 +8408,8 @@ function frame() {
   }
   if (nearMode.active) { if (!nearMode.tgt || !nearMode.tgt.userData.hang) exitNear(); else nearPose(); }
   if (ghost) {
-    if (placement && (placement.valid || placement.pos) && placement.type !== 'terminal' && placement.type !== 'pan') {
+    const touchIdle = touchHold.lastTouch && (touchHold.id === null || touchHold.cancel);   // 휴대폰: 누르고 있는 동안만 미리보기
+    if (!touchIdle && placement && (placement.valid || placement.pos) && placement.type !== 'terminal' && placement.type !== 'pan') {
       ghost.visible = true;
       const mat = placement.valid ? ghostMatOk : ghostMatBad;
       ghost.traverse(m => { if (m.isMesh) m.material = mat; });
