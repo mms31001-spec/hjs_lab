@@ -170,6 +170,10 @@ body.scaled #overlay .card { zoom: 1.5; }
 #mailCopy:hover { border-color: var(--brass); color: var(--brass); }
 #introBtn:hover, #introBack:hover, #suggestBtn:hover, #suggestBack:hover { background: rgba(217,180,91,.1); }
 #introText { color: var(--ink); line-height: 1.7; text-align: left; display: grid; gap: 12px; max-height: min(52vh, 420px); overflow-y: auto; }
+#introText { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.85) transparent; padding-right: 6px; }
+#introText::-webkit-scrollbar { width: 6px; }
+#introText::-webkit-scrollbar-track { background: transparent; }
+#introText::-webkit-scrollbar-thumb { background: rgba(255,255,255,.85); border-radius: 3px; }
 #introText p { color: var(--ink); font-size: 14.5px; line-height: 1.75; word-break: keep-all; }
 #overlayNote:empty { display: none; }
 body:has(#overlay:not([hidden])) #sideBtns { visibility: hidden; }   /* 첫 화면에서는 왼쪽 버튼을 숨긴다 */
