@@ -370,7 +370,7 @@ body.touch #help { display: none; }
   <div class="invHead"><h2>추천 실험</h2><button id="recClose" type="button">닫기</button></div>
   <div id="recTabs" role="tablist"><button type="button" data-cat="mech" class="on">역학</button><button type="button" data-cat="thermo">열물리학</button><button type="button" data-cat="em">전자기학</button><button type="button" data-cat="wave">파동 및 광학</button><button type="button" data-cat="modern">현대 물리학</button></div>
   <ol id="recList">
-    <li class="rec" data-cat="mech"><span class="tag">역학</span><p>지레와 돌림힘의 평형</p><div class="needRow"><div class="need">필요한 기구: 지레 장치, 거는 추(50 g)</div><button class="demoBtn" type="button" data-demo="lever">시범실험</button><button class="setBtn" type="button" data-set="lever">실험하기</button></div></li>
+    <li class="rec" data-cat="mech"><span class="tag">역학</span><p>지레와 돌림힘의 평형</p><div class="needRow"><div class="need">필요한 기구: 지레 장치, 추(50g)</div><button class="demoBtn" type="button" data-demo="lever">시범실험</button><button class="setBtn" type="button" data-set="lever">실험하기</button></div></li>
     <li class="rec" data-cat="mech"><span class="tag">역학</span><p>힘·질량·가속도의 관계</p><div class="needRow"><div class="need">필요한 기구: 역학 레일, 역학 수레(끌기 전용), 수레용 추(1 kg)</div><button class="demoBtn" type="button" data-demo="fma">시범실험</button><button class="setBtn" type="button" data-set="fma">실험하기</button></div></li>
     <li class="rec" data-cat="mech"><span class="tag">역학</span><p>빗면에서의 등가속도 운동</p><div class="needRow"><div class="need">필요한 기구: 빗면 실험 장치, 역학 수레</div><button class="demoBtn" type="button" data-demo="incline">시범실험</button><button class="setBtn" type="button" data-set="incline">실험하기</button></div></li>
     <li class="rec" data-cat="mech"><span class="tag">역학</span><p>충돌과 운동량 보존</p><div class="needRow"><div class="need">필요한 기구: 역학 레일, 역학 수레 2대, 수레용 추(1 kg)</div><button class="demoBtn" type="button" data-demo="collide">시범실험</button><button class="setBtn" type="button" data-set="collide">실험하기</button></div></li>
@@ -1136,12 +1136,16 @@ function notchAt(l, hit) {                     // 조준한 곳에서 가장 가
 /* 거는 추 50 g: 바닥이 원점(실험대 위에 세워 둘 수 있게), 위에 걸이 고리 */
 function makeHangWeight() {
   const g = new THREE.Group();
-  g.userData = { grab: true, kind: 'hweight', name: '거는 추 (50 g)', mass: 0.05, physMass: 0.05, radius: 0.02, centerY: 0.02, angle: 0 };
+  g.userData = { grab: true, kind: 'hweight', name: '추(50g)', mass: 0.05, physMass: 0.05, radius: 0.02, centerY: 0.02, angle: 0 };
   const brass = std({ color: 0xc9a14a, metalness: 0.9, roughness: 0.3 }), steel = std({ color: 0xb8bec4, metalness: 0.9, roughness: 0.3 });
   const body = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.026, 24), brass); body.position.y = 0.013; g.add(body);
   const top = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.012, 0.004, 24), brass); top.position.y = 0.028; g.add(top);
   const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.0015, 0.0015, 0.006, 8), steel); stem.position.y = 0.033; g.add(stem);
-  const hook = new THREE.Mesh(new THREE.TorusGeometry(0.004, 0.0013, 6, 12), steel); hook.position.y = 0.039; g.add(hook);
+  const hp = [new THREE.Vector3(0, 0.035, 0), new THREE.Vector3(0, 0.041, 0)];                   // 갈고리: 위로 곧게 올라가다가 옆으로 둥글게 꺾여 내려온다 (물음표 모양)
+  for (let k = 1; k <= 8; k++) { const a = Math.PI - Math.PI * k / 8; hp.push(new THREE.Vector3(0.0035 + 0.0035 * Math.cos(a), 0.041 + 0.0035 * Math.sin(a), 0)); }
+  hp.push(new THREE.Vector3(0.0072, 0.0385, 0));
+  const hook = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(hp), 32, 0.0012, 8, false), steel); g.add(hook);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.0012, 8, 6), steel); tip.position.set(0.0072, 0.0385, 0); g.add(tip);   // 갈고리 끝을 둥글게
   g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
   return g;
 }
@@ -4396,7 +4400,7 @@ const CATALOG = [
   { key: 'beakerIce', cat: 'thermo', name: '비커(5000 mL)', make: () => makeBeaker({ ml: 2000, T: 0, ice: 6 }), hidden: true },   // 추천 실험(풍선): 0 °C 물 2000 mL + 얼음
   { key: 'beakerHot', cat: 'thermo', name: '비커(5000 mL)', make: () => makeBeaker({ ml: 2000, T: 80 }), hidden: true },          // 추천 실험(풍선): 80 °C 물 2000 mL
   { key: 'balloon', cat: 'thermo', name: '풍선', make: makeBalloon },
-  { key: 'hweight', cat: 'mech', name: '거는 추 (50 g)', make: makeHangWeight },
+  { key: 'hweight', cat: 'mech', name: '추(50g)', make: makeHangWeight },
   { key: 'laser', cat: 'wave', name: '3구 레이저', make: makeLaser },
   ...['convex', 'concave', 'prism', 'plane', 'concaveMirror', 'convexMirror'].map(t => ({ key: t, cat: 'wave', name: OPTIC_DEFS[t]().name, make: () => makeOptic(t) })),
   { key: 'slinky', cat: 'wave', name: '용수철(2m)', make: makeSlinky },
@@ -6158,7 +6162,7 @@ function linkInfo() {
   }
   if (isK(aimItem, 'lever') || aimItem.userData.lever) {                         // 거는 추 → 지레 눈금
     const lev = isK(aimItem, 'lever') ? aimItem : aimItem.userData.lever.lev;
-    if (u.kind !== 'hweight') return { valid: false, label: '지레에 걸기', msg: '지레에는 거는 추(50 g)만 걸 수 있어요.' };
+    if (u.kind !== 'hweight') return { valid: false, label: '지레에 걸기', msg: '지레에는 추(50g)만 걸 수 있어요.' };
     const n = aimItem.userData.lever ? aimItem.userData.lever.notch : notchAt(lev, aimHit);
     if (!n) return { valid: false, label: '눈금을 조준해 주세요', msg: '지레 막대의 눈금(1~5)을 조준해 주세요.' };
     const where = `${n < 0 ? '왼쪽' : '오른쪽'} 눈금 ${Math.abs(n)}`;
