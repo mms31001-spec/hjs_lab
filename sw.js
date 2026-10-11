@@ -1,5 +1,5 @@
 // 세상의 모든 물리학 실험 서비스 워커: 한 번 열면 앱 파일과 3D·물리 엔진을 저장해 두고, 다음부터는 저장본으로 빠르게(인터넷이 끊겨도) 실행한다.
-const CACHE = 'hjs-physics-lab-v253';        // 앱 파일: 새 버전마다 이름을 바꾼다
+const CACHE = 'hjs-physics-lab-v255';        // 앱 파일: 새 버전마다 이름을 바꾼다
 const LIB = 'hjs-physics-lib-v1';            // 3D·물리 엔진·글꼴: 버전과 관계없이 계속 보관 (업데이트 뒤에도 인터넷 없이 실행)
 const SHELL = ['./install.html', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 const LIBS = [
