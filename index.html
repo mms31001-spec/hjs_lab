@@ -174,6 +174,14 @@ body.scaled #overlay .card { zoom: 1.5; }
 #introText::-webkit-scrollbar { width: 6px; }
 #introText::-webkit-scrollbar-track { background: transparent; }
 #introText::-webkit-scrollbar-thumb { background: rgba(255,255,255,.85); border-radius: 3px; }
+.introWrap { position: relative; }
+#introRail { display: none; position: absolute; top: 0; bottom: 0; right: 0; width: 4px; border-radius: 2px; background: rgba(255,255,255,.12); pointer-events: none; }
+#introThumb { position: absolute; left: 0; right: 0; top: 0; border-radius: 2px; background: rgba(255,255,255,.85); }
+@media (pointer: coarse) {   /* 휴대폰은 기본 스크롤 막대가 숨어 있어서, 늘 보이는 막대를 따로 그린다 */
+  #introText { scrollbar-width: none; padding-right: 12px; }
+  #introText::-webkit-scrollbar { display: none; }
+  .introWrap.scrollable #introRail { display: block; }
+}
 #introText p { color: var(--ink); font-size: 14.5px; line-height: 1.75; word-break: keep-all; }
 #overlayNote:empty { display: none; }
 body:has(#overlay:not([hidden])) #sideBtns { visibility: hidden; }   /* 첫 화면에서는 왼쪽 버튼을 숨긴다 */
@@ -461,13 +469,13 @@ body.touch #help { display: none; }
   </div>
   <div class="card" id="introCard" hidden>
     <h2>기획 의도</h2>
-    <div id="introText">
+    <div class="introWrap"><div id="introText">
       <p>과학적으로 생각하는 힘을 기르는 가장 좋은 방법 중 하나는 실험입니다.</p>
       <p>하지만 학교마다 갖춘 실험 기구가 다르고, 실험 하나를 준비하는 데에도 적지 않은 시간과 노력이 듭니다. 그러다 보니 유익한 실험들이 실제로 이루어지지 못하고, 설명으로만 배우고 넘어가는 경우가 많습니다.</p>
       <p>세상의 모든 물리학 실험은 그런 실험들을 화면 속 실험대 위로 옮겨 온 가상 실험실입니다. 자유 실험을 통해 원하는 실험 기구를 꺼내고 조합하며 직접 실험을 설계해 볼 수 있고, 추천 실험을 통해 실험 기구의 세팅부터 시범 실험까지 차근차근 따라 해 볼 수도 있습니다.</p>
       <p>현재 <span id="nItems">56</span>종의 실험 기구와 <span id="nRecs">19</span>가지 추천 실험이 준비되어 있으며, 이름에 걸맞게 세상의 모든 물리학 실험을 담아낼 때까지 계속 확장될 것입니다.</p>
       <p>실험 기구나 여건 때문에 해 보지 못했던 다양한 실험들을 이제 모든 학생이 직접 경험할 수 있기를 바랍니다.</p>
-    </div>
+    </div><div id="introRail"><div id="introThumb"></div></div></div>
     <button id="introBack" type="button">돌아가기</button>
   </div>
 </div>
@@ -620,7 +628,15 @@ body.touch #help { display: none; }
       .catch(function () { read().catch(function () {}); });   // 인터넷이 없거나 막히면 숫자만 숨긴다
   })();
   // 첫 화면: 기획 의도 보기 / 돌아가기 (3D가 불러와지기 전에도 동작)
-  document.getElementById('introBtn').addEventListener('click', function () { document.getElementById('mainCard').hidden = true; document.getElementById('introCard').hidden = false; });
+  document.getElementById('introBtn').addEventListener('click', function () { document.getElementById('mainCard').hidden = true; document.getElementById('introCard').hidden = false; introBar(); });
+  function introBar() {   // 기획 의도 글 상자의 스크롤 막대 위치·길이 맞추기
+    var t = document.getElementById('introText'), w = t.parentNode, th = document.getElementById('introThumb');
+    var ch = t.clientHeight, sh = t.scrollHeight; w.classList.toggle('scrollable', sh > ch + 1);
+    if (sh <= ch + 1) return; var h = Math.max(24, ch * ch / sh);
+    th.style.height = h + 'px'; th.style.top = ((ch - h) * t.scrollTop / (sh - ch)) + 'px';
+  }
+  document.getElementById('introText').addEventListener('scroll', introBar, { passive: true });
+  window.addEventListener('resize', introBar);
   document.getElementById('introBack').addEventListener('click', function () { document.getElementById('introCard').hidden = true; document.getElementById('mainCard').hidden = false; });
   // 실험 제안하기: 메일 주소 안내 (누르면 메일 앱, 주소 복사)
   document.getElementById('suggestBtn').addEventListener('click', function () { document.getElementById('mainCard').hidden = true; document.getElementById('suggestCard').hidden = false; });
