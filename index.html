@@ -8282,7 +8282,6 @@ function syncSideBtns() {
 (function setupInventory() {
   const $$ = id => document.getElementById(id);
   $$('invBtn').addEventListener('click', () => {
-    if ($$('invPanel').hidden && recActive && !demoState.active) { dropDataPanel(); recActive = false; recKey = null; }   // 추천 실험 → 자유 실험으로 넘어가면 데이터창을 없앤다
     refreshInventory(); $$('recPanel').hidden = true; $$('invPanel').hidden = !$$('invPanel').hidden;
   });
   $$('recBtn').addEventListener('click', () => { $$('invPanel').hidden = true; $$('recPanel').hidden = !$$('recPanel').hidden; });
