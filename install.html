@@ -55,8 +55,9 @@
   .chrome-btn:active{ transform:scale(0.97); }
   .share-svg{ width:15px; height:18px; vertical-align:-3px; }
   /* 설치 없이 브라우저에서 바로 실행 */
-  .open-now{ margin-top:14px; color:var(--dim); font-size:13px; }
-  .open-now a{ color:var(--brass); }
+  .open-now{ margin-top:14px; color:var(--dim); font-size:13px; max-width:290px; line-height:1.6; }
+  .open-now a{ color:var(--brass); font-weight:700; }
+  .open-now .open-note{ display:inline-block; margin-top:4px; font-size:12px; }
   /* iPhone/iPad: 단계별 "홈 화면에 추가" 안내 (Safari에는 한 번에 설치하는 기능이 없다) */
   .ios-guide{
     position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:50;
@@ -137,6 +138,8 @@
 
   <p class="fallback" id="fallbackMsg">이 브라우저에서는 자동 설치가 지원되지 않아요.<br>Chrome, Safari, Edge 등 최신 브라우저에서<br>다시 열어봐 주세요.</p>
 
+
+  <p class="open-now" id="openNow" hidden><a href="index.html?web=1">설치하지 않고 바로 실행하기 →</a><br><span class="open-note">(브라우저 화면이라 주소창 때문에 실험 화면이 조금 작아요)</span></p>
 
   <div class="ios-guide" id="iosGuide">
     <div class="ios-guide-card">
@@ -220,6 +223,9 @@
       document.getElementById('samsungSteps').style.display = 'block';
       return;
     }
+
+    // 안드로이드 Chrome 등·아이폰 Safari: 맨 아래에 '설치하지 않고 바로 실행하기' (지금 브라우저에서 실험실을 연다)
+    document.getElementById('openNow').hidden = false;
 
     window.addEventListener('beforeinstallprompt', function(e){
       e.preventDefault();

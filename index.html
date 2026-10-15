@@ -20,7 +20,9 @@
     var mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
     var app = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
     var bot = /bot|crawl|spider|slurp|Yeti|Google|Lighthouse/i.test(ua);   // 검색 로봇은 실험실 본문을 그대로 읽도록
-    if (mobile && !app && !bot) location.replace('install.html');
+    var web = /[?&]web=1\b/.test(location.search);   // 설치 안내 화면의 '설치하지 않고 바로 실행하기': 이 탭에서는 브라우저로 그대로 연다
+    try { if (web) sessionStorage.setItem('semomulWeb', '1'); else web = sessionStorage.getItem('semomulWeb') === '1'; } catch (e) {}
+    if (mobile && !app && !bot && !web) location.replace('install.html');
   } catch (e) {}
 })();
 </script>
@@ -473,7 +475,7 @@ body.touch #help { display: none; }
       <button id="suggestBtn" type="button">실험 제안하기</button>
     </div>
     <p class="note" id="overlayNote"></p>
-    <p class="visits" id="visitCount" hidden>지금까지 실험실이 <b id="visitNum"></b>번 열렸어요</p>
+    <p class="visits" id="visitCount" hidden>누적 방문 수 <b id="visitNum"></b>회</p>
     <p class="maker">제작: 물리교사 한재상(경상남도교육청 과학교육원, 2026)<br>E-mail: hjs31001@korea.kr</p>
     <p class="ver">v1.03</p>
   </div>
@@ -634,7 +636,8 @@ body.touch #help { display: none; }
       var ua = navigator.userAgent || '';
       var mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
       var app = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
-      if (mobile && !app) return;
+      var web = /[?&]web=1\b/.test(location.search); try { web = web || sessionStorage.getItem('semomulWeb') === '1'; } catch (e) {}
+      if (mobile && !app && !web) return;              // 설치 없이 브라우저로 바로 연 경우는 센다
     } catch (e) {}
     function show(n) { if (typeof n !== 'number' || !isFinite(n)) return; document.getElementById('visitNum').textContent = n.toLocaleString('ko-KR'); document.getElementById('visitCount').hidden = false; }
     function read() { return fetch(DB).then(function (r) { return r.ok ? r.json() : null; }).then(show); }
