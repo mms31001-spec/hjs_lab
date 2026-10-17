@@ -1590,7 +1590,7 @@ function makeIncline() {
 }
 function setInclineAngle(g, deg) {
   const u = g.userData, th = deg * Math.PI / 180, S = u.stand;
-  u.deg = deg; u.track.rotation.z = -th;
+  u.deg = deg; u.track.rotation.z = -th; if (u.body) inclineShapes(g);
   const xh = INC.len / 2 - INC.len * Math.cos(th) + 0.04, yh = INC.foot + (INC.len - 0.04) * Math.sin(th);   // 위쪽 끝 가까이 받친다
   S.plate.position.set(xh, 0.006, 0); S.post.position.set(xh, yh / 2, -INC.w / 2 - 0.012); S.post.scale.y = yh;
   S.knob.position.set(xh, yh - 0.01, -INC.w / 2 - 0.012);
@@ -2151,6 +2151,7 @@ const iceFloats = g => g.userData.water > 5 && totalML(g) * 1e-6 / (Math.PI * (B
 const waterH = g => (g.userData.water < 0.5 ? 0 : iceFloats(g) ? totalML(g) : g.userData.water) * 1e-6 / (Math.PI * (BLN.R - 0.002) ** 2);   // 수면 높이 (m)
 const waterTop = g => 0.006 + waterH(g);
 function setBeakerWater(g) {                         // 물의 양 → 물 높이, 온도 → 물빛 (차가울수록 푸르게)
+  if (typeof beakerPhys === 'function') beakerPhys(g);   // 물의 양에 따라 몸체의 질량·무게중심도
   const u = g.userData, h = waterH(g), w = u.waterMesh;
   w.visible = h > 0.0006; w.scale.y = Math.max(0.0001, h);
   const t = Math.max(0, Math.min(1, u.T / 80)); w.material.color.setRGB(0.75 + 0.1 * t, 0.89 + 0.04 * t, 0.95);
@@ -5301,6 +5302,47 @@ function isK(it, k) { return !!it && it.userData.kind === k; }
 
 /* ---------- 도구마다 강체 만들기 ---------- */
 const PHYS_MASS = { weight: 0.5, balance: 1.2, laser: 0.3, refract: 0.12, mirror: 0.1 };
+// 무게중심 높이 (m, 바닥에서): 실제 기구를 잰 값이 아니라 모양·재질로 어림한 값
+//  모래 컵: 모래가 바닥에 깔려 있다 / 광학대 기구: 금속 받침 블록이 무겁다 (윗부분이 무거운 LED등·레이저는 조금 높게) / 기체 방전관: 변압기가 든 받침 상자
+const PHYS_COM = { sandcup: 0.04, spdev: 0.07, carrier: { clens: 0.035, dslit: 0.035, oscreen: 0.04, mscreen: 0.04, ledsrc: 0.05, olaser: 0.05 } };
+function visBox(it) {                                // 눈에 보이는 모양만 감싸는 상자 (떠 있는 표시판(스프라이트)·숨긴 부품·판정용 투명 상자는 빼고)
+  it.updateMatrixWorld(true);
+  const box = new THREE.Box3(), tmp = new THREE.Box3(), inv = new THREE.Matrix4().copy(it.matrixWorld).invert(), m4 = new THREE.Matrix4();
+  it.traverse(m => {
+    if (!m.isMesh || m.isSprite || m.name === 'hitbox') return;
+    for (let p = m; p && p !== it.parent; p = p.parent) if (!p.visible) return;
+    if ([].concat(m.material).every(x => !x || x.visible === false)) return;
+    if (m.isInstancedMesh) { m.computeBoundingBox(); tmp.copy(m.boundingBox); }   // 여러 개를 찍어 그린 모양(용수철 고리): 모든 고리를 감싸게
+    else { if (!m.geometry.boundingBox) m.geometry.computeBoundingBox(); tmp.copy(m.geometry.boundingBox); }
+    tmp.applyMatrix4(m4.multiplyMatrices(inv, m.matrixWorld)); box.union(tmp);
+  });
+  if (box.isEmpty()) box.setFromObject(it);
+  return box;
+}
+// 비커: 빈 유리(0.9 kg, 두꺼운 바닥 → 무게중심 약 11 cm)와 담긴 물(물 높이의 절반)을 합친 무게중심과 질량
+function beakerComY(g) { const u = g.userData, mw = (u.water || 0) / 1000 + (u.ice || 0), m0 = u.physMass ?? 0.9; return (m0 * 0.11 + mw * waterH(g) / 2) / (m0 + mw); }
+function beakerPhys(g) {                             // 물을 채우거나 쏟으면 몸체의 질량·무게중심을 다시 맞춘다
+  const u = g.userData, b = u.body; if (!b || !u.com || !b.shapes.length) return;
+  const cy = beakerComY(g), dy = cy - u.com.y; if (Math.abs(dy) < 1e-4 && Math.abs(b.mass - ((u.physMass ?? 0.9) + (u.water || 0) / 1000 + (u.ice || 0))) < 1e-4) return;
+  b.shapeOffsets[0].y -= dy; u.com.y = cy;
+  u.baseMass = (u.physMass ?? 0.9) + (u.water || 0) / 1000 + (u.ice || 0);
+  if (b.type === CANNON.Body.DYNAMIC) b.mass = u.baseMass;
+  b.updateMassProperties(); b.updateBoundingRadius(); b.aabbNeedsUpdate = true;
+  if (b.world && g.parent === scene) syncBodyFromGroup(g);
+}
+function inclineShapes(g, init) {                    // 빗면 각도에 맞춰 판·받침의 자리를 다시 놓는다 (무게중심 = 알루미늄 판의 가운데)
+  const u = g.userData, b = u.body; if (!b || b.shapes.length < 3) return;
+  const th = u.deg * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th);
+  const lx = -INC.len / 2, ly = (INC.top + 0.012) / 2;                                    // 판 가운데 (판 좌표: 아래쪽 끝이 원점)
+  const tx = INC.len / 2 + lx * c + ly * sn, ty = INC.foot - lx * sn + ly * c;             // z축으로 −th 돌린 뒤 판 원점 자리로
+  const xh = INC.len / 2 - INC.len * c + 0.04;
+  u.com.set(tx, ty, 0);
+  b.shapeOffsets[0].set(0, 0, 0); b.shapeOrientations[0].setFromEuler(0, 0, -th);
+  b.shapeOffsets[1].set(INC.len / 2 - 0.03 - tx, INC.foot / 2 - ty, 0); b.shapeOrientations[1].set(0, 0, 0, 1);
+  b.shapeOffsets[2].set(xh - tx, 0.006 - ty, 0); b.shapeOrientations[2].set(0, 0, 0, 1);
+  b.updateMassProperties(); b.updateBoundingRadius(); b.aabbNeedsUpdate = true;
+  if (!init && b.world && g.parent === scene) syncBodyFromGroup(g);
+}
 function buildBody(it) {
   const u = it.userData;
   const mass = u.physMass !== undefined ? u.physMass : u.kind === 'balance' ? PHYS_MASS.balance : u.kind === 'weight' ? PHYS_MASS.weight : u.kind === 'laser' ? PHYS_MASS.laser
@@ -5337,12 +5379,29 @@ function buildBody(it) {
     const box = (hx, hy, hz, x, y, z) => b.addShape(new CANNON.Box(new CANNON.Vec3(hx, hy, hz)), new CANNON.Vec3(x, y - com.y, z));
     box(0.19, 0.015, 0.075, 0, 0.015, 0); box(0.013, 0.135, 0.013, 0, 0.165, 0); box(0.21, 0.01, 0.008, 0, 0.3, 0);
     box(0.075, 0.006, 0.075, -ARM, PIVOT_Y - HANG, 0); box(0.075, 0.006, 0.075, ARM, PIVOT_Y - HANG, 0);
-  } else {                                         // 레이저·광학 도구: 모양을 감싸는 납작한 상자
-    const bb = new THREE.Box3().setFromObject(it), size = bb.getSize(new THREE.Vector3());
+  } else if (u.kind === 'sandcup') {               // 스타이로폼 컵: 실제 크기의 원기둥 (꽂은 센서·표시판은 빼고), 무게중심은 모래가 담긴 높이
+    com = new THREE.Vector3(0, PHYS_COM.sandcup, 0);
+    b.addShape(new CANNON.Cylinder(0.042, 0.042, 0.114, 16), new CANNON.Vec3(0, 0.057 - com.y, 0));
+  } else if (PHYS_COM.carrier[u.kind] != null) {   // 광학대 기구: 무거운 받침 블록(3 × 2 × 7 cm)으로 실험대에 닿고, 그 위 부분은 따로. 무게중심은 받침 쪽
+    const vb = visBox(it); com = new THREE.Vector3(0, PHYS_COM.carrier[u.kind], 0);
+    b.addShape(new CANNON.Box(new CANNON.Vec3(0.015, 0.01, 0.035)), new CANNON.Vec3(0, 0.01 - com.y, 0));
+    const y0 = 0.021, hx = Math.max(0.004, (vb.max.x - vb.min.x) / 2), hy = Math.max(0.004, (vb.max.y - y0) / 2), hz = Math.max(0.004, (vb.max.z - vb.min.z) / 2);
+    b.addShape(new CANNON.Box(new CANNON.Vec3(hx, hy, hz)), new CANNON.Vec3((vb.min.x + vb.max.x) / 2, y0 + hy - com.y, (vb.min.z + vb.max.z) / 2));
+  } else if (u.kind === 'incline') {               // 빗면: 기울어진 판 + 아래쪽 받침 + 위쪽 받침판 (각도를 바꾸면 다시 맞춘다)
+    com = new THREE.Vector3();
+    b.addShape(new CANNON.Box(new CANNON.Vec3(INC.len / 2, (INC.top + 0.012) / 2, INC.w / 2)));
+    b.addShape(new CANNON.Box(new CANNON.Vec3(0.03, INC.foot / 2, INC.w / 2)));
+    b.addShape(new CANNON.Box(new CANNON.Vec3(0.05, 0.006, 0.08)));
+    u.body = b; u.com = com; inclineShapes(it, true);
+  } else {                                         // 레이저·광학 도구 등: 눈에 보이는 모양을 감싸는 상자 (떠 있는 표시판·숨긴 부품·판정용 상자는 빼고)
+    const bb = visBox(it), size = bb.getSize(new THREE.Vector3());
     com = bb.getCenter(new THREE.Vector3());
-    b.addShape(new CANNON.Box(new CANNON.Vec3(Math.max(size.x, 0.008) / 2, Math.max(size.y, 0.008) / 2, Math.max(size.z, 0.008) / 2)));
+    const box = new CANNON.Box(new CANNON.Vec3(Math.max(size.x, 0.008) / 2, Math.max(size.y, 0.008) / 2, Math.max(size.z, 0.008) / 2));
+    const cy = PHYS_COM[u.kind] ?? (u.kind === 'beaker' ? beakerComY(it) : null);   // 받침이 무겁거나 내용물이 아래에 있는 기구: 무게중심을 낮춘다
+    if (cy != null) { const c0 = com.clone(); com.y = cy; b.addShape(box, new CANNON.Vec3(0, c0.y - cy, 0)); } else b.addShape(box);
   }
   u.body = b; u.com = com; u.baseMass = mass;
+  if (u.kind === 'beaker') beakerPhys(it);          // 처음부터 물이 담긴 비커: 물의 질량까지
 }
 const _pq = new THREE.Quaternion(), _pp = new THREE.Vector3(), _ps = new THREE.Vector3();
 function syncBodyFromGroup(it) {
@@ -7664,7 +7723,11 @@ function findSpot(it) {
 }
 // 선택창에서 고른 기구를 바로 손에 든다: 미리보기가 커서를 따라다니고, 누른 자리에 놓인다
 function grabFromInventory(entry) {
-  if (held) { toast('손에 든 기구를 먼저 내려놓아 주세요.'); return; }
+  if (held) {                                          // 선택창에서 꺼내 든 기구면: 그 꺼내기를 취소하고 새 기구를 든다 (실험대에서 주운 기구는 먼저 내려놓기)
+    if (!(UNDO.pend && UNDO.pend.add && UNDO.pend.it === held)) { toast('손에 든 기구를 먼저 내려놓아 주세요.'); return; }
+    const old = held; dropHeld(true); for (const w of items.filter(w => w.userData.snapOf === old)) destroyItem(w); destroyItem(old);
+    UNDO.pend = null; UNDO.lastHeld = null;
+  }
   $('invPanel').hidden = true; if (typeof syncSideBtns === 'function') syncSideBtns();
   const it = spawnItem(entry);
   scene.add(it); it.position.set((TABLE.minX + TABLE.maxX) / 2, TABLE.y + 0.002, (TABLE.minZ + TABLE.maxZ) / 2); setPlacedRotation(it, it, 'surface'); resetPose(it);
@@ -7696,7 +7759,7 @@ function refreshInventory() {
     b.innerHTML = `<img alt="" src="${entry.thumb || ''}"><span>${entry.name || ''}</span><span class="st">${n ? `실험대에 ${n}개` : ''}</span>`;
     b.addEventListener('click', () => {
       if (entry.pour) { startPour(entry.pour); return; }   // 물·얼음: 채울 비커를 고른다
-      if (held) { toast('손에 든 기구를 먼저 내려놓아 주세요.'); return; }
+      if (held && !(UNDO.pend && UNDO.pend.add && UNDO.pend.it === held)) { toast('손에 든 기구를 먼저 내려놓아 주세요.'); return; }   // 선택창에서 꺼내 든 기구는 바꿔 든다 (grabFromInventory)
       if (recActive && items.length) {   // 추천 실험 중이면: 실험대를 비우고 자유 실험으로 (묻고 나서 손에 든다)
         $('cbImg').src = entry.thumb || '';
         pendingItem = null; pendingAction = () => { resetLab(); $('demoBar').hidden = true; grabFromInventory(entry); };
@@ -8917,7 +8980,7 @@ function goMain() {
    시간에 따라 진행되는 물리 현상(굴러가는 수레, 온도, 파동, 축전기 충전 등)은 되돌리지 않는다 */
 const UNDO = { stack: [], max: 20, pend: null, lastHeld: null, busy: false };
 const UNDO_PROPS = { olaser: ['on', 's'], ledsrc: ['on', 's'], dslit: ['d', 's'], clens: ['s'], oscreen: ['s'], mscreen: ['s'], laser: ['power'], spdev: ['on'], spbulb: ['on'], switch: ['on'], psu: ['V'], clip: ['magnetized'] };   // s: 광학대 위 눈금 자리
-function undoBtnSync() { const b = $('undoBtn'); if (b) b.disabled = !UNDO.stack.length || demoState.active; }
+function undoBtnSync() { const b = $('undoBtn'); if (b) b.disabled = (!UNDO.stack.length && !held) || demoState.active; }   // 손에 든 기구가 있으면 기록이 비어도 켠다(집기·꺼내기 취소)
 function undoPush(e) { if (demoState.active || UNDO.busy) return; UNDO.stack.push(e); if (UNDO.stack.length > UNDO.max) UNDO.stack.shift(); undoBtnSync(); }
 function undoTerm(T) { if (!T || !T.owner || !T.owner.userData) return null; const i = (T.owner.userData.terms || []).indexOf(T); return i >= 0 ? { owner: T.owner, i } : null; }
 function undoSnap(it) {                               // 기구 하나의 자리·관계·설정값
@@ -9044,6 +9107,7 @@ function undoAction(fn, label) {                     // fn을 하고, 바뀐 것
   const S0 = snapLab(); const r = fn(); undoFrom(S0, label); return r;
 }
 function updateUndo() {                               // 들고 있던 기구를 내려놓으면(어디에 놓든) '옮기기'로 기록
+  const ub = $('undoBtn'), dis = (!UNDO.stack.length && !held) || demoState.active; if (ub && ub.disabled !== dis) undoBtnSync();   // 손에 들고 놓을 때마다 버튼 켜짐 맞추기
   if (held === UNDO.lastHeld) return;
   const prev = UNDO.lastHeld; UNDO.lastHeld = held;
   if (prev && !held && UNDO.pend && UNDO.pend.it === prev && items.includes(prev)) undoPush(UNDO.pend.add ? { type: 'add', it: prev, label: '올리기' } : { type: 'move', it: prev, S: UNDO.pend.S, label: '옮기기' });
@@ -9634,7 +9698,7 @@ startBtn.disabled = false; startBtn.textContent = '입장 하기';
 requestAnimationFrame(frame);
 
 // 자동 점검용 훅
-window.__lab = { player, items, CATALOG, view3, spawnItem, placeFromInventory, removeToInventory, interact, get held() { return held; }, get placement() { return placement; },
+window.__lab = { player, items, CATALOG, view3, spawnItem, placeAt, resetLab, placeFromInventory, grabFromInventory, doUndo, removeToInventory, interact, get held() { return held; }, get placement() { return placement; },
   start() { playing = true; mode = 'drag'; overlay.hidden = true; } };
 </script>
 
