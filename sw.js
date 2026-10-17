@@ -13,7 +13,6 @@
 
  이 웹사이트에 접속하여 실험실을 수업과 학습에 이용하는 것은 자유롭게
  할 수 있습니다.
- 외부 라이브러리(three.js, cannon-es)는 각자의 MIT 라이선스를 따릅니다.
  이용 문의: hjs31001@korea.kr
 
  The source code of this program is protected by copyright law and is
@@ -28,7 +27,7 @@
 ==========================================================================
 */
 // 세상의 모든 물리학 실험 서비스 워커: 한 번 열면 앱 파일과 3D·물리 엔진을 저장해 두고, 다음부터는 저장본으로 빠르게(인터넷이 끊겨도) 실행한다.
-const CACHE = 'hjs-physics-lab-v296';        // 앱 파일: 새 버전마다 이름을 바꾼다
+const CACHE = 'hjs-physics-lab-v297';        // 앱 파일: 새 버전마다 이름을 바꾼다
 const LIB = 'hjs-physics-lib-v1';            // 3D·물리 엔진·글꼴: 버전과 관계없이 계속 보관 (업데이트 뒤에도 인터넷 없이 실행)
 const SHELL = ['./install.html', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 const LIBS = [

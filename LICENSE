@@ -12,9 +12,6 @@ Copyright © 2026 한재상 (Han Jae Sang). All rights reserved.
 - https://mms31001-spec.github.io/hjs_lab/ 에 접속하여 실험실을 수업과 학습에
   이용하는 것
 
-외부 라이브러리
-- three.js, cannon-es는 이 저작물에 포함되지 않으며, 각자의 MIT 라이선스를 따릅니다.
-
 이용 문의: hjs31001@korea.kr
 
 --------------------------------------------------------------------------
@@ -31,8 +28,5 @@ Korea (imprisonment of up to five years, a fine of up to 50 million won, or both
 
 Permitted use: using the lab at https://mms31001-spec.github.io/hjs_lab/ for
 teaching and learning.
-
-Third-party libraries (three.js, cannon-es) are not part of this work and remain
-under their respective MIT licenses.
 
 Contact: hjs31001@korea.kr
