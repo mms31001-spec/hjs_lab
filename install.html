@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<!--
+==========================================================================
+ 세상의 모든 물리학 실험 (세.모.물)
+ Copyright © 2026 한재상 (Han Jae Sang). All rights reserved.
+ 한국저작권위원회 저작권 등록
+
+ 이 프로그램의 소스 코드는 저작권법으로 보호되는 저작물입니다.
+ 저작권자의 사전 서면 허락 없이 전부 또는 일부를 복제, 배포, 변형,
+ 상업적 이용 등의 행위를 하는 것을 엄격히 금지합니다.
+ 이를 어기면 저작권법 제136조 등에 따라 민사상 손해배상 책임과 함께
+ 5년 이하의 징역 또는 5천만 원 이하의 벌금에 처해지거나
+ 이를 함께 받을 수 있습니다.
+
+ 이 웹사이트에 접속하여 실험실을 수업과 학습에 이용하는 것은 자유롭게
+ 할 수 있습니다.
+ 이용 문의: hjs31001@korea.kr
+
+ The source code of this program is protected by copyright law and is
+ registered with the Korea Copyright Commission. Copying, distributing,
+ modifying, or commercially using this source code, in whole or in part,
+ without the prior written permission of the copyright holder is strictly
+ prohibited. Violations may result in civil liability and criminal
+ penalties under Article 136 of the Copyright Act of the Republic of Korea
+ (imprisonment of up to five years, a fine of up to 50 million won, or both).
+ Using the lab through this website for teaching and learning is permitted.
+ Contact: hjs31001@korea.kr
+==========================================================================
+-->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>세상의 모든 물리학 실험 - 설치</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#244a39">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="세.모.물">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  /* 세상의 모든 물리학 실험 색: 실험실 밤 배경, 분필색 글씨, 황동 강조, 칠판 초록 버튼 */
+  :root{ --bg:#121617; --ink:#EEF1EF; --dim:#A9B3B0; --card:#182022; --line:#2A3533; --brass:#D9B45B; --green:#2F7A5C; color-scheme:dark; }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Pretendard",sans-serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100vh; min-height:100dvh; text-align:center;
+    padding:max(28px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom));
+  }
+  .icon{ width:96px; height:96px; border-radius:22px; margin-bottom:22px; box-shadow:0 4px 18px rgba(0,0,0,0.45); }
+  h1{ font-size:20px; margin:0 0 8px; letter-spacing:0.02em; }
+  p.sub{ color:var(--dim); font-size:13.5px; margin:0 0 30px; line-height:1.6; max-width:290px; }
+  #installBtn{
+    font-family:inherit; font-size:16px; font-weight:700; padding:15px 36px; border-radius:8px;
+    border:none; background:var(--green); color:#fff; cursor:pointer; margin-bottom:16px;
+    display:none; -webkit-tap-highlight-color:transparent;
+  }
+  #installBtn:active{ transform:scale(0.97); }
+  .ios-steps{
+    display:none; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:18px 20px; margin-bottom:22px; font-size:13.5px; line-height:1.9; max-width:300px;
+  }
+  .ios-steps b{ color:var(--brass); }
+  .share-icon{ display:inline-block; padding:1px 6px; border:1px solid var(--dim); border-radius:4px; font-size:12px; }
+  .status{ color:var(--dim); font-size:13px; margin-bottom:20px; display:none; }
+  .fallback{ display:none; color:var(--dim); font-size:13.5px; line-height:1.7; max-width:290px; }
+  .inapp-steps{
+    display:none; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:18px 20px; margin-bottom:22px; font-size:13.5px; line-height:1.9; max-width:300px;
+  }
+  .inapp-steps b{ color:var(--brass); }
+  .menu-icon{ display:inline-block; padding:1px 8px; border:1px solid var(--dim); border-radius:4px; font-size:12px; }
+  .chrome-btn{
+    display:none; font-family:inherit; font-size:16px; font-weight:700; padding:15px 30px; border-radius:8px;
+    border:none; background:var(--green); color:#fff; cursor:pointer; margin-bottom:16px; text-decoration:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .chrome-btn:active{ transform:scale(0.97); }
+  .share-svg{ width:15px; height:18px; vertical-align:-3px; }
+  /* iPhone/iPad: 단계별 "홈 화면에 추가" 안내 (Safari에는 한 번에 설치하는 기능이 없다) */
+  .ios-guide{
+    position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:50;
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  .ios-guide.show{ display:flex; }
+  .ios-guide-card{
+    background:var(--card); border:1px solid #34413E; border-radius:14px; padding:22px 20px 18px;
+    max-width:330px; width:100%; text-align:left; font-size:14.5px; line-height:1.7;
+  }
+  .ios-guide-card h2{ font-size:17px; margin:0 0 14px; text-align:center; color:var(--ink); }
+  .ios-guide-step{ display:flex; gap:12px; align-items:flex-start; margin-bottom:14px; }
+  .ios-guide-num{
+    flex:none; width:26px; height:26px; border-radius:50%; background:var(--green); color:#fff;
+    font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; margin-top:1px;
+  }
+  .ios-guide-step b{ color:var(--brass); }
+  .ios-guide-note{ color:var(--dim); font-size:12.5px; }
+  .ios-guide-close{
+    display:block; width:100%; margin-top:6px; font-family:inherit; font-size:15px; font-weight:700;
+    padding:12px 0; border-radius:8px; border:none; background:var(--ink); color:var(--bg); cursor:pointer;
+  }
+  .ios-guide-arrow{
+    position:fixed; z-index:51; font-size:44px; color:var(--brass); display:none;
+    text-shadow:0 0 12px rgba(0,0,0,0.8); pointer-events:none;
+  }
+  .ios-guide.show ~ .ios-guide-arrow{ display:block; }
+  .ios-guide-arrow.down{ bottom:6px; left:50%; transform:translateX(-50%); animation:bobDown 0.9s ease-in-out infinite; }
+  .ios-guide-arrow.up{ top:6px; right:70px; animation:bobUp 0.9s ease-in-out infinite; }
+  @keyframes bobDown{ 0%,100%{ transform:translate(-50%,0); } 50%{ transform:translate(-50%,10px); } }
+  @keyframes bobUp{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
+  @media (prefers-reduced-motion: reduce){ .ios-guide-arrow{ animation:none !important; } }
+</style>
+</head>
+<body>
+  <img class="icon" src="icon-192.png" alt="세상의 모든 물리학 실험 아이콘">
+  <h1>세상의 모든 물리학 실험</h1>
+  <p class="sub">스마트폰·태블릿에서는 홈 화면에 추가하면 앱처럼 아이콘을 눌러 바로 실험실에 들어갈 수 있어요.</p>
+
+  <button id="installBtn" type="button">홈 화면에 추가</button>
+  <p class="status" id="statusMsg"></p>
+
+  <button class="chrome-btn" id="iosAddBtn" type="button">홈 화면에 추가</button>
+
+  <div class="ios-steps" id="iosSteps">
+    아이폰 · 아이패드에서 설치하는 방법<br><br>
+    1. 하단(또는 상단)의 <span class="share-icon">공유 <svg class="share-svg" viewBox="0 0 20 24" fill="none" stroke="#D9B45B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15V2"/><path d="M5.5 6.5L10 2l4.5 4.5"/><path d="M6 10H3.5v12h13V10H14"/></svg></span> 버튼을 눌러주세요<br>
+    2. <b>"홈 화면에 추가"</b>를 선택해주세요<br>
+    3. 오른쪽 위 <b>"추가"</b>를 누르면 완료돼요!
+  </div>
+
+  <a class="chrome-btn" id="chromeBtn" href="#">Chrome으로 열기</a>
+  <a class="chrome-btn" id="safariBtn" href="#">Safari로 열기</a>
+
+  <div class="inapp-steps" id="inappSteps">
+    <span id="iosInappWhere">카카오톡 안에서는</span> 설치 기능이 제한되어 있어요.<br><br>위의 <b>"Safari로 열기"</b> 버튼을 눌러주세요.<br><br>
+    버튼이 동작하지 않으면<br>
+    1. 우측 하단(또는 상단)의 <span class="menu-icon">공유</span> 또는 <span class="menu-icon">⋯</span> 버튼을 눌러주세요<br>
+    2. <b>"Safari로 열기"</b>(또는 "기본 브라우저로 열기")를 선택해주세요<br>
+    3. Safari에서 이 페이지가 다시 뜨면, 안내에 따라 설치해주세요
+  </div>
+
+  <div class="inapp-steps" id="inappAndroidSteps">
+    카카오톡 안에서는 설치 기능이 제한되어 있어요.<br><br>위의 <b>"Chrome으로 열기"</b> 버튼을 눌러주세요.<br><br>
+    버튼이 동작하지 않으면<br>
+    1. 우측 상단(또는 하단)의 <span class="menu-icon">⋮</span> 메뉴를 눌러주세요<br>
+    2. <b>"다른 브라우저로 열기"</b>를 누르고 <b>Chrome</b>을 선택해주세요<br>
+    3. Chrome에서 이 페이지가 다시 뜨면, 안내에 따라 설치해주세요
+  </div>
+
+  <div class="inapp-steps" id="samsungSteps">
+    <b>삼성 인터넷</b>에서 설치하면 Google Play 프로텍트가 "안전하지 않은 앱"으로 <b>차단</b>할 수 있어요.<br><br>위의 <b>"Chrome으로 열기"</b> 버튼을 눌러 Chrome에서 설치해주세요.<br><br>
+    버튼이 동작하지 않으면<br>
+    1. <b>Chrome</b> 앱을 직접 열어주세요<br>
+    2. 이 페이지 주소를 입력해서 열어주세요<br>
+    3. <b>"홈 화면에 추가"</b> 버튼을 눌러 설치해주세요
+  </div>
+
+  <p class="fallback" id="fallbackMsg">이 브라우저에서는 자동 설치가 지원되지 않아요.<br>Chrome, Safari, Edge 등 최신 브라우저에서<br>다시 열어봐 주세요.</p>
+
+
+
+  <div class="ios-guide" id="iosGuide">
+    <div class="ios-guide-card">
+      <h2>홈 화면에 추가하는 방법</h2>
+      <div class="ios-guide-step"><div class="ios-guide-num">1</div><div><span id="iosShareWhere">화면 <b>아래쪽 가운데</b></span>의 <b>공유 버튼</b> <svg class="share-svg" viewBox="0 0 20 24" fill="none" stroke="#D9B45B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15V2"/><path d="M5.5 6.5L10 2l4.5 4.5"/><path d="M6 10H3.5v12h13V10H14"/></svg> 을 눌러주세요.<br><span class="ios-guide-note">공유 버튼이 안 보이면 <b>⋯</b> 버튼을 먼저 누르면 나와요.</span></div></div>
+      <div class="ios-guide-step"><div class="ios-guide-num">2</div><div>목록을 위로 올려 <b>"홈 화면에 추가"</b> <span class="menu-icon">＋</span> 를 눌러주세요.<br><span class="ios-guide-note">안 보이면 목록 맨 아래 "편집"에서 추가할 수 있어요.</span></div></div>
+      <div class="ios-guide-step"><div class="ios-guide-num">3</div><div>오른쪽 위 <b>"추가"</b>를 누르면 완료!<br><span class="ios-guide-note">홈 화면에 생긴 아이콘으로 실험실을 실행해요.</span></div></div>
+      <button class="ios-guide-close" id="iosGuideClose" type="button">확인</button>
+    </div>
+  </div>
+  <div class="ios-guide-arrow down" id="iosGuideArrow">⬇</div>
+
+<script>
+  (function(){
+    // 오프라인 저장(서비스 워커) 등록: 안드로이드 Chrome의 설치 버튼이 나타나는 조건이기도 하다
+    if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
+
+    var installBtn = document.getElementById('installBtn');
+    var iosSteps = document.getElementById('iosSteps');
+    var statusMsg = document.getElementById('statusMsg');
+    var deferredPrompt = null;
+    var promptSeen = false; // Chrome이 한 번이라도 설치를 제안했는지
+
+    // 이미 설치해서 홈 화면 아이콘으로 열었다면 바로 실험실로
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches || window.navigator.standalone === true;
+    if(isStandalone){
+      location.replace('index.html');
+      return;
+    }
+
+    var ua = navigator.userAgent || '';
+    var isIPadDesktopUA = /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1; // iPadOS는 자신을 Mac이라고 알린다
+    var isIPad = /iPad/i.test(ua) || isIPadDesktopUA;
+    var isIOS = (/iPhone|iPad|iPod/i.test(ua) || isIPadDesktopUA) && !window.MSStream;
+    var isKakao = /KAKAOTALK/i.test(ua);
+    // Safari가 아닌 iOS 브라우저·앱 속 브라우저 (제대로 설치할 수 없다)
+    var isIOSNonSafari = isIOS && /CriOS|FxiOS|EdgiOS|OPiOS|Whale|NAVER|DaumApps|KAKAOTALK|Instagram|FBAN|FBAV|Line\//i.test(ua);
+
+    // 같은 페이지를 Safari로 열기: 카카오톡은 자체 외부 브라우저 링크, 그 밖에는 x-safari-https:// (iOS 17+)
+    function showSafariButton(){
+      var btn = document.getElementById('safariBtn');
+      btn.href = isKakao
+        ? 'kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href)
+        : 'x-safari-' + location.href;
+      btn.style.display = 'inline-block';
+    }
+    var isInApp = /KAKAOTALK/i.test(ua) || /FBAN|FBAV/i.test(ua) || /Instagram/i.test(ua) || /NAVER\(/i.test(ua) || /Line\//i.test(ua);
+    var isAndroid = /Android/i.test(ua);
+    // 삼성 인터넷은 오래된 안드로이드 버전용 설치 꾸러미(WebAPK)를 만들어 Play 프로텍트가 차단하므로 Chrome으로 설치
+    var isSamsungBrowser = /SamsungBrowser/i.test(ua);
+
+    // 같은 페이지를 Chrome으로 열기(안드로이드 intent 주소). Chrome이 없으면 Play 스토어의 Chrome 페이지로
+    function showChromeButton(){
+      var here = location.href.replace(/^https?:\/\//, '');
+      var fallback = encodeURIComponent('https://play.google.com/store/apps/details?id=com.android.chrome');
+      var btn = document.getElementById('chromeBtn');
+      btn.href = 'intent://' + here + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + fallback + ';end';
+      btn.style.display = 'inline-block';
+    }
+
+    if(isInApp && isAndroid){
+      showChromeButton();
+      document.getElementById('inappAndroidSteps').style.display = 'block';
+      return;
+    }
+
+    if(isIOSNonSafari){
+      showSafariButton();
+      document.getElementById('iosInappWhere').textContent = isKakao ? '카카오톡 안에서는' : '이 브라우저에서는';
+      document.getElementById('inappSteps').style.display = 'block';
+      return;
+    }
+
+    if(isInApp){
+      document.getElementById('inappSteps').style.display = 'block';
+      return;
+    }
+
+    if(isAndroid && isSamsungBrowser){
+      showChromeButton();
+      document.getElementById('samsungSteps').style.display = 'block';
+      return;
+    }
+
+    window.addEventListener('beforeinstallprompt', function(e){
+      e.preventDefault();
+      deferredPrompt = e;
+      promptSeen = true;
+      installBtn.style.display = 'inline-block';
+      var fb = document.getElementById('fallbackMsg');
+      if(fb) fb.style.display = 'none';
+    });
+
+    installBtn.addEventListener('click', function(){
+      if(!deferredPrompt) return;
+      installBtn.disabled = true;
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(choice){
+        deferredPrompt = null;
+        if(choice.outcome === 'accepted'){
+          installBtn.style.display = 'none';
+          statusMsg.textContent = '설치 중입니다…';
+          statusMsg.style.display = 'block';
+        } else {
+          installBtn.disabled = false;
+        }
+      });
+    });
+
+    window.addEventListener('appinstalled', function(){
+      installBtn.style.display = 'none';
+      statusMsg.textContent = '설치 완료! 홈 화면의 세.모.물 아이콘을 눌러 실행해 주세요.';
+      statusMsg.style.display = 'block';
+    });
+
+    if(isIOS){
+      // Safari에는 설치 기능이 없어서, 버튼을 누르면 공유 버튼을 가리키는 그림 안내를 띄운다
+      var iosAddBtn = document.getElementById('iosAddBtn');
+      var guide = document.getElementById('iosGuide');
+      var arrow = document.getElementById('iosGuideArrow');
+      if(isIPad){
+        arrow.className = 'ios-guide-arrow up'; arrow.textContent = '⬆';
+        document.getElementById('iosShareWhere').innerHTML = '화면 <b>오른쪽 위</b>';
+      }
+      iosAddBtn.style.display = 'inline-block';
+      iosAddBtn.addEventListener('click', function(){ guide.classList.add('show'); });
+      document.getElementById('iosGuideClose').addEventListener('click', function(){ guide.classList.remove('show'); });
+      iosSteps.style.display = 'block';
+    } else {
+      var fallbackMsg = document.getElementById('fallbackMsg');
+      setTimeout(function(){
+        if(!promptSeen){
+          fallbackMsg.style.display = 'block';
+        }
+      }, 2500);
+    }
+  })();
+</script>
+</body>
+</html>
